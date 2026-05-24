@@ -62,9 +62,9 @@ export default function Dashboard() {
           </div>
 
           <div className="space-y-0.5">
-            <h2 className="text-lg font-bold">
+            <h1 className="text-lg font-bold">
               Welcome back, {profile?.full_name || 'User'}!
-            </h2>
+            </h1>
             <p className="text-xs text-brand-100 font-medium flex items-center gap-1.5">
               <span>Managing</span>
               <span className="font-bold text-white">{organization?.name || 'Workspace'}</span>

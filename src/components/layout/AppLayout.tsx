@@ -1,4 +1,5 @@
-import { Outlet } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
@@ -6,8 +7,28 @@ import { useUIStore } from '@/stores/ui-store';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { ErrorFallback } from '@/components/shared/ErrorFallback';
 
+const pageTitles: Record<string, string> = {
+  '/': 'Dashboard',
+  '/dashboard': 'Dashboard',
+  '/bookings': 'Bookings Calendar',
+  '/leads': 'Leads & Inquiries',
+  '/customers': 'Customers Directory',
+  '/payments': 'Payments Ledger',
+  '/venues': 'Venue Configuration',
+  '/expenses': 'Expense Tracker',
+  '/import': 'Import Workspace Data',
+  '/settings': 'Settings & Workspace',
+  '/help': 'Help Center & Guides',
+};
+
 export function AppLayout() {
   const collapsed = useUIStore((s) => s.sidebarCollapsed);
+  const location = useLocation();
+
+  useEffect(() => {
+    const title = pageTitles[location.pathname] || 'VenuePro';
+    document.title = `${title} | VenuePro`;
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-surface-secondary">

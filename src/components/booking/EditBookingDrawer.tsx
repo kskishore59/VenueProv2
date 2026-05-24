@@ -119,12 +119,12 @@ export function EditBookingDrawer() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Event Date</label>
-              <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)}
+              <input id="input-eb-event-date" type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)}
                 className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all" />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Hall</label>
-              <select value={hallId} onChange={(e) => setHallId(e.target.value)}
+              <select id="select-eb-hall-id" value={hallId} onChange={(e) => setHallId(e.target.value)}
                 className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all appearance-none bg-white">
                 {halls.filter((h) => h.is_active).map((h) => (
                   <option key={h.id} value={h.id}>{h.name}</option>
@@ -147,12 +147,12 @@ export function EditBookingDrawer() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Start</label>
-              <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)}
+              <input id="input-eb-start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)}
                 className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all" />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">End</label>
-              <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)}
+              <input id="input-eb-end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)}
                 className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all" />
             </div>
           </div>
@@ -161,14 +161,14 @@ export function EditBookingDrawer() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Event Type</label>
-              <select value={eventType} onChange={(e) => setEventType(e.target.value as EventType)}
+              <select id="select-eb-event-type" value={eventType} onChange={(e) => setEventType(e.target.value as EventType)}
                 className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all appearance-none bg-white">
                 {eventTypes.map((et) => <option key={et} value={et}>{eventTypeLabels[et]}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Guests</label>
-              <input type="number" value={guestCount} onChange={(e) => setGuestCount(e.target.value)}
+              <input id="input-eb-guest-count" type="number" value={guestCount} onChange={(e) => setGuestCount(e.target.value)}
                 className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all" />
             </div>
           </div>
@@ -178,7 +178,7 @@ export function EditBookingDrawer() {
             <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Total Amount (₹)</label>
             <div className="relative">
               <IndianRupee className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input type="number" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)}
+              <input id="input-eb-total-amount" type="number" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)}
                 className="w-full pl-10 pr-3 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all" />
             </div>
           </div>
@@ -186,14 +186,14 @@ export function EditBookingDrawer() {
           {/* Notes */}
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Notes</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3}
+            <textarea id="textarea-eb-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3}
               className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all resize-none" />
           </div>
         </div>
 
         {/* Footer */}
         <div className="border-t border-gray-100 px-6 py-4 space-y-2.5">
-          <button onClick={handleSave}
+          <button id="btn-eb-save-changes" onClick={handleSave}
             disabled={isSaving}
             className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-brand-600 text-white font-semibold text-sm hover:bg-brand-700 active:scale-[0.98] transition-all shadow-sm disabled:opacity-55 disabled:cursor-not-allowed">
             {isSaving ? (
@@ -203,7 +203,7 @@ export function EditBookingDrawer() {
             )}
             {isSaving ? 'Saving Changes...' : 'Save Changes'}
           </button>
-          <button onClick={closeEditBooking}
+          <button id="btn-eb-cancel" onClick={closeEditBooking}
             className="w-full px-4 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-50 transition-colors">
             Cancel
           </button>

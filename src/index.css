@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -9,7 +9,46 @@
    Premium India-first venue management UI
    ═══════════════════════════════════════════════════════════════ */
 
-/* ─── Google Fonts ────────────────────────────────────────── */
+:root {
+  /* Brand Typography */
+  --font-sans: 'Google Sans Text', 'Google Sans', 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  --font-display: 'Plus Jakarta Sans', sans-serif;
+
+  /* Theme Palette (Premium Indigo-Violet-Slate Hybrid) */
+  --color-brand-50: #f5f3ff;
+  --color-brand-100: #ede9fe;
+  --color-brand-200: #ddd6fe;
+  --color-brand-300: #c4b5fd;
+  --color-brand-400: #a78bfa;
+  --color-brand-500: #8b5cf6;
+  /* Vibrant Purple/Violet */
+  --color-brand-600: #6366f1;
+  /* Premium Royal Indigo */
+  --color-brand-700: #4f46e5;
+  /* Deep Accent Indigo */
+  --color-brand-800: #4338ca;
+  --color-brand-900: #1a1846;
+
+  /* Semantic Accent Tints */
+  --color-success-50: #ecfdf5;
+  --color-success-500: #10b981;
+  --color-success-600: #059669;
+
+  --color-warning-50: #fffbe6;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+
+  --color-danger-50: #fef2f2;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+
+  /* Surfaces & Containers */
+  --color-bg-base: #f8fafc;
+  /* Sleek Slate-50 */
+  --color-bg-surface: #ffffff;
+  --color-border-card: #e2e8f0;
+  /* Crisp Slate-200 */
+}
 
 /* ─── Base Styles ────────────────────────────────────────── */
 @layer base {
@@ -29,18 +68,27 @@
     overflow-x: hidden;
   }
 
+  h1,
+  h2,
+  h3 {
+    @apply font-display tracking-tight;
+  }
+
   /* Scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
+
   ::-webkit-scrollbar-track {
     background: transparent;
   }
+
   ::-webkit-scrollbar-thumb {
     background: #D1D5DB;
     border-radius: 100px;
   }
+
   ::-webkit-scrollbar-thumb:hover {
     background: #9CA3AF;
   }
@@ -48,12 +96,14 @@
 
 /* ─── Component Styles ───────────────────────────────────── */
 @layer components {
+
   /* Glass effects */
   .glass {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
+
   .glass-dark {
     background: rgba(17, 25, 40, 0.85);
     backdrop-filter: blur(16px);
@@ -64,9 +114,11 @@
   .drawer-overlay {
     animation: drawer-overlay-in 0.25s ease-out;
   }
+
   .drawer-content {
     animation: drawer-slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   }
+
   .modal-content {
     animation: modal-scale-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -83,10 +135,12 @@
   .calendar-day {
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
+
   .calendar-day:hover {
     transform: scale(1.05);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
   }
+
   .calendar-day:active {
     transform: scale(0.98);
   }
@@ -95,25 +149,56 @@
   .card-hover {
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
+
   .card-hover:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -5px rgba(0, 0, 0, 0.04);
   }
 
   /* Stagger animation children */
-  .stagger-children > * {
+  .stagger-children>* {
     animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
-  .stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
-  .stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
-  .stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
-  .stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
-  .stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
-  .stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
-  .stagger-children > *:nth-child(7) { animation-delay: 0.35s; }
-  .stagger-children > *:nth-child(8) { animation-delay: 0.4s; }
-  .stagger-children > *:nth-child(9) { animation-delay: 0.45s; }
-  .stagger-children > *:nth-child(10) { animation-delay: 0.5s; }
+
+  .stagger-children>*:nth-child(1) {
+    animation-delay: 0.05s;
+  }
+
+  .stagger-children>*:nth-child(2) {
+    animation-delay: 0.1s;
+  }
+
+  .stagger-children>*:nth-child(3) {
+    animation-delay: 0.15s;
+  }
+
+  .stagger-children>*:nth-child(4) {
+    animation-delay: 0.2s;
+  }
+
+  .stagger-children>*:nth-child(5) {
+    animation-delay: 0.25s;
+  }
+
+  .stagger-children>*:nth-child(6) {
+    animation-delay: 0.3s;
+  }
+
+  .stagger-children>*:nth-child(7) {
+    animation-delay: 0.35s;
+  }
+
+  .stagger-children>*:nth-child(8) {
+    animation-delay: 0.4s;
+  }
+
+  .stagger-children>*:nth-child(9) {
+    animation-delay: 0.45s;
+  }
+
+  .stagger-children>*:nth-child(10) {
+    animation-delay: 0.5s;
+  }
 
   /* Number animate */
   .number-animate {
@@ -136,32 +221,81 @@
 
 /* ─── Keyframes ──────────────────────────────────────────── */
 @keyframes drawer-overlay-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
+
 @keyframes drawer-slide-in {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
 }
+
 @keyframes modal-scale-in {
-  from { opacity: 0; transform: scale(0.95) translateY(10px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
+
 @keyframes status-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 currentColor; }
-  50% { box-shadow: 0 0 0 4px transparent; }
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 currentColor;
+  }
+
+  50% {
+    box-shadow: 0 0 0 4px transparent;
+  }
 }
+
 @keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 @keyframes count-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 /* ─── Mobile-First Responsive ────────────────────────────── */
@@ -171,7 +305,15 @@
     border-radius: 20px 20px 0 0;
   }
 }
+
 @keyframes slide-in-up {
-  from { opacity: 0; transform: translateY(100%); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

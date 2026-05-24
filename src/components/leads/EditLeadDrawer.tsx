@@ -52,6 +52,7 @@ export function EditLeadDrawer() {
   if (!isOpen || !leadId || !lead) return null;
 
   const handleSave = async () => {
+    if (isSaving) return;
     if (!name || !phone) {
       toast.error('Name and Phone number are required');
       return;
@@ -111,6 +112,7 @@ export function EditLeadDrawer() {
           </div>
           <div className="flex items-center gap-1.5">
             <button
+              id="btn-el-delete"
               onClick={handleDelete}
               className="p-2 rounded-xl hover:bg-rose-50 text-rose-500 transition-colors"
               title="Delete Lead"
@@ -129,12 +131,12 @@ export function EditLeadDrawer() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Lead Name *</label>
-              <input type="text" value={name} onChange={(e) => setName(e.target.value)} required
+              <input id="input-el-name" type="text" value={name} onChange={(e) => setName(e.target.value)} required
                 className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all" />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Phone *</label>
-              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required
+              <input id="input-el-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required
                 className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all" />
             </div>
           </div>
@@ -142,12 +144,12 @@ export function EditLeadDrawer() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+              <input id="input-el-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all" />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Source</label>
-              <select value={source} onChange={(e) => setSource(e.target.value as LeadSource)}
+              <select id="select-el-source" value={source} onChange={(e) => setSource(e.target.value as LeadSource)}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all bg-white">
                 {Object.entries(leadSourceLabels).map(([val, label]) => (
                   <option key={val} value={val}>{label}</option>
@@ -162,7 +164,7 @@ export function EditLeadDrawer() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Event Type</label>
-              <select value={eventType} onChange={(e) => setEventType(e.target.value)}
+              <select id="select-el-event-type" value={eventType} onChange={(e) => setEventType(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all bg-white">
                 <option value="">Select Event Type</option>
                 {eventTypes.map((et) => (
@@ -172,7 +174,7 @@ export function EditLeadDrawer() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Tentative Date</label>
-              <input type="date" value={tentativeDate} onChange={(e) => setTentativeDate(e.target.value)}
+              <input id="input-el-tentative-date" type="date" value={tentativeDate} onChange={(e) => setTentativeDate(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all" />
             </div>
           </div>
@@ -180,7 +182,7 @@ export function EditLeadDrawer() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Hall Preference</label>
-              <select value={hallPreference} onChange={(e) => setHallPreference(e.target.value)}
+              <select id="select-el-hall-pref" value={hallPreference} onChange={(e) => setHallPreference(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all bg-white">
                 <option value="">No Preference</option>
                 {halls.map((h) => (
@@ -190,7 +192,7 @@ export function EditLeadDrawer() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Expected Guests</label>
-              <input type="number" value={guestCount} onChange={(e) => setGuestCount(e.target.value)}
+              <input id="input-el-guest-count" type="number" value={guestCount} onChange={(e) => setGuestCount(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all" />
             </div>
           </div>
@@ -203,7 +205,7 @@ export function EditLeadDrawer() {
               <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Min Budget (₹)</label>
               <div className="relative">
                 <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input type="number" value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)}
+                <input id="input-el-budget-min" type="number" value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)}
                   className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all" />
               </div>
             </div>
@@ -211,7 +213,7 @@ export function EditLeadDrawer() {
               <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Max Budget (₹)</label>
               <div className="relative">
                 <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input type="number" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)}
+                <input id="input-el-budget-max" type="number" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)}
                   className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all" />
               </div>
             </div>
@@ -222,21 +224,21 @@ export function EditLeadDrawer() {
             <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5 text-brand-600" /> Follow-up Date
             </label>
-            <input type="date" value={followUpDate} onChange={(e) => setFollowUpDate(e.target.value)}
+            <input id="input-el-follow-up-date" type="date" value={followUpDate} onChange={(e) => setFollowUpDate(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all" />
           </div>
 
           {/* Notes */}
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Notes</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3}
+            <textarea id="textarea-el-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3}
               className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all resize-none" />
           </div>
         </div>
 
         {/* Footer */}
         <div className="border-t border-gray-100 px-6 py-4 space-y-2.5">
-          <button onClick={handleSave}
+          <button id="btn-el-save" onClick={handleSave}
             disabled={isSaving}
             className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-brand-600 text-white font-semibold text-sm hover:bg-brand-700 active:scale-[0.98] transition-all shadow-sm disabled:opacity-55 disabled:cursor-not-allowed">
             {isSaving ? (
@@ -246,7 +248,7 @@ export function EditLeadDrawer() {
             )}
             {isSaving ? 'Saving Changes...' : 'Save Changes'}
           </button>
-          <button onClick={closeEditLead}
+          <button id="btn-el-cancel" onClick={closeEditLead}
             className="w-full px-4 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-50 transition-colors">
             Cancel
           </button>

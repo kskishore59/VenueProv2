@@ -99,7 +99,7 @@ interface DataState {
   isOnline: boolean;
 
   // ─── Sync Action ─────────────────────────────────────────
-  syncData: () => Promise<void>;
+  syncData: (silent?: boolean) => Promise<void>;
 
   // ─── Booking CRUD ────────────────────────────────────────
   createBooking: (data: {
@@ -289,7 +289,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
   isOnline: false,
 
   // ─── Sync Action ─────────────────────────────────────────
-  syncData: async () => {
+  syncData: async (silent = false) => {
     if (!isSupabaseConfigured()) {
       console.log('Using Local Mock Mode (no credentials provided). Seeding mock collections.');
       set({
@@ -431,7 +431,9 @@ export const useDataStore = create<DataState>()((set, get) => ({
         get().runBackgroundChecks();
       }, 1000);
 
-      toast.success('Connection successful');
+      if (!silent) {
+        toast.success('Connection successful');
+      }
     } catch (err: any) {
       console.error('Sync failed, running in offline fallback mode:', err);
       toast.error('Database offline. Running in local fallback.');

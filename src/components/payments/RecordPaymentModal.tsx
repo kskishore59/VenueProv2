@@ -23,6 +23,7 @@ export function RecordPaymentModal() {
   const [mode, setMode] = useState<PaymentMode>('upi');
   const [reference, setReference] = useState('');
   const [notes, setNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen || !bookingId || !booking) return null;
 
@@ -32,11 +33,13 @@ export function RecordPaymentModal() {
   const balance = booking.total_amount_paise - totalPaid;
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
     if (!amount || Number(amount) <= 0) {
       toast.error('Please enter a valid amount');
       return;
     }
 
+    setIsSubmitting(true);
     try {
       await recordPayment({
         booking_id: bookingId,
@@ -51,8 +54,10 @@ export function RecordPaymentModal() {
       });
       closePaymentModal();
       setAmount(''); setMode('upi'); setReference(''); setNotes('');
+      setIsSubmitting(false);
     } catch (err) {
       toast.error('Failed to record payment');
+      setIsSubmitting(false);
     }
   };
 
@@ -76,7 +81,7 @@ export function RecordPaymentModal() {
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Amount (₹)</label>
               <div className="relative">
                 <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input type="number" placeholder="50,000" value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus
+                <input id="input-rp-amount" type="number" placeholder="50,000" value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus
                   className="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-gray-200 text-xl font-bold text-gray-900 focus:ring-2 focus:ring-brand-200 focus:border-brand-400 outline-none transition-all" />
               </div>
               <div className="flex gap-2 mt-2">
@@ -94,7 +99,7 @@ export function RecordPaymentModal() {
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Mode</label>
               <div className="grid grid-cols-3 gap-2">
                 {paymentModes.map((m) => (
-                  <button key={m} onClick={() => setMode(m)}
+                  <button id={`btn-rp-mode-${m}`} key={m} onClick={() => setMode(m)}
                     className={cn('px-3 py-2.5 rounded-xl text-xs font-semibold transition-all border',
                       mode === m ? 'bg-brand-600 text-white border-brand-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50')}>
                     {paymentModeLabels[m]}
@@ -105,23 +110,27 @@ export function RecordPaymentModal() {
 
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Ref (optional)</label>
-              <input type="text" placeholder="UPI ref / cheque no..." value={reference} onChange={(e) => setReference(e.target.value)}
+              <input id="input-rp-reference" type="text" placeholder="UPI ref / cheque no..." value={reference} onChange={(e) => setReference(e.target.value)}
                 className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all" />
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Notes (optional)</label>
-              <textarea placeholder="Any notes..." value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
+              <textarea id="textarea-rp-notes" placeholder="Any notes..." value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
                 className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all resize-none" />
             </div>
           </div>
 
           <div className="px-6 py-4 border-t border-gray-100 space-y-2.5">
-            <button onClick={handleSubmit}
-              className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-success-500 text-white font-semibold text-sm hover:bg-success-600 active:scale-[0.98] transition-all shadow-sm">
-              <Check className="w-4 h-4" /> Record Payment
+            <button id="btn-rp-submit" onClick={handleSubmit} disabled={isSubmitting}
+              className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-success-500 text-white font-semibold text-sm hover:bg-success-600 active:scale-[0.98] transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+              {isSubmitting ? 'Recording Payment...' : (
+                <>
+                  <Check className="w-4 h-4" /> Record Payment
+                </>
+              )}
             </button>
-            <button onClick={closePaymentModal}
+            <button id="btn-rp-cancel" onClick={closePaymentModal}
               className="w-full px-4 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-50 transition-colors">
               Cancel
             </button>

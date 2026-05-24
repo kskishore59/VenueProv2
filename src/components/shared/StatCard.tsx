@@ -75,7 +75,7 @@ export function StatCard({ icon: Icon, label, value, sublabel, color, delay = 0,
 
         {/* Value */}
         <div className="number-animate">
-          <span className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
+          <span className="text-2xl md:text-3xl font-bold font-display text-gray-900 tracking-tight">
             {displayValue}
           </span>
         </div>

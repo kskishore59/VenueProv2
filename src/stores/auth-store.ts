@@ -55,7 +55,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       });
 
       // Trigger local mock sync
-      await useDataStore.getState().syncData();
+      await useDataStore.getState().syncData(true);
       return;
     }
 
@@ -91,7 +91,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       });
 
       // 4. Trigger workspace data download
-      await useDataStore.getState().syncData();
+      await useDataStore.getState().syncData(true);
     } catch (err: any) {
       console.error('Auth: checkSession failed', err);
       set({
@@ -131,7 +131,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         isLoading: false,
       });
 
-      await useDataStore.getState().syncData();
+      await useDataStore.getState().syncData(true);
       return;
     }
 
@@ -183,7 +183,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       });
 
       // 4. Sync workspace data
-      await useDataStore.getState().syncData();
+      await useDataStore.getState().syncData(true);
     } catch (err: any) {
       set({ isLoading: false, error: err.message || 'Login failed.' });
       throw err;
@@ -219,7 +219,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         isLoading: false,
       });
 
-      await useDataStore.getState().syncData();
+      await useDataStore.getState().syncData(true);
       return { sessionCreated: true };
     }
 
@@ -279,7 +279,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         });
 
         // Trigger workspace sync
-        await useDataStore.getState().syncData();
+        await useDataStore.getState().syncData(true);
         return { sessionCreated: true };
       }
 

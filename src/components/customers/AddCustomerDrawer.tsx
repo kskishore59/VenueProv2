@@ -19,23 +19,28 @@ export function AddCustomerDrawer() {
   const [source, setSource] = useState<CustomerSource>('walk_in');
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
     if (!name.trim()) { toast.error('Name is required'); return; }
     if (!validateIndianPhone(phone)) { toast.error('Enter a valid 10-digit phone number'); return; }
 
+    setIsSubmitting(true);
     try {
       await createCustomer({ name: name.trim(), phone, email: email || undefined, source, address: address || undefined, notes: notes || undefined });
       toast.success('Customer added! 👤', { description: `${name} — ${phone}` });
       handleClose();
     } catch (err) {
       toast.error('Failed to add customer');
+      setIsSubmitting(false);
     }
   };
 
   const handleClose = () => {
     closeAddCustomer();
     setName(''); setPhone(''); setEmail(''); setSource('walk_in'); setAddress(''); setNotes('');
+    setIsSubmitting(false);
   };
 
   if (!isOpen) return null;
@@ -59,7 +64,7 @@ export function AddCustomerDrawer() {
             <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
               Name <span className="text-danger-500">*</span>
             </label>
-            <input type="text" placeholder="Customer name" value={name} onChange={(e) => setName(e.target.value)}
+            <input id="input-ac-name" type="text" placeholder="Customer name" value={name} onChange={(e) => setName(e.target.value)}
               className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all" autoFocus />
           </div>
           <div>
@@ -68,40 +73,44 @@ export function AddCustomerDrawer() {
             </label>
             <div className="relative">
               <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input type="tel" placeholder="98765 43210" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+              <input id="input-ac-phone" type="tel" placeholder="98765 43210" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                 className="w-full pl-10 pr-3 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all" />
             </div>
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Email</label>
-            <input type="email" placeholder="email@example.com" value={email} onChange={(e) => setEmail(e.target.value)}
+            <input id="input-ac-email" type="email" placeholder="email@example.com" value={email} onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all" />
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Source</label>
-            <select value={source} onChange={(e) => setSource(e.target.value as CustomerSource)}
+            <select id="select-ac-source" value={source} onChange={(e) => setSource(e.target.value as CustomerSource)}
               className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all appearance-none bg-white">
               {sources.map((s) => <option key={s} value={s}>{customerSourceLabels[s]}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Address</label>
-            <textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Full address..."
+            <textarea id="textarea-ac-address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Full address..."
               rows={2} className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all resize-none" />
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Notes</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Any notes..."
+            <textarea id="textarea-ac-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Any notes..."
               rows={2} className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all resize-none" />
           </div>
         </div>
 
         <div className="border-t border-gray-100 px-6 py-4 space-y-2.5">
-          <button onClick={handleSubmit}
-            className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-brand-600 text-white font-semibold text-sm hover:bg-brand-700 active:scale-[0.98] transition-all shadow-sm">
-            <Plus className="w-4 h-4" /> Add Customer
+          <button id="btn-ac-submit" onClick={handleSubmit} disabled={isSubmitting}
+            className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-brand-600 text-white font-semibold text-sm hover:bg-brand-700 active:scale-[0.98] transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+            {isSubmitting ? 'Adding Customer...' : (
+              <>
+                <Plus className="w-4 h-4" /> Add Customer
+              </>
+            )}
           </button>
-          <button onClick={handleClose}
+          <button id="btn-ac-cancel" onClick={handleClose}
             className="w-full px-4 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-50 transition-colors">
             Cancel
           </button>

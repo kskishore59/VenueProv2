@@ -41,6 +41,7 @@ export function EditCustomerDrawer() {
   if (!isOpen || !customerId || !customer) return null;
 
   const handleSave = async () => {
+    if (isSaving) return;
     if (!name.trim()) { toast.error('Name is required'); return; }
     if (!validateIndianPhone(phone)) { toast.error('Enter a valid 10-digit phone number'); return; }
 
@@ -101,6 +102,7 @@ export function EditCustomerDrawer() {
           </div>
           <div className="flex items-center gap-1.5">
             <button
+              id="btn-ec-delete"
               onClick={handleDelete}
               className="p-2 rounded-xl hover:bg-rose-50 text-rose-500 transition-colors"
               title="Delete Customer"
@@ -119,7 +121,7 @@ export function EditCustomerDrawer() {
             <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
               Name <span className="text-danger-500">*</span>
             </label>
-            <input type="text" placeholder="Customer name" value={name} onChange={(e) => setName(e.target.value)}
+            <input id="input-ec-name" type="text" placeholder="Customer name" value={name} onChange={(e) => setName(e.target.value)}
               className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all" />
           </div>
           <div>
@@ -128,37 +130,37 @@ export function EditCustomerDrawer() {
             </label>
             <div className="relative">
               <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input type="tel" placeholder="98765 43210" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+              <input id="input-ec-phone" type="tel" placeholder="98765 43210" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                 className="w-full pl-10 pr-3 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all" />
             </div>
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Email</label>
-            <input type="email" placeholder="email@example.com" value={email} onChange={(e) => setEmail(e.target.value)}
+            <input id="input-ec-email" type="email" placeholder="email@example.com" value={email} onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all" />
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Source</label>
-            <select value={source} onChange={(e) => setSource(e.target.value as CustomerSource)}
+            <select id="select-ec-source" value={source} onChange={(e) => setSource(e.target.value as CustomerSource)}
               className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all appearance-none bg-white">
               {sources.map((s) => <option key={s} value={s}>{customerSourceLabels[s]}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Address</label>
-            <textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Full address..."
+            <textarea id="textarea-ec-address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Full address..."
               rows={2} className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all resize-none" />
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Notes</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Any notes..."
+            <textarea id="textarea-ec-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Any notes..."
               rows={2} className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all resize-none" />
           </div>
         </div>
 
         {/* Footer */}
         <div className="border-t border-gray-100 px-6 py-4 space-y-2.5">
-          <button onClick={handleSave}
+          <button id="btn-ec-save" onClick={handleSave}
             disabled={isSaving}
             className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-brand-600 text-white font-semibold text-sm hover:bg-brand-700 active:scale-[0.98] transition-all shadow-sm disabled:opacity-55 disabled:cursor-not-allowed">
             {isSaving ? (
@@ -168,7 +170,7 @@ export function EditCustomerDrawer() {
             )}
             {isSaving ? 'Saving Changes...' : 'Save Changes'}
           </button>
-          <button onClick={closeEditCustomer}
+          <button id="btn-ec-cancel" onClick={closeEditCustomer}
             className="w-full px-4 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-50 transition-colors">
             Cancel
           </button>

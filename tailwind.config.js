@@ -7,40 +7,41 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['var(--font-sans)', 'sans-serif'],
+        display: ['var(--font-display)', 'sans-serif'],
       },
       colors: {
         brand: {
-          50: '#EFF6FF',
-          100: '#DBEAFE',
-          200: '#BFDBFE',
-          300: '#93C5FD',
-          400: '#60A5FA',
-          500: '#3B82F6',
-          600: '#1A56DB',
-          700: '#1D4ED8',
-          800: '#1E40AF',
-          900: '#1E3A8A',
+          50: 'var(--color-brand-50)',
+          100: 'var(--color-brand-100)',
+          200: 'var(--color-brand-200)',
+          300: 'var(--color-brand-300)',
+          400: 'var(--color-brand-400)',
+          500: 'var(--color-brand-500)',
+          600: 'var(--color-brand-600)',
+          700: 'var(--color-brand-700)',
+          800: 'var(--color-brand-800)',
+          900: 'var(--color-brand-900)',
         },
         surface: {
-          DEFAULT: '#FFFFFF',
-          secondary: '#F9FAFB',
-          tertiary: '#F3F4F6',
+          DEFAULT: 'var(--color-bg-surface)',
+          secondary: 'var(--color-bg-base)',
+          tertiary: 'var(--color-border-card)',
         },
         success: {
-          50: '#ECFDF5',
-          500: '#057A55',
-          600: '#046C4E',
+          50: 'var(--color-success-50)',
+          500: 'var(--color-success-500)',
+          600: 'var(--color-success-600)',
         },
         warning: {
-          50: '#FFFBEB',
-          500: '#C27803',
-          600: '#9A6700',
+          50: 'var(--color-warning-50)',
+          500: 'var(--color-warning-500)',
+          600: 'var(--color-warning-600)',
         },
         danger: {
-          50: '#FFF5F5',
-          500: '#C81E1E',
-          600: '#B91C1C',
+          50: 'var(--color-danger-50)',
+          500: 'var(--color-danger-500)',
+          600: 'var(--color-danger-600)',
         },
       },
       borderRadius: {
@@ -49,7 +50,7 @@ export default {
       },
       boxShadow: {
         'xs': '0 1px 2px rgba(0, 0, 0, 0.04)',
-        'glow': '0 0 20px rgba(26, 86, 219, 0.15)',
+        'glow': '0 0 20px rgba(79, 70, 229, 0.15)',
         'card-hover': '0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -5px rgba(0, 0, 0, 0.04)',
       },
       animation: {
