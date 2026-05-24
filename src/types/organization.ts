@@ -9,6 +9,7 @@ export interface Organization {
   phone: string | null;
   email: string | null;
   logo_url: string | null;
+  terms_and_conditions: string | null;
   settings: OrgSettings;
   plan: 'free' | 'starter' | 'pro' | 'enterprise';
   created_at: string;
@@ -23,6 +24,7 @@ export interface OrgSettings {
   whatsapp_enabled: boolean;
   sms_enabled: boolean;
   email_notifications: boolean;
+  permissions?: Record<string, Record<string, Record<string, boolean>>>;
 }
 
 export const defaultOrgSettings: OrgSettings = {

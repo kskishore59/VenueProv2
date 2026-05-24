@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth-store';
 import { Mail, Lock, Eye, EyeOff, Loader2, User, Building2, ShieldCheck, AlertTriangle, Inbox } from 'lucide-react';
 import { toast } from 'sonner';
@@ -13,9 +13,12 @@ export default function Signup() {
   const user = useAuthStore((s) => s.user);
   const sessionChecked = useAuthStore((s) => s.sessionChecked);
 
+  const [searchParams] = useSearchParams();
+  const emailParam = searchParams.get('email') || '';
+
   const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [orgName, setOrgName] = useState('');
+  const [email, setEmail] = useState(emailParam);
+  const [orgName, setOrgName] = useState(emailParam ? 'Accepting Invite' : '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -181,7 +184,7 @@ export default function Signup() {
                   type="email"
                   placeholder="rahul@myvenue.com"
                   value={email}
-                  disabled={isLoading}
+                  disabled={isLoading || !!emailParam}
                   onChange={(e) => {
                     setEmail(e.target.value);
                     if (localError) setLocalError(null);
@@ -199,7 +202,7 @@ export default function Signup() {
                   type="text"
                   placeholder="Royal Heritage Banquet"
                   value={orgName}
-                  disabled={isLoading}
+                  disabled={isLoading || !!emailParam}
                   onChange={(e) => {
                     setOrgName(e.target.value);
                     if (localError) setLocalError(null);
@@ -207,6 +210,11 @@ export default function Signup() {
                   className="w-full bg-slate-900/50 border border-white/[0.08] text-white pl-11 pr-4 py-2.5 rounded-xl text-sm placeholder-slate-600 focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none transition-all disabled:opacity-50"
                 />
               </div>
+              {emailParam && (
+                <p className="text-[10px] text-brand-400 mt-1 font-medium">
+                  Joining existing team organization automatically.
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

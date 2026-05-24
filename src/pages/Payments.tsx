@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { IndianRupee, TrendingUp, AlertCircle } from 'lucide-react';
+import { IndianRupee, TrendingUp, AlertCircle, Edit, FileText } from 'lucide-react';
 import { cn, formatCurrency, formatDateReadable } from '@/lib/utils';
 import { useDataStore } from '@/stores/data-store';
+import { useUIStore } from '@/stores/ui-store';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { paymentModeLabels } from '@/types/payment';
 import { startOfMonth } from 'date-fns';
 
 export default function Payments() {
   const [filter, setFilter] = useState<'all' | 'received' | 'pending'>('all');
+  const openEditPayment = useUIStore((s) => s.openEditPayment);
+  const openReceiptModal = useUIStore((s) => s.openReceiptModal);
 
   const payments = useDataStore((s) => s.payments);
   const bookings = useDataStore((s) => s.bookings);
@@ -84,8 +87,22 @@ export default function Payments() {
                     {payment.transaction_ref && <><span>•</span><span className="font-mono text-gray-500">{payment.transaction_ref}</span></>}
                   </div>
                 </div>
-                <div className="hidden sm:block text-right">
-                  <p className="text-xs text-gray-500">{payment.paid_at ? formatDateReadable(payment.paid_at) : '—'}</p>
+                <div className="flex items-center gap-2">
+                  <div className="hidden sm:block text-right mr-1">
+                    <p className="text-xs text-gray-500">{payment.paid_at ? formatDateReadable(payment.paid_at) : '—'}</p>
+                  </div>
+                  {payment.status === 'received' && (
+                    <button 
+                      onClick={() => openReceiptModal('receipt', payment.id)} 
+                      className="p-2 rounded-xl border border-gray-100 hover:bg-gray-50 text-brand-600 hover:text-brand-700 transition-all" 
+                      title="Generate Receipt"
+                    >
+                      <FileText className="w-4 h-4" />
+                    </button>
+                  )}
+                  <button onClick={() => openEditPayment(payment.id)} className="p-2 rounded-xl border border-gray-100 hover:bg-gray-50 text-gray-400 hover:text-gray-600 transition-all" title="Edit Payment">
+                    <Edit className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             );

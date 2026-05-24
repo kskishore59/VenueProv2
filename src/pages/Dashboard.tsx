@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { CalendarCheck, IndianRupee, AlertCircle, Clock, ArrowRight, PhoneIncoming } from 'lucide-react';
+import { CalendarCheck, IndianRupee, AlertCircle, Clock, ArrowRight, PhoneIncoming, Building2 } from 'lucide-react';
 import { StatCard } from '@/components/shared/StatCard';
 import { BookingCalendar } from '@/components/booking/BookingCalendar';
 import { StatusBadge } from '@/components/shared/StatusBadge';
@@ -7,6 +7,7 @@ import { WhatsAppButton } from '@/components/shared/WhatsAppButton';
 import { cn, formatCurrency, formatDateReadable, formatTime, getRelativeTime } from '@/lib/utils';
 import { useDataStore } from '@/stores/data-store';
 import { useUIStore } from '@/stores/ui-store';
+import { useAuthStore } from '@/stores/auth-store';
 import { eventTypeLabels, type EventType } from '@/types/booking';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { ErrorFallback } from '@/components/shared/ErrorFallback';
@@ -25,12 +26,66 @@ export default function Dashboard() {
   const openBookingDrawer = useUIStore((s) => s.openBookingDrawer);
   const openLeadDrawer = useUIStore((s) => s.openLeadDrawer);
 
+  const profile = useAuthStore((s) => s.profile);
+  const organization = useDataStore((s) => s.organization);
+
   const stats = useMemo(() => getDashboardStats(), [getDashboardStats, bookings, payments]);
   const upcoming = useMemo(() => getUpcomingBookings(7), [getUpcomingBookings, bookings]);
   const followUps = useMemo(() => getFollowUpsDue(), [getFollowUpsDue, leads]);
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Welcome Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-brand-700 via-brand-600 to-brand-500 rounded-3xl p-6 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6">
+        {/* Decorative background circles */}
+        <div className="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+        <div className="absolute left-1/3 bottom-0 w-36 h-36 bg-brand-400/20 rounded-full blur-2xl -ml-10 -mb-10 pointer-events-none" />
+
+        <div className="flex items-center gap-4 relative z-10">
+          {/* Logo Overlap */}
+          <div className="flex items-center">
+            {/* VenuePro logo */}
+            <div className="w-12 h-12 rounded-2xl bg-white text-brand-600 flex items-center justify-center shadow-md relative z-20">
+              <Building2 className="w-6.5 h-6.5" />
+            </div>
+            
+            {/* Custom org logo overlapping */}
+            {organization?.logo_url && (
+              <div className="w-12 h-12 rounded-2xl bg-white border-2 border-brand-600 overflow-hidden shadow-md -ml-4 relative z-10 transition-transform hover:translate-x-1 duration-300">
+                <img 
+                  src={organization.logo_url} 
+                  alt={organization.name} 
+                  className="w-full h-full object-contain p-1" 
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-0.5">
+            <h2 className="text-lg font-bold">
+              Welcome back, {profile?.full_name || 'User'}!
+            </h2>
+            <p className="text-xs text-brand-100 font-medium flex items-center gap-1.5">
+              <span>Managing</span>
+              <span className="font-bold text-white">{organization?.name || 'Workspace'}</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" title="Connected to database" />
+              <span className="text-[10px] text-brand-200">Active</span>
+            </p>
+          </div>
+        </div>
+
+        {/* Quick info or action */}
+        <div className="flex items-center gap-3 relative z-10 self-start md:self-auto">
+          <div className="bg-white/10 backdrop-blur-xs px-3.5 py-1.5 rounded-xl border border-white/10 text-xs font-semibold text-white/90">
+            Role: <span className="capitalize text-white font-bold">{profile?.role || 'staff'}</span>
+          </div>
+          <div className="bg-emerald-500/20 backdrop-blur-xs px-3.5 py-1.5 rounded-xl border border-emerald-500/30 text-xs font-semibold text-emerald-300 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span>Connection Successful</span>
+          </div>
+        </div>
+      </div>
+
       {/* Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
         <StatCard
@@ -59,19 +114,7 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Calendar */}
-      <ErrorBoundary
-        fallback={(error, reset) => (
-          <ErrorFallback
-            error={error}
-            reset={reset}
-            variant="widget"
-            title="Failed to Load Booking Calendar"
-          />
-        )}
-      >
-        <BookingCalendar />
-      </ErrorBoundary>
+
 
 
       {/* Bottom Row */}
@@ -163,13 +206,26 @@ export default function Dashboard() {
                       )}
                     </div>
                   </div>
-                  <WhatsAppButton phone={lead.phone} size="sm" />
+                  <WhatsAppButton phone={lead.phone} size="sm" leadId={lead.id} />
                 </div>
               ))
             )}
           </div>
         </div>
       </div>
+      {/* Calendar */}
+      <ErrorBoundary
+        fallback={(error, reset) => (
+          <ErrorFallback
+            error={error}
+            reset={reset}
+            variant="widget"
+            title="Failed to Load Booking Calendar"
+          />
+        )}
+      >
+        <BookingCalendar />
+      </ErrorBoundary>
     </div>
   );
 }

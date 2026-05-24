@@ -5,7 +5,12 @@ import type { Payment, PaymentMode, PaymentType } from '@/types/payment';
 import type { Lead, LeadStatus, LeadSource } from '@/types/lead';
 import type { Hall } from '@/types/venue';
 import type { Organization } from '@/types/organization';
+import type { Expense, ExpenseCategory, ExpensePaymentMode } from '@/types/expense';
+import type { StaffInvite, StaffRole } from '@/types/staff';
+import type { Profile } from '@/types/auth';
+import type { Notification, NotificationType, Feedback } from '@/types';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { formatDateReadable, formatCurrency, parseDatabaseError } from '@/lib/utils';
 import {
   mockBookings as initialBookings,
   mockCustomers as initialCustomers,
@@ -14,7 +19,7 @@ import {
   mockHalls as initialHalls,
   mockOrganization as initialOrg,
 } from '@/lib/mock-data';
-import { format, addDays, startOfMonth, addMonths } from 'date-fns';
+import { format, addDays, startOfMonth, addMonths, subDays } from 'date-fns';
 import { toast } from 'sonner';
 
 function uuid() {
@@ -30,6 +35,55 @@ function generateBookingNumber(): string {
   return `VP-${year}-${String(num).padStart(5, '0')}`;
 }
 
+const mockExpenses: Expense[] = [
+  { id: 'exp-001', org_id: 'org-demo-001', title: 'Catering for Sharma Wedding', category: 'catering', amount_paise: 12000000, expense_date: format(new Date(), 'yyyy-MM-dd'), payment_mode: 'bank_transfer', reference_number: 'TXN-98213', notes: 'Paid to vendor directly', receipt_url: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  { id: 'exp-002', org_id: 'org-demo-001', title: 'Electrical repair work', category: 'maintenance', amount_paise: 850000, expense_date: format(subDays(new Date(), 2), 'yyyy-MM-dd'), payment_mode: 'cash', reference_number: null, notes: 'AC compressor gas top-up', receipt_url: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  { id: 'exp-003', org_id: 'org-demo-001', title: 'Electricity Bill April', category: 'utilities', amount_paise: 4500000, expense_date: format(subDays(new Date(), 10), 'yyyy-MM-dd'), payment_mode: 'online', reference_number: 'MTR-9831', notes: 'Paid online via portal', receipt_url: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+];
+
+const mockStaffProfiles: Profile[] = [
+  { id: 'user-001', org_id: 'org-demo-001', email: 'admin@shreemangalam.com', full_name: 'Rajesh Agarwal', role: 'owner', avatar_url: null, phone: '9876543210', is_active: true, created_at: new Date().toISOString() },
+  { id: 'user-002', org_id: 'org-demo-001', email: 'manager@shreemangalam.com', full_name: 'Amit Patel', role: 'manager', avatar_url: null, phone: '9876543222', is_active: true, created_at: new Date().toISOString() },
+  { id: 'user-003', org_id: 'org-demo-001', email: 'finance@shreemangalam.com', full_name: 'Nikhil Shah', role: 'finance', avatar_url: null, phone: '9876543233', is_active: true, created_at: new Date().toISOString() }
+];
+
+const mockStaffInvites: StaffInvite[] = [
+  { id: 'inv-001', org_id: 'org-demo-001', email: 'staff1@shreemangalam.com', role: 'staff', invited_by: 'user-001', status: 'pending', created_at: new Date().toISOString() },
+];
+
+const mockNotifications: Notification[] = [
+  {
+    id: 'notif-001',
+    org_id: 'org-demo-001',
+    title: 'Follow-up Due Today 🎯',
+    message: 'Inquiry from Priya Sharma requires follow-up today.',
+    type: 'lead_followup',
+    is_read: false,
+    link_to: '/leads',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'notif-002',
+    org_id: 'org-demo-001',
+    title: 'Payment Received 💰',
+    message: 'Advance payment of ₹50,000 recorded for booking VP-2026-0248.',
+    type: 'payment_received',
+    is_read: true,
+    link_to: '/payments',
+    created_at: subDays(new Date(), 1).toISOString(),
+  },
+  {
+    id: 'notif-003',
+    org_id: 'org-demo-001',
+    title: 'Welcome to VenuePro! ⚙️',
+    message: 'Start by configuring your halls and base pricing in Settings.',
+    type: 'system',
+    is_read: false,
+    link_to: '/settings',
+    created_at: subDays(new Date(), 3).toISOString(),
+  }
+];
+
 interface DataState {
   // ─── Collections ─────────────────────────────────────────
   bookings: Booking[];
@@ -38,6 +92,9 @@ interface DataState {
   leads: Lead[];
   halls: Hall[];
   organization: Organization;
+  expenses: Expense[];
+  staffProfiles: Profile[];
+  pendingInvites: StaffInvite[];
   isLoading: boolean;
   isOnline: boolean;
 
@@ -61,6 +118,7 @@ interface DataState {
 
   updateBooking: (id: string, data: Partial<Booking>) => Promise<void>;
   cancelBooking: (id: string) => Promise<void>;
+  deleteBooking: (id: string) => Promise<void>;
 
   // ─── Customer CRUD ───────────────────────────────────────
   createCustomer: (data: {
@@ -69,9 +127,11 @@ interface DataState {
     email?: string;
     source?: CustomerSource;
     address?: string;
+    gstin?: string;
     notes?: string;
   }) => Promise<Customer>;
   updateCustomer: (id: string, data: Partial<Customer>) => Promise<void>;
+  deleteCustomer: (id: string) => Promise<void>;
 
   // ─── Payment CRUD ────────────────────────────────────────
   recordPayment: (data: {
@@ -82,6 +142,8 @@ interface DataState {
     transaction_ref?: string;
     notes?: string;
   }) => Promise<Payment>;
+  updatePayment: (id: string, data: Partial<Payment>) => Promise<void>;
+  deletePayment: (id: string) => Promise<void>;
 
   // ─── Lead CRUD ───────────────────────────────────────────
   createLead: (data: {
@@ -100,6 +162,7 @@ interface DataState {
   }) => Promise<Lead>;
   updateLead: (id: string, data: Partial<Lead>) => Promise<void>;
   updateLeadStatus: (id: string, status: LeadStatus) => Promise<void>;
+  deleteLead: (id: string) => Promise<void>;
   convertLeadToBooking: (leadId: string, bookingData: {
     hall_id: string;
     event_date: string;
@@ -117,8 +180,47 @@ interface DataState {
     capacity_max: number;
     area_sqft?: number;
     base_price_paise?: number;
+    floor_number?: number;
+    description?: string;
+    capacity_comfortable?: number;
+    hall_length?: number;
+    hall_width?: number;
+    hall_height?: number;
+    ceiling_height?: number;
+    floors_within_hall?: number;
+    amenities_config?: any;
+    facilities_config?: any;
+    pricing_config?: any;
+    media_config?: any;
+    images?: string[];
+    is_active?: boolean;
   }) => Promise<Hall>;
   updateHall: (id: string, data: Partial<Hall>) => Promise<void>;
+
+  // ─── Expense CRUD ────────────────────────────────────────
+  fetchExpenses: () => Promise<void>;
+  createExpense: (data: {
+    title: string;
+    category: ExpenseCategory;
+    amount_paise: number;
+    expense_date: string;
+    payment_mode: ExpensePaymentMode;
+    reference_number?: string | null;
+    notes?: string | null;
+    receipt_url?: string | null;
+  }) => Promise<Expense>;
+  updateExpense: (id: string, data: Partial<Expense>) => Promise<void>;
+  deleteExpense: (id: string) => Promise<void>;
+
+  // ─── Staff CRUD ──────────────────────────────────────────
+  fetchStaff: () => Promise<void>;
+  inviteStaff: (email: string, role: 'manager' | 'finance' | 'staff') => Promise<StaffInvite>;
+  updateStaffRole: (id: string, role: StaffRole) => Promise<void>;
+  deleteStaff: (id: string) => Promise<void>;
+  cancelInvite: (id: string) => Promise<void>;
+
+  // ─── Upload Media ────────────────────────────────────────
+  uploadMedia: (file: File, bucket: string) => Promise<string>;
 
   // ─── Organization ────────────────────────────────────────
   updateOrganization: (data: Partial<Organization>) => Promise<void>;
@@ -147,6 +249,29 @@ interface DataState {
 
   // ─── Data Purging ────────────────────────────────────────
   clearData: () => void;
+
+  // ─── Notifications State ─────────────────────────────────
+  notifications: Notification[];
+  fetchNotifications: () => Promise<void>;
+  createNotification: (data: {
+    title: string;
+    message: string;
+    type: NotificationType;
+    link_to?: string | null;
+  }) => Promise<Notification>;
+  markNotificationRead: (id: string) => Promise<void>;
+  markAllNotificationsRead: () => Promise<void>;
+  deleteNotification: (id: string) => Promise<void>;
+
+  // ─── Feedback State ──────────────────────────────────────
+  submitFeedback: (data: {
+    rating: number;
+    category: 'bug' | 'feature_request' | 'design' | 'other';
+    message: string;
+  }) => Promise<void>;
+
+  // ─── Background Checks ───────────────────────────────────
+  runBackgroundChecks: () => void;
 }
 
 export const useDataStore = create<DataState>()((set, get) => ({
@@ -156,6 +281,10 @@ export const useDataStore = create<DataState>()((set, get) => ({
   leads: [...initialLeads],
   halls: [...initialHalls],
   organization: { ...initialOrg },
+  expenses: [...mockExpenses],
+  staffProfiles: [...mockStaffProfiles],
+  pendingInvites: [...mockStaffInvites],
+  notifications: [],
   isLoading: false,
   isOnline: false,
 
@@ -170,8 +299,16 @@ export const useDataStore = create<DataState>()((set, get) => ({
         leads: [...initialLeads],
         halls: [...initialHalls],
         organization: { ...initialOrg },
+        expenses: [...mockExpenses],
+        staffProfiles: [...mockStaffProfiles],
+        pendingInvites: [...mockStaffInvites],
+        notifications: [...mockNotifications],
         isOnline: false,
       });
+      // Run background checks for followups/payment alerts
+      setTimeout(() => {
+        get().runBackgroundChecks();
+      }, 1000);
       return;
     }
 
@@ -218,13 +355,17 @@ export const useDataStore = create<DataState>()((set, get) => ({
       console.log(`Connected to Supabase. Org ID: ${orgId}`);
 
       // 3. Fetch all organization-scoped collections
-      const [orgRes, hallsRes, customersRes, bookingsRes, paymentsRes, leadsRes] = await Promise.all([
+      const [orgRes, hallsRes, customersRes, bookingsRes, paymentsRes, leadsRes, expensesRes, staffRes, invitesRes, notificationsRes] = await Promise.all([
         supabase.from('organizations').select('*').eq('id', orgId).single(),
         supabase.from('halls').select('*').eq('org_id', orgId).order('display_order'),
         supabase.from('customers').select('*').eq('org_id', orgId),
         supabase.from('bookings').select('*').eq('org_id', orgId),
         supabase.from('payments').select('*').eq('org_id', orgId),
         supabase.from('leads').select('*').eq('org_id', orgId),
+        supabase.from('expenses').select('*').eq('org_id', orgId).order('expense_date', { ascending: false }),
+        supabase.from('profiles').select('*').eq('org_id', orgId).order('created_at'),
+        supabase.from('staff_invites').select('*').eq('org_id', orgId).order('created_at', { ascending: false }),
+        supabase.from('notifications').select('*').eq('org_id', orgId).order('created_at', { ascending: false }),
       ]);
 
       if (orgRes.error) throw orgRes.error;
@@ -278,14 +419,29 @@ export const useDataStore = create<DataState>()((set, get) => ({
         bookings: formattedBookings,
         payments: paymentsRes.data || [],
         leads: leadsRes.data || [],
+        expenses: expensesRes.data || [],
+        staffProfiles: staffRes.data || [],
+        pendingInvites: invitesRes.data || [],
+        notifications: notificationsRes.data || [],
         isOnline: true,
       });
 
-      toast.success('Successfully synchronized with Supabase backend! ⚡');
+      // Run background checks for followups/payment alerts
+      setTimeout(() => {
+        get().runBackgroundChecks();
+      }, 1000);
+
+      toast.success('Connection successful');
     } catch (err: any) {
       console.error('Sync failed, running in offline fallback mode:', err);
-      toast.error(`Database connection failed: ${err.message || err}. Running in offline fallback.`);
-      set({ isOnline: false });
+      toast.error('Database offline. Running in local fallback.');
+      set({
+        notifications: [...mockNotifications],
+        isOnline: false
+      });
+      setTimeout(() => {
+        get().runBackgroundChecks();
+      }, 1000);
     } finally {
       set({ isLoading: false });
     }
@@ -299,6 +455,10 @@ export const useDataStore = create<DataState>()((set, get) => ({
       payments: [],
       leads: [],
       halls: [],
+      expenses: [],
+      staffProfiles: [],
+      pendingInvites: [],
+      notifications: [],
       organization: {
         id: '',
         name: '',
@@ -310,6 +470,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
         phone: null,
         email: null,
         logo_url: null,
+        terms_and_conditions: null,
         settings: {
           currency: 'INR',
           timezone: 'Asia/Kolkata',
@@ -392,10 +553,20 @@ export const useDataStore = create<DataState>()((set, get) => ({
           payments: newPayments,
         }));
 
+        // Trigger notification
+        const cust = state.getCustomerById(newBooking.customer_id);
+        const hall = state.getHallById(newBooking.hall_id);
+        await state.createNotification({
+          title: 'Booking Confirmed 📅',
+          message: `Booking ${newBooking.booking_number} for ${cust?.name || 'customer'} in ${hall?.name || 'hall'} on ${formatDateReadable(newBooking.event_date)} is confirmed.`,
+          type: 'booking_created',
+          link_to: '/bookings'
+        });
+
         return { success: true, booking: newBooking };
       } catch (err: any) {
         console.error('Supabase createBooking failed:', err);
-        return { success: false, error: `Database save failed: ${err.message || err}` };
+        return { success: false, error: parseDatabaseError(err) };
       }
     }
 
@@ -420,6 +591,16 @@ export const useDataStore = create<DataState>()((set, get) => ({
     };
 
     set((s) => ({ bookings: [newBooking, ...s.bookings] }));
+
+    // Trigger notification
+    const cust = state.getCustomerById(newBooking.customer_id);
+    const hall = state.getHallById(newBooking.hall_id);
+    state.createNotification({
+      title: 'Booking Confirmed 📅',
+      message: `Booking ${newBooking.booking_number} for ${cust?.name || 'customer'} in ${hall?.name || 'hall'} on ${formatDateReadable(newBooking.event_date)} is confirmed.`,
+      type: 'booking_created',
+      link_to: '/bookings'
+    });
 
     if (data.advance_amount_paise && data.advance_amount_paise > 0) {
       const advancePayment: Payment = {
@@ -454,7 +635,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
         if (error) throw error;
       } catch (err) {
         console.error('Database updateBooking failed:', err);
-        toast.error('Failed to save booking to backend database.');
+        toast.error(parseDatabaseError(err));
         return;
       }
     }
@@ -468,6 +649,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
 
   cancelBooking: async (id) => {
     const state = get();
+    const booking = state.bookings.find((b) => b.id === id);
     if (state.isOnline) {
       try {
         const { error } = await supabase
@@ -478,7 +660,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
         if (error) throw error;
       } catch (err) {
         console.error('Database cancelBooking failed:', err);
-        toast.error('Failed to cancel booking in backend.');
+        toast.error(parseDatabaseError(err));
         return;
       }
     }
@@ -488,6 +670,15 @@ export const useDataStore = create<DataState>()((set, get) => ({
         b.id === id ? { ...b, status: 'cancelled' as BookingStatus, updated_at: new Date().toISOString() } : b
       ),
     }));
+
+    if (booking) {
+      await state.createNotification({
+        title: 'Booking Cancelled 🚫',
+        message: `Booking ${booking.booking_number} for ${state.getCustomerById(booking.customer_id)?.name || 'customer'} has been cancelled.`,
+        type: 'booking_cancelled',
+        link_to: '/bookings'
+      });
+    }
   },
 
   // ─── Customer CRUD ───────────────────────────────────────
@@ -502,6 +693,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
           phone: data.phone,
           email: data.email || null,
           whatsapp: data.phone,
+          gstin: data.gstin || null,
           address: data.address || null,
           notes: data.notes || null,
           source: data.source || 'walk_in',
@@ -521,7 +713,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
         return dbCustomer;
       } catch (err: any) {
         console.error('Database createCustomer failed:', err);
-        toast.error('Failed to save customer to database.');
+        toast.error(parseDatabaseError(err));
       }
     }
 
@@ -533,7 +725,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
       phone: data.phone,
       email: data.email || null,
       whatsapp: data.phone,
-      gstin: null,
+      gstin: data.gstin || null,
       address: data.address || null,
       notes: data.notes || null,
       source: data.source || 'walk_in',
@@ -558,7 +750,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
         if (error) throw error;
       } catch (err) {
         console.error('Database updateCustomer failed:', err);
-        toast.error('Failed to update customer details.');
+        toast.error(parseDatabaseError(err));
         return;
       }
     }
@@ -595,10 +787,21 @@ export const useDataStore = create<DataState>()((set, get) => ({
         if (!dbPayment) throw new Error('No payment object returned');
 
         set((s) => ({ payments: [dbPayment, ...s.payments] }));
+
+        // Trigger notification
+        const booking = state.bookings.find((b) => b.id === dbPayment.booking_id);
+        const custName = booking ? state.getCustomerById(booking.customer_id)?.name : 'Customer';
+        await state.createNotification({
+          title: 'Payment Received 💰',
+          message: `Collected ${formatCurrency(dbPayment.amount_paise)} for ${custName}'s booking ${booking?.booking_number || ''}.`,
+          type: 'payment_received',
+          link_to: '/payments'
+        });
+
         return dbPayment;
       } catch (err) {
         console.error('Database recordPayment failed:', err);
-        toast.error('Failed to save payment record.');
+        toast.error(parseDatabaseError(err));
       }
     }
 
@@ -618,6 +821,17 @@ export const useDataStore = create<DataState>()((set, get) => ({
       created_at: new Date().toISOString(),
     };
     set((s) => ({ payments: [newPayment, ...s.payments] }));
+
+    // Trigger notification
+    const booking = state.bookings.find((b) => b.id === newPayment.booking_id);
+    const custName = booking ? state.getCustomerById(booking.customer_id)?.name : 'Customer';
+    state.createNotification({
+      title: 'Payment Received 💰',
+      message: `Collected ${formatCurrency(newPayment.amount_paise)} for ${custName}'s booking ${booking?.booking_number || ''}.`,
+      type: 'payment_received',
+      link_to: '/payments'
+    });
+
     return newPayment;
   },
 
@@ -654,10 +868,19 @@ export const useDataStore = create<DataState>()((set, get) => ({
         if (!dbLead) throw new Error('No lead object returned');
 
         set((s) => ({ leads: [dbLead, ...s.leads] }));
+
+        // Trigger notification
+        await state.createNotification({
+          title: 'New Inquiry Captured 🎯',
+          message: `Lead from ${dbLead.name} (${dbLead.phone}) registered via ${dbLead.source}.`,
+          type: 'lead_followup',
+          link_to: '/leads'
+        });
+
         return dbLead;
       } catch (err) {
         console.error('Database createLead failed:', err);
-        toast.error('Failed to record new lead.');
+        toast.error(parseDatabaseError(err));
       }
     }
 
@@ -683,6 +906,15 @@ export const useDataStore = create<DataState>()((set, get) => ({
       updated_at: new Date().toISOString(),
     };
     set((s) => ({ leads: [newLead, ...s.leads] }));
+
+    // Trigger notification
+    state.createNotification({
+      title: 'New Inquiry Captured 🎯',
+      message: `Lead from ${newLead.name} (${newLead.phone}) registered via ${newLead.source}.`,
+      type: 'lead_followup',
+      link_to: '/leads'
+    });
+
     return newLead;
   },
 
@@ -698,7 +930,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
         if (error) throw error;
       } catch (err) {
         console.error('Database updateLead failed:', err);
-        toast.error('Failed to update lead settings.');
+        toast.error(parseDatabaseError(err));
         return;
       }
     }
@@ -722,7 +954,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
         if (error) throw error;
       } catch (err) {
         console.error('Database updateLeadStatus failed:', err);
-        toast.error('Failed to update lead status in database.');
+        toast.error(parseDatabaseError(err));
         return;
       }
     }
@@ -779,10 +1011,10 @@ export const useDataStore = create<DataState>()((set, get) => ({
       try {
         const pricing = {
           base_price_paise: data.base_price_paise || 0,
-          per_plate_veg_paise: null,
-          per_plate_nonveg_paise: null,
+          per_plate_veg_paise: data.pricing_config?.catering_veg ? data.pricing_config.catering_veg * 100 : null,
+          per_plate_nonveg_paise: data.pricing_config?.catering_nonveg ? data.pricing_config.catering_nonveg * 100 : null,
           decoration_paise: null,
-          overtime_per_hour_paise: null,
+          overtime_per_hour_paise: data.pricing_config?.overtime_rate ? data.pricing_config.overtime_rate * 100 : null,
         };
 
         const hallData = {
@@ -794,8 +1026,21 @@ export const useDataStore = create<DataState>()((set, get) => ({
           area_sqft: data.area_sqft || null,
           pricing,
           amenities: [],
-          is_active: true,
+          is_active: data.is_active !== false,
           display_order: state.halls.length + 1,
+          floor_number: data.floor_number || 0,
+          description: data.description || null,
+          capacity_comfortable: data.capacity_comfortable || 0,
+          hall_length: data.hall_length || null,
+          hall_width: data.hall_width || null,
+          hall_height: data.hall_height || null,
+          ceiling_height: data.ceiling_height || null,
+          floors_within_hall: data.floors_within_hall || 1,
+          amenities_config: data.amenities_config || {},
+          facilities_config: data.facilities_config || {},
+          pricing_config: data.pricing_config || {},
+          media_config: data.media_config || {},
+          images: data.images || [],
         };
 
         const { data: dbHall, error } = await supabase
@@ -809,9 +1054,9 @@ export const useDataStore = create<DataState>()((set, get) => ({
 
         set((s) => ({ halls: [...s.halls, dbHall] }));
         return dbHall;
-      } catch (err) {
+      } catch (err: any) {
         console.error('Database createHall failed:', err);
-        toast.error('Failed to register hall details.');
+        toast.error(parseDatabaseError(err));
       }
     }
 
@@ -826,15 +1071,28 @@ export const useDataStore = create<DataState>()((set, get) => ({
       area_sqft: data.area_sqft || null,
       pricing: {
         base_price_paise: data.base_price_paise || 0,
-        per_plate_veg_paise: null,
-        per_plate_nonveg_paise: null,
+        per_plate_veg_paise: data.pricing_config?.catering_veg ? data.pricing_config.catering_veg * 100 : null,
+        per_plate_nonveg_paise: data.pricing_config?.catering_nonveg ? data.pricing_config.catering_nonveg * 100 : null,
         decoration_paise: null,
-        overtime_per_hour_paise: null,
+        overtime_per_hour_paise: data.pricing_config?.overtime_rate ? data.pricing_config.overtime_rate * 100 : null,
       },
       amenities: [],
-      is_active: true,
+      is_active: data.is_active !== false,
       display_order: state.halls.length + 1,
       created_at: new Date().toISOString(),
+      floor_number: data.floor_number || 0,
+      description: data.description || null,
+      capacity_comfortable: data.capacity_comfortable || 0,
+      hall_length: data.hall_length || null,
+      hall_width: data.hall_width || null,
+      hall_height: data.hall_height || null,
+      ceiling_height: data.ceiling_height || null,
+      floors_within_hall: data.floors_within_hall || 1,
+      amenities_config: data.amenities_config || {},
+      facilities_config: data.facilities_config || {},
+      pricing_config: data.pricing_config || {},
+      media_config: data.media_config || {},
+      images: data.images || [],
     };
     set((s) => ({ halls: [...s.halls, newHall] }));
     return newHall;
@@ -850,9 +1108,9 @@ export const useDataStore = create<DataState>()((set, get) => ({
           .eq('id', id);
         
         if (error) throw error;
-      } catch (err) {
+      } catch (err: any) {
         console.error('Database updateHall failed:', err);
-        toast.error('Failed to update hall configuration.');
+        toast.error(parseDatabaseError(err));
         return;
       }
     }
@@ -873,9 +1131,9 @@ export const useDataStore = create<DataState>()((set, get) => ({
           .eq('id', state.organization.id);
         
         if (error) throw error;
-      } catch (err) {
+      } catch (err: any) {
         console.error('Database updateOrganization failed:', err);
-        toast.error('Failed to update organization details in DB.');
+        toast.error(parseDatabaseError(err));
         return;
       }
     }
@@ -991,4 +1249,560 @@ export const useDataStore = create<DataState>()((set, get) => ({
     );
     return conflicts.length === 0;
   },
+
+  // ─── Booking delete ──────────────────────────────────────
+  deleteBooking: async (id) => {
+    const state = get();
+    if (state.isOnline) {
+      try {
+        await supabase.from('payments').delete().eq('booking_id', id);
+        const { error } = await supabase.from('bookings').delete().eq('id', id);
+        if (error) throw error;
+      } catch (err) {
+        console.error('Database deleteBooking failed:', err);
+        toast.error(parseDatabaseError(err));
+        return;
+      }
+    }
+    set((s) => ({
+      bookings: s.bookings.filter((b) => b.id !== id),
+      payments: s.payments.filter((p) => p.booking_id !== id),
+    }));
+    toast.success('Booking deleted.');
+  },
+
+  // ─── Customer delete ─────────────────────────────────────
+  deleteCustomer: async (id) => {
+    const state = get();
+    const hasBookings = state.bookings.some((b) => b.customer_id === id && b.status !== 'cancelled');
+    if (hasBookings) {
+      toast.error('Cannot delete customer with active bookings.');
+      return;
+    }
+    if (state.isOnline) {
+      try {
+        const { error } = await supabase.from('customers').delete().eq('id', id);
+        if (error) throw error;
+      } catch (err) {
+        console.error('Database deleteCustomer failed:', err);
+        toast.error(parseDatabaseError(err));
+        return;
+      }
+    }
+    set((s) => ({
+      customers: s.customers.filter((c) => c.id !== id),
+    }));
+    toast.success('Customer deleted.');
+  },
+
+  // ─── Payment delete & update ─────────────────────────────
+  deletePayment: async (id) => {
+    const state = get();
+    if (state.isOnline) {
+      try {
+        const { error } = await supabase.from('payments').delete().eq('id', id);
+        if (error) throw error;
+      } catch (err) {
+        console.error('Database deletePayment failed:', err);
+        toast.error(parseDatabaseError(err));
+        return;
+      }
+    }
+    set((s) => ({
+      payments: s.payments.filter((p) => p.id !== id),
+    }));
+    toast.success('Payment deleted.');
+  },
+
+  updatePayment: async (id, data) => {
+    const state = get();
+    if (state.isOnline) {
+      try {
+        const { error } = await supabase.from('payments').update(data).eq('id', id);
+        if (error) throw error;
+      } catch (err) {
+        console.error('Database updatePayment failed:', err);
+        toast.error(parseDatabaseError(err));
+        return;
+      }
+    }
+    set((s) => ({
+      payments: s.payments.map((p) => p.id === id ? { ...p, ...data } : p),
+    }));
+    toast.success('Payment updated.');
+  },
+
+  // ─── Lead delete ─────────────────────────────────────────
+  deleteLead: async (id) => {
+    const state = get();
+    if (state.isOnline) {
+      try {
+        const { error } = await supabase.from('leads').delete().eq('id', id);
+        if (error) throw error;
+      } catch (err) {
+        console.error('Database deleteLead failed:', err);
+        toast.error(parseDatabaseError(err));
+        return;
+      }
+    }
+    set((s) => ({
+      leads: s.leads.filter((l) => l.id !== id),
+    }));
+    toast.success('Lead deleted.');
+  },
+
+  // ─── Expense CRUD ────────────────────────────────────────
+  fetchExpenses: async () => {
+    const state = get();
+    if (state.isOnline) {
+      try {
+        const { data, error } = await supabase
+          .from('expenses')
+          .select('*')
+          .eq('org_id', state.organization.id)
+          .order('expense_date', { ascending: false });
+        if (error) throw error;
+        set({ expenses: data || [] });
+      } catch (err) {
+        console.error('Database fetchExpenses failed:', err);
+      }
+    }
+  },
+
+  createExpense: async (data) => {
+    const state = get();
+    const newExpenseData = {
+      ...data,
+      org_id: state.organization.id,
+    };
+    if (state.isOnline) {
+      try {
+        const { data: dbExpense, error } = await supabase
+          .from('expenses')
+          .insert(newExpenseData)
+          .select()
+          .single();
+        if (error) throw error;
+        set((s) => ({ expenses: [dbExpense, ...s.expenses] }));
+        return dbExpense;
+      } catch (err) {
+        console.error('Database createExpense failed:', err);
+        toast.error(parseDatabaseError(err));
+        throw err;
+      }
+    }
+    const localExpense: Expense = {
+      id: uuid(),
+      org_id: state.organization.id,
+      title: data.title,
+      category: data.category,
+      amount_paise: data.amount_paise,
+      expense_date: data.expense_date,
+      payment_mode: data.payment_mode,
+      reference_number: data.reference_number || null,
+      notes: data.notes || null,
+      receipt_url: data.receipt_url || null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    set((s) => ({ expenses: [localExpense, ...s.expenses] }));
+    return localExpense;
+  },
+
+  updateExpense: async (id, data) => {
+    const state = get();
+    if (state.isOnline) {
+      try {
+        const { error } = await supabase.from('expenses').update(data).eq('id', id);
+        if (error) throw error;
+      } catch (err) {
+        console.error('Database updateExpense failed:', err);
+        toast.error(parseDatabaseError(err));
+        return;
+      }
+    }
+    set((s) => ({
+      expenses: s.expenses.map((e) => e.id === id ? { ...e, ...data, updated_at: new Date().toISOString() } : e),
+    }));
+    toast.success('Expense updated.');
+  },
+
+  deleteExpense: async (id) => {
+    const state = get();
+    if (state.isOnline) {
+      try {
+        const { error } = await supabase.from('expenses').delete().eq('id', id);
+        if (error) throw error;
+      } catch (err) {
+        console.error('Database deleteExpense failed:', err);
+        toast.error(parseDatabaseError(err));
+        return;
+      }
+    }
+    set((s) => ({
+      expenses: s.expenses.filter((e) => e.id !== id),
+    }));
+    toast.success('Expense deleted.');
+  },
+
+  // ─── Staff CRUD ──────────────────────────────────────────
+  fetchStaff: async () => {
+    const state = get();
+    if (state.isOnline) {
+      try {
+        const [profilesRes, invitesRes] = await Promise.all([
+          supabase.from('profiles').select('*').eq('org_id', state.organization.id).order('created_at'),
+          supabase.from('staff_invites').select('*').eq('org_id', state.organization.id).order('created_at', { ascending: false }),
+        ]);
+        if (profilesRes.error) throw profilesRes.error;
+        if (invitesRes.error) throw invitesRes.error;
+        set({
+          staffProfiles: profilesRes.data || [],
+          pendingInvites: invitesRes.data || [],
+        });
+      } catch (err) {
+        console.error('Database fetchStaff failed:', err);
+      }
+    }
+  },
+
+  inviteStaff: async (email, role) => {
+    const state = get();
+    const { data: { user } } = await supabase.auth.getUser();
+    const invitedBy = user?.id || '';
+    
+    if (state.isOnline) {
+      try {
+        const { data: dbInvite, error } = await supabase
+          .from('staff_invites')
+          .insert({
+            org_id: state.organization.id,
+            email,
+            role,
+            invited_by: invitedBy || null,
+            status: 'pending',
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        set((s) => ({ pendingInvites: [dbInvite, ...s.pendingInvites] }));
+        toast.success(`Invitation created! Click the mail icon next to it to send or copy link.`);
+        return dbInvite;
+      } catch (err: any) {
+        console.error('Database inviteStaff failed:', err);
+        toast.error(parseDatabaseError(err));
+        throw err;
+      }
+    }
+    
+    const localInvite: StaffInvite = {
+      id: uuid(),
+      org_id: state.organization.id,
+      email,
+      role,
+      invited_by: invitedBy,
+      status: 'pending',
+      created_at: new Date().toISOString(),
+    };
+    set((s) => ({ pendingInvites: [localInvite, ...s.pendingInvites] }));
+    toast.success(`Invitation created! Click the mail icon next to it to send or copy link.`);
+    return localInvite;
+  },
+
+  updateStaffRole: async (id, role) => {
+    const state = get();
+    if (state.isOnline) {
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ role })
+          .eq('id', id);
+        if (error) throw error;
+      } catch (err: any) {
+        console.error('Database updateStaffRole failed:', err);
+        toast.error(parseDatabaseError(err));
+        return;
+      }
+    }
+    set((s) => ({
+      staffProfiles: s.staffProfiles.map((p) => p.id === id ? { ...p, role } : p),
+    }));
+    toast.success('Staff role updated.');
+  },
+
+  deleteStaff: async (id) => {
+    const state = get();
+    if (state.isOnline) {
+      try {
+        const { error } = await supabase.from('profiles').delete().eq('id', id);
+        if (error) throw error;
+      } catch (err: any) {
+        console.error('Database deleteStaff failed:', err);
+        toast.error(parseDatabaseError(err));
+        return;
+      }
+    }
+    set((s) => ({
+      staffProfiles: s.staffProfiles.filter((p) => p.id !== id),
+    }));
+    toast.success('Staff member removed.');
+  },
+
+  cancelInvite: async (id) => {
+    const state = get();
+    if (state.isOnline) {
+      try {
+        const { error } = await supabase.from('staff_invites').delete().eq('id', id);
+        if (error) throw error;
+      } catch (err: any) {
+        console.error('Database cancelInvite failed:', err);
+        toast.error(parseDatabaseError(err));
+        return;
+      }
+    }
+    set((s) => ({
+      pendingInvites: s.pendingInvites.filter((i) => i.id !== id),
+    }));
+    toast.success('Invitation cancelled.');
+  },
+
+  // ─── Upload Media ────────────────────────────────────────
+  uploadMedia: async (file, bucket) => {
+    const state = get();
+    if (state.isOnline) {
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${uuid()}.${fileExt}`;
+        const filePath = `${state.organization.id}/${fileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from(bucket)
+          .upload(filePath, file);
+        
+        if (uploadError) throw uploadError;
+        
+        const { data } = supabase.storage
+          .from(bucket)
+          .getPublicUrl(filePath);
+          
+        return data.publicUrl;
+      } catch (err: any) {
+        console.error('File upload failed:', err);
+        toast.error(`Upload failed: ${err.message || err}. Using fallback.`);
+      }
+    }
+    
+    const categories: Record<string, string> = {
+      'venuepro-media': 'wedding,banquet,hall',
+      'receipts': 'receipt,invoice,bill'
+    };
+    const query = categories[bucket] || 'venue';
+    const rand = Math.floor(Math.random() * 1000);
+    return `https://images.unsplash.com/photo-${1500000000000 + rand}?q=80&w=1000&auto=format&fit=crop&sig=${rand}`;
+  },
+
+  // ─── Notifications CRUD ──────────────────────────────────
+  fetchNotifications: async () => {
+    const state = get();
+    if (state.isOnline) {
+      try {
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('org_id', state.organization.id)
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        set({ notifications: data || [] });
+      } catch (err) {
+        console.error('Failed to fetch notifications:', err);
+      }
+    } else {
+      if (get().notifications.length === 0) {
+        set({ notifications: [...mockNotifications] });
+      }
+    }
+  },
+
+  createNotification: async (data) => {
+    const state = get();
+    const newNotif: Notification = {
+      id: uuid(),
+      org_id: state.organization.id,
+      title: data.title,
+      message: data.message,
+      type: data.type,
+      is_read: false,
+      link_to: data.link_to || null,
+      created_at: new Date().toISOString()
+    };
+
+    if (state.isOnline) {
+      try {
+        const { data: dbNotif, error } = await supabase
+          .from('notifications')
+          .insert({
+            org_id: state.organization.id,
+            title: data.title,
+            message: data.message,
+            type: data.type,
+            link_to: data.link_to || null,
+            is_read: false
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        if (dbNotif) {
+          set((s) => ({ notifications: [dbNotif, ...s.notifications] }));
+          return dbNotif;
+        }
+      } catch (err) {
+        console.error('Database createNotification failed:', err);
+      }
+    }
+
+    set((s) => ({ notifications: [newNotif, ...s.notifications] }));
+    return newNotif;
+  },
+
+  markNotificationRead: async (id) => {
+    const state = get();
+    if (state.isOnline) {
+      try {
+        const { error } = await supabase
+          .from('notifications')
+          .update({ is_read: true })
+          .eq('id', id);
+        if (error) throw error;
+      } catch (err) {
+        console.error('Database markNotificationRead failed:', err);
+      }
+    }
+    set((s) => ({
+      notifications: s.notifications.map((n) =>
+        n.id === id ? { ...n, is_read: true } : n
+      )
+    }));
+  },
+
+  markAllNotificationsRead: async () => {
+    const state = get();
+    if (state.isOnline) {
+      try {
+        const { error } = await supabase
+          .from('notifications')
+          .update({ is_read: true })
+          .eq('org_id', state.organization.id)
+          .eq('is_read', false);
+        if (error) throw error;
+      } catch (err) {
+        console.error('Database markAllNotificationsRead failed:', err);
+      }
+    }
+    set((s) => ({
+      notifications: s.notifications.map((n) => ({ ...n, is_read: true }))
+    }));
+  },
+
+  deleteNotification: async (id) => {
+    const state = get();
+    if (state.isOnline) {
+      try {
+        const { error } = await supabase
+          .from('notifications')
+          .delete()
+          .eq('id', id);
+        if (error) throw error;
+      } catch (err) {
+        console.error('Database deleteNotification failed:', err);
+      }
+    }
+    set((s) => ({
+      notifications: s.notifications.filter((n) => n.id !== id)
+    }));
+  },
+
+  // ─── Feedback Actions ────────────────────────────────────
+  submitFeedback: async (data) => {
+    const state = get();
+    let userId = null;
+    
+    if (state.isOnline) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) userId = user.id;
+
+        const { error } = await supabase
+          .from('feedbacks')
+          .insert({
+            org_id: state.organization.id,
+            user_id: userId,
+            rating: data.rating,
+            category: data.category,
+            message: data.message
+          });
+        if (error) throw error;
+        toast.success('Feedback submitted successfully! Thank you. ❤️');
+      } catch (err: any) {
+        console.error('Database submitFeedback failed:', err);
+        toast.error(parseDatabaseError(err));
+      }
+    } else {
+      console.log('Submitted Mock Feedback:', data);
+      toast.success('Feedback recorded (Demo Mode)! Thank you. ❤️');
+    }
+  },
+
+  // ─── Background Sync Checks ──────────────────────────────
+  runBackgroundChecks: () => {
+    const state = get();
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    
+    // Check 1: Leads due for follow-up today
+    const leadsDue = state.leads.filter(
+      (l) => l.status !== 'won' && l.status !== 'lost' && l.follow_up_date === todayStr
+    );
+    leadsDue.forEach(async (lead) => {
+      const exists = state.notifications.some(
+        (n) => n.type === 'lead_followup' && n.link_to === '/leads' && n.message.includes(lead.name) && n.created_at.slice(0, 10) === todayStr
+      );
+      if (!exists) {
+        await state.createNotification({
+          title: 'Follow-up Due Today 🎯',
+          message: `Inquiry from ${lead.name} (${lead.phone}) is scheduled for follow-up today.`,
+          type: 'lead_followup',
+          link_to: '/leads'
+        });
+      }
+    });
+
+    // Check 2: Bookings with pending balance payment due soon (within 3 days)
+    const bookingsDue = state.bookings.filter(
+      (b) => b.status === 'confirmed'
+    );
+    bookingsDue.forEach(async (b) => {
+      const eventDate = new Date(b.event_date);
+      const diffTime = eventDate.getTime() - new Date().getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays >= 0 && diffDays <= 3) {
+        const payments = state.getPaymentsForBooking(b.id);
+        const totalPaid = payments.filter((p) => p.status === 'received').reduce((sum, p) => sum + p.amount_paise, 0);
+        const balance = b.total_amount_paise - totalPaid;
+        
+        if (balance > 0) {
+          const exists = state.notifications.some(
+            (n) => n.type === 'payment_due' && n.message.includes(b.booking_number) && n.created_at.slice(0, 10) === todayStr
+          );
+          if (!exists) {
+            await state.createNotification({
+              title: 'Balance Payment Due ⏳',
+              message: `Booking ${b.booking_number} is scheduled in ${diffDays} days and has a pending balance of ${formatCurrency(balance)}.`,
+              type: 'payment_due',
+              link_to: '/bookings'
+            });
+          }
+        }
+      }
+    });
+  }
 }));

@@ -1,10 +1,14 @@
-import { useState } from 'react';
-import { Menu, Bell, Search, Plus, LogOut } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import { useState, useEffect } from 'react';
+import { 
+  Menu, Bell, Search, Plus, LogOut, RefreshCw, ChevronDown,
+  HelpCircle, Check, Trash2, Calendar, AlertCircle, PhoneIncoming, Info, IndianRupee 
+} from 'lucide-react';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { cn, getInitials, getRelativeTime } from '@/lib/utils';
 import { useUIStore } from '@/stores/ui-store';
-import { getInitials } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth-store';
+import { useDataStore } from '@/stores/data-store';
+import { hasPermission } from '@/lib/permissions';
 
 const pageTitles: Record<string, string> = {
   '/': 'Dashboard',
@@ -14,20 +18,80 @@ const pageTitles: Record<string, string> = {
   '/customers': 'Customers',
   '/payments': 'Payments',
   '/settings': 'Settings',
+  '/expenses': 'Expenses',
+  '/venues': 'Venues',
+  '/help': 'Help & Guides',
+};
+
+const notifIcons: Record<string, any> = {
+  booking_created: Calendar,
+  booking_cancelled: AlertCircle,
+  payment_received: IndianRupee,
+  payment_due: AlertCircle,
+  lead_followup: PhoneIncoming,
+  system: Info,
+};
+
+const notifColors: Record<string, string> = {
+  booking_created: 'bg-blue-50 text-blue-500',
+  booking_cancelled: 'bg-rose-50 text-rose-500',
+  payment_received: 'bg-emerald-50 text-emerald-500',
+  payment_due: 'bg-amber-50 text-amber-500',
+  lead_followup: 'bg-purple-50 text-purple-500',
+  system: 'bg-slate-50 text-slate-500',
 };
 
 export function Header() {
   const location = useLocation();
+  const navigate = useNavigate();
   const setSidebarMobileOpen = useUIStore((s) => s.setSidebarMobileOpen);
   const openQuickAdd = useUIStore((s) => s.openQuickAdd);
+  const openAddLead = useUIStore((s) => s.openAddLead);
   const collapsed = useUIStore((s) => s.sidebarCollapsed);
-
+ 
   const profile = useAuthStore((s) => s.profile);
   const signOut = useAuthStore((s) => s.signOut);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const syncData = useDataStore((s) => s.syncData);
+  const isSyncing = useDataStore((s) => s.isLoading);
+  
+  const notifications = useDataStore((s) => s.notifications);
+  const fetchNotifications = useDataStore((s) => s.fetchNotifications);
+  const markNotificationRead = useDataStore((s) => s.markNotificationRead);
+  const markAllNotificationsRead = useDataStore((s) => s.markAllNotificationsRead);
+  const deleteNotification = useDataStore((s) => s.deleteNotification);
+  
+  const role = useAuthStore((s) => s.profile?.role);
+  const organization = useDataStore((s) => s.organization);
 
+  const canCreateBooking = hasPermission(role, 'bookings', 'create', organization?.settings);
+  const canCreateLead = hasPermission(role, 'leads', 'create', organization?.settings);
+  const showQuickAdd = canCreateBooking || canCreateLead;
+ 
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifFilter, setNotifFilter] = useState<'all' | 'unread'>('all');
+ 
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+ 
   const title = pageTitles[location.pathname] || 'VenuePro';
   const fullName = profile?.full_name || 'Venue Manager';
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+  
+  const filteredNotifications = notifications.filter((n) => {
+    if (notifFilter === 'unread') return !n.is_read;
+    return true;
+  });
+  
+  const handleNotificationClick = (n: any) => {
+    markNotificationRead(n.id);
+    setNotificationsOpen(false);
+    if (n.link_to) {
+      navigate(n.link_to);
+    }
+  };
 
   const handleSignOut = async () => {
     setDropdownOpen(false);
@@ -35,6 +99,14 @@ export function Header() {
       await signOut();
     } catch (err) {
       console.error('Failed to sign out:', err);
+    }
+  };
+
+  const handleSync = async () => {
+    try {
+      await syncData();
+    } catch (err) {
+      console.error('Sync failed:', err);
     }
   };
 
@@ -61,44 +133,243 @@ export function Header() {
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2">
-        {/* Quick Add */}
+        {/* Quick Add Dropdown Container */}
+        {showQuickAdd && (
+          <div id="tour-quick-add-btn" className="relative">
+            <button
+              onClick={() => setQuickAddOpen(!quickAddOpen)}
+              className={cn(
+                'flex items-center gap-2 px-3.5 py-2 rounded-xl',
+                'bg-brand-600 text-white text-sm font-semibold',
+                'hover:bg-brand-700 active:scale-95',
+                'transition-all duration-200 shadow-sm hover:shadow-md',
+                'hidden sm:flex',
+              )}
+            >
+              <Plus className="w-4 h-4" />
+              <span>Quick Add</span>
+              <ChevronDown className="w-3.5 h-3.5 opacity-80" />
+            </button>
+
+            {/* Mobile quick add button */}
+            <button
+              onClick={() => setQuickAddOpen(!quickAddOpen)}
+              className={cn(
+                'sm:hidden p-2.5 rounded-xl',
+                'bg-brand-600 text-white',
+                'hover:bg-brand-700 active:scale-95',
+                'transition-all duration-200 shadow-sm',
+              )}
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+
+            {quickAddOpen && (
+              <>
+                {/* Overlay */}
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setQuickAddOpen(false)} 
+                />
+                {/* Dropdown Menu */}
+                <div className="absolute right-0 mt-2 w-52 rounded-2xl bg-white border border-gray-150 shadow-2xl p-2 z-50 animate-fade-in space-y-1">
+                  {canCreateBooking && (
+                    <button
+                      onClick={() => {
+                        setQuickAddOpen(false);
+                        openQuickAdd();
+                      }}
+                      className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2.5"
+                    >
+                      <span className="text-base text-brand-600">📅</span>
+                      <span>New Booking</span>
+                    </button>
+                  )}
+                  {canCreateLead && (
+                    <button
+                      onClick={() => {
+                        setQuickAddOpen(false);
+                        openAddLead();
+                      }}
+                      className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2.5"
+                    >
+                      <span className="text-base text-brand-600">🎯</span>
+                      <span>New Lead / Enquiry</span>
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Sync/Refresh */}
         <button
-          onClick={() => openQuickAdd()}
+          onClick={handleSync}
+          disabled={isSyncing}
           className={cn(
-            'flex items-center gap-2 px-3.5 py-2 rounded-xl',
-            'bg-brand-600 text-white text-sm font-semibold',
-            'hover:bg-brand-700 active:scale-95',
-            'transition-all duration-200 shadow-sm hover:shadow-md',
-            'hidden sm:flex',
+            'p-2.5 rounded-xl hover:bg-gray-100 transition-colors text-gray-500 relative',
+            isSyncing && 'text-brand-600'
           )}
+          title="Sync Data"
         >
-          <Plus className="w-4 h-4" />
-          <span>New Booking</span>
+          <RefreshCw className={cn('w-5 h-5', isSyncing && 'animate-spin')} />
         </button>
 
-        {/* Mobile quick add */}
-        <button
-          onClick={() => openQuickAdd()}
-          className={cn(
-            'sm:hidden p-2.5 rounded-xl',
-            'bg-brand-600 text-white',
-            'hover:bg-brand-700 active:scale-95',
-            'transition-all duration-200 shadow-sm',
+        {/* Help Center Shortcut */}
+        <Link
+          to="/help"
+          id="tour-help-btn"
+          className="p-2.5 rounded-xl hover:bg-gray-100 transition-colors text-gray-500"
+          title="Help Center"
+        >
+          <HelpCircle className="w-5 h-5" />
+        </Link>
+ 
+        {/* Notifications Dropdown */}
+        <div className="relative">
+          <button 
+            id="tour-notifications-btn"
+            onClick={() => {
+              setNotificationsOpen(!notificationsOpen);
+              setDropdownOpen(false);
+              setQuickAddOpen(false);
+            }}
+            className={cn(
+              "relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors text-gray-500",
+              unreadCount > 0 && "text-brand-600 bg-brand-50/50 hover:bg-brand-50"
+            )}
+            title="Notifications"
+          >
+            <Bell className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger-500 rounded-full animate-pulse-soft" />
+            )}
+          </button>
+ 
+          {notificationsOpen && (
+            <>
+              {/* Overlay */}
+              <div 
+                className="fixed inset-0 z-40" 
+                onClick={() => setNotificationsOpen(false)} 
+              />
+              
+              {/* Dropdown Menu */}
+              <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-white border border-gray-150 shadow-2xl p-4 z-50 animate-fade-in flex flex-col max-h-[480px]">
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-gray-100 pb-2.5 mb-2.5">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-extrabold text-gray-900">Notifications</h3>
+                    {unreadCount > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-brand-50 text-[10px] font-bold text-brand-700">
+                        {unreadCount} Unread
+                      </span>
+                    )}
+                  </div>
+                  {unreadCount > 0 && (
+                    <button 
+                      onClick={() => markAllNotificationsRead()}
+                      className="text-[11px] font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1 hover:underline transition-all"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Mark all read</span>
+                    </button>
+                  )}
+                </div>
+ 
+                {/* Tabs */}
+                <div className="flex gap-2 border-b border-gray-50 pb-2 mb-2">
+                  <button 
+                    onClick={() => setNotifFilter('all')}
+                    className={cn(
+                      "px-3 py-1 rounded-lg text-[10px] font-bold transition-all",
+                      notifFilter === 'all' 
+                        ? "bg-brand-50 text-brand-700 shadow-3xs" 
+                        : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+                    )}
+                  >
+                    All ({notifications.length})
+                  </button>
+                  <button 
+                    onClick={() => setNotifFilter('unread')}
+                    className={cn(
+                      "px-3 py-1 rounded-lg text-[10px] font-bold transition-all",
+                      notifFilter === 'unread' 
+                        ? "bg-brand-50 text-brand-700 shadow-3xs" 
+                        : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+                    )}
+                  >
+                    Unread ({unreadCount})
+                  </button>
+                </div>
+ 
+                {/* Scrollable list */}
+                <div className="flex-1 overflow-y-auto space-y-1.5 max-h-[280px] pr-0.5 custom-scrollbar">
+                  {filteredNotifications.length === 0 ? (
+                    <div className="py-8 text-center flex flex-col items-center justify-center gap-2">
+                      <span className="text-2xl">🎉</span>
+                      <p className="text-xs font-semibold text-gray-500">All caught up!</p>
+                      <p className="text-[10px] text-gray-400">No notifications to show here.</p>
+                    </div>
+                  ) : (
+                    filteredNotifications.map((n) => {
+                      const Icon = notifIcons[n.type] || Info;
+                      const colorClass = notifColors[n.type] || 'bg-slate-50 text-slate-500';
+                      return (
+                        <div 
+                          key={n.id}
+                          onClick={() => handleNotificationClick(n)}
+                          className={cn(
+                            "flex gap-3 p-2.5 rounded-xl transition-all cursor-pointer relative group border",
+                            n.is_read 
+                              ? "bg-white border-transparent hover:bg-gray-50/70" 
+                              : "bg-brand-50/10 border-brand-50/30 hover:bg-brand-50/20"
+                          )}
+                        >
+                          {/* Left icon wrapper */}
+                          <div className={cn("w-8.5 h-8.5 rounded-lg flex items-center justify-center flex-shrink-0 shadow-3xs", colorClass)}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+ 
+                          {/* Details */}
+                          <div className="flex-1 min-w-0 pr-6">
+                            <div className="flex items-center gap-1.5">
+                              <p className={cn("text-xs leading-normal truncate", !n.is_read ? "font-bold text-gray-900" : "font-semibold text-gray-700")}>
+                                {n.title}
+                              </p>
+                              {!n.is_read && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-brand-600 flex-shrink-0 animate-pulse" />
+                              )}
+                            </div>
+                            <p className="text-[11px] text-gray-400 leading-normal line-clamp-2 mt-0.5">
+                              {n.message}
+                            </p>
+                            <p className="text-[9px] font-semibold text-gray-400 mt-1">
+                              {getRelativeTime(n.created_at)}
+                            </p>
+                          </div>
+ 
+                          {/* Close/delete button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteNotification(n.id);
+                            }}
+                            className="absolute top-2.5 right-2.5 p-1 rounded-md bg-white border border-gray-150 opacity-0 group-hover:opacity-100 hover:text-rose-600 transition-opacity hover:shadow-xs"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-3 h-3 text-gray-400 hover:text-rose-500" />
+                          </button>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </>
           )}
-        >
-          <Plus className="w-5 h-5" />
-        </button>
-
-        {/* Search */}
-        <button className="p-2.5 rounded-xl hover:bg-gray-100 transition-colors text-gray-500 hidden md:flex">
-          <Search className="w-5 h-5" />
-        </button>
-
-        {/* Notifications */}
-        <button className="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors text-gray-500">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger-500 rounded-full animate-pulse-soft" />
-        </button>
+        </div>
 
         {/* User Profile Dropdown Container */}
         <div className="relative">

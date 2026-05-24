@@ -8,6 +8,8 @@ import { WhatsAppButton } from '@/components/shared/WhatsAppButton';
 import { leadStatusConfig, leadSourceLabels, type LeadStatus } from '@/types/lead';
 import { eventTypeLabels, type EventType } from '@/types/booking';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/stores/auth-store';
+import { hasPermission } from '@/lib/permissions';
 
 const statusFlow: LeadStatus[] = ['new', 'contacted', 'visit_scheduled', 'negotiation', 'won', 'lost'];
 
@@ -16,12 +18,18 @@ export function LeadDrawer() {
   const leadId = useUIStore((s) => s.selectedLeadId);
   const closeLeadDrawer = useUIStore((s) => s.closeLeadDrawer);
   const openQuickAdd = useUIStore((s) => s.openQuickAdd);
+  const openEditLead = useUIStore((s) => s.openEditLead);
 
   const lead = useDataStore((s) => (leadId ? s.getLeadById(leadId) : undefined));
   const updateLeadStatus = useDataStore((s) => s.updateLeadStatus);
   const updateLead = useDataStore((s) => s.updateLead);
   const convertLeadToBooking = useDataStore((s) => s.convertLeadToBooking);
   const halls = useDataStore((s) => s.halls);
+  const role = useAuthStore((s) => s.profile?.role);
+  const organization = useDataStore((s) => s.organization);
+
+  const canUpdateLeads = hasPermission(role, 'leads', 'update', organization?.settings);
+  const canCreateBookings = hasPermission(role, 'bookings', 'create', organization?.settings);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editNotes, setEditNotes] = useState('');
@@ -97,9 +105,16 @@ export function LeadDrawer() {
       <div className="fixed top-0 right-0 h-full w-full sm:w-[480px] bg-white z-50 shadow-2xl flex flex-col drawer-content">
         {/* Header */}
         <div className="relative px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-violet-50/50 to-white">
-          <button onClick={closeLeadDrawer} className="absolute top-4 right-4 p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-400">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="absolute top-4 right-4 flex items-center gap-1">
+            {canUpdateLeads && (
+              <button onClick={() => { closeLeadDrawer(); openEditLead(leadId); }} className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-400" title="Edit Lead">
+                <Edit className="w-4.5 h-4.5" />
+              </button>
+            )}
+            <button onClick={closeLeadDrawer} className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-400">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xs font-medium text-gray-400">{leadSourceLabels[lead.source]}</span>
             <StatusBadge type="lead" status={lead.status} pulse={lead.status === 'new'} />
@@ -175,12 +190,14 @@ export function LeadDrawer() {
                 return (
                   <button
                     key={s}
+                    disabled={!canUpdateLeads}
                     onClick={() => handleStatusChange(s)}
                     className={cn(
                       'px-3 py-2 rounded-lg text-xs font-semibold transition-all border',
                       isCurrent
                         ? 'border-transparent shadow-sm'
                         : 'bg-white border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-gray-600',
+                      !canUpdateLeads && 'opacity-65 cursor-not-allowed'
                     )}
                     style={isCurrent ? { backgroundColor: config.bg, color: config.color, borderColor: config.color + '40' } : {}}
                   >
@@ -195,7 +212,7 @@ export function LeadDrawer() {
           <div className="px-6 py-5 border-b border-gray-100">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Notes</h4>
-              {!isEditing && (
+              {!isEditing && canUpdateLeads && (
                 <button
                   onClick={() => { setIsEditing(true); setEditNotes(lead.notes || ''); }}
                   className="text-xs font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1"
@@ -233,7 +250,7 @@ export function LeadDrawer() {
           </div>
 
           {/* Convert to Booking section */}
-          {lead.status !== 'won' && lead.status !== 'lost' && (
+          {lead.status !== 'won' && lead.status !== 'lost' && canCreateBookings && (
             <div className="px-6 py-5">
               {showConvert ? (
                 <div className="p-4 rounded-2xl bg-brand-50 border border-brand-100 space-y-4 animate-fade-in">
@@ -329,6 +346,7 @@ export function LeadDrawer() {
             label="WhatsApp"
             message={`Hi ${lead.name.split(' ')[0]}, this is from ${useDataStore.getState().organization.name}. `}
             className="flex-1"
+            leadId={lead.id}
           />
           {lead.email && (
             <a

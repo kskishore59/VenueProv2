@@ -24,6 +24,17 @@ import Payments from '@/pages/Payments';
 import Settings from '@/pages/Settings';
 import Login from '@/pages/Login';
 import Signup from '@/pages/Signup';
+import Venues from '@/pages/Venues';
+import Expenses from '@/pages/Expenses';
+import Import from '@/pages/Import';
+import Help from '@/pages/Help';
+import { FeedbackWidget } from '@/components/shared/FeedbackWidget';
+import { ReceiptModal } from '@/components/payments/ReceiptModal';
+import { EditLeadDrawer } from '@/components/leads/EditLeadDrawer';
+import { EditCustomerDrawer } from '@/components/customers/EditCustomerDrawer';
+import { EditPaymentModal } from '@/components/payments/EditPaymentModal';
+import { PermissionGuard } from '@/components/shared/PermissionGuard';
+import { OnboardingTour } from '@/components/shared/OnboardingTour';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,11 +77,15 @@ export default function App() {
               <Route element={<AppLayout />}>
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/bookings" element={<Bookings />} />
-                <Route path="/leads" element={<Leads />} />
-                <Route path="/customers" element={<Customers />} />
-                <Route path="/payments" element={<Payments />} />
-                <Route path="/settings" element={<Settings />} />
+                <Route path="/bookings" element={<PermissionGuard resource="bookings"><Bookings /></PermissionGuard>} />
+                <Route path="/leads" element={<PermissionGuard resource="leads"><Leads /></PermissionGuard>} />
+                <Route path="/customers" element={<PermissionGuard resource="customers"><Customers /></PermissionGuard>} />
+                <Route path="/payments" element={<PermissionGuard resource="payments"><Payments /></PermissionGuard>} />
+                <Route path="/venues" element={<PermissionGuard resource="bookings"><Venues /></PermissionGuard>} />
+                <Route path="/expenses" element={<PermissionGuard resource="expenses"><Expenses /></PermissionGuard>} />
+                <Route path="/import" element={<PermissionGuard resource="settings"><Import /></PermissionGuard>} />
+                <Route path="/settings" element={<PermissionGuard resource="settings"><Settings /></PermissionGuard>} />
+                <Route path="/help" element={<Help />} />
               </Route>
             </Route>
 
@@ -84,10 +99,16 @@ export default function App() {
           <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} variant="widget" title="Edit Booking Failed" />}><EditBookingDrawer /></ErrorBoundary>
           <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} variant="widget" title="Record Payment Failed" />}><RecordPaymentModal /></ErrorBoundary>
           <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} variant="widget" title="Lead Detail Failed" />}><LeadDrawer /></ErrorBoundary>
+          <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} variant="widget" title="Edit Lead Failed" />}><EditLeadDrawer /></ErrorBoundary>
           <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} variant="widget" title="Add Lead Failed" />}><AddLeadForm /></ErrorBoundary>
           <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} variant="widget" title="Add Customer Failed" />}><AddCustomerDrawer /></ErrorBoundary>
+          <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} variant="widget" title="Edit Customer Failed" />}><EditCustomerDrawer /></ErrorBoundary>
+          <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} variant="widget" title="Edit Payment Failed" />}><EditPaymentModal /></ErrorBoundary>
           <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} variant="widget" title="Add Hall Failed" />}><AddHallModal /></ErrorBoundary>
           <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} variant="widget" title="Confirm Dialog Failed" />}><ConfirmDialog /></ErrorBoundary>
+          <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} variant="widget" title="Receipt Generator Failed" />}><ReceiptModal /></ErrorBoundary>
+          <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} variant="widget" title="Feedback Widget Failed" />}><FeedbackWidget /></ErrorBoundary>
+          <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} variant="widget" title="Onboarding Tour Failed" />}><OnboardingTour /></ErrorBoundary>
 
           {/* Toast Notifications */}
           <Toaster

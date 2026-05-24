@@ -28,6 +28,23 @@ interface UIState {
   isAddCustomerOpen: boolean;
   isAddHallOpen: boolean;
 
+  // Phase 3 States
+  isImportOpen: boolean;
+  isExpenseModalOpen: boolean;
+  selectedExpenseId: string | null;
+  isEditLeadOpen: boolean;
+  selectedEditLeadId: string | null;
+  isEditCustomerOpen: boolean;
+  selectedEditCustomerId: string | null;
+  isEditPaymentOpen: boolean;
+  selectedEditPaymentId: string | null;
+
+  // Receipt Modal State
+  isReceiptModalOpen: boolean;
+  receiptMode: 'receipt' | 'invoice' | null;
+  receiptPaymentId: string | null;
+  receiptBookingId: string | null;
+
   // Confirm Dialog
   confirmDialog: {
     open: boolean;
@@ -54,6 +71,22 @@ interface UIState {
   closeAddCustomer: () => void;
   openAddHall: () => void;
   closeAddHall: () => void;
+  
+  // Phase 3 Actions
+  openImport: () => void;
+  closeImport: () => void;
+  openExpenseModal: (expenseId?: string | null) => void;
+  closeExpenseModal: () => void;
+  openEditLead: (leadId: string) => void;
+  closeEditLead: () => void;
+  openEditCustomer: (customerId: string) => void;
+  closeEditCustomer: () => void;
+  openEditPayment: (paymentId: string) => void;
+  closeEditPayment: () => void;
+
+  openReceiptModal: (mode: 'receipt' | 'invoice', id: string) => void;
+  closeReceiptModal: () => void;
+
   showConfirm: (opts: { title: string; description: string; variant?: 'danger' | 'warning' | 'info'; onConfirm: () => void }) => void;
   closeConfirm: () => void;
 
@@ -90,6 +123,23 @@ export const useUIStore = create<UIState>()((set) => ({
   isAddCustomerOpen: false,
   isAddHallOpen: false,
 
+  // Phase 3 States
+  isImportOpen: false,
+  isExpenseModalOpen: false,
+  selectedExpenseId: null,
+  isEditLeadOpen: false,
+  selectedEditLeadId: null,
+  isEditCustomerOpen: false,
+  selectedEditCustomerId: null,
+  isEditPaymentOpen: false,
+  selectedEditPaymentId: null,
+
+  // Receipt Modal State
+  isReceiptModalOpen: false,
+  receiptMode: null,
+  receiptPaymentId: null,
+  receiptBookingId: null,
+
   // Confirm Dialog
   confirmDialog: { open: false, title: '', description: '', variant: 'danger', onConfirm: null },
 
@@ -120,6 +170,32 @@ export const useUIStore = create<UIState>()((set) => ({
   closeAddCustomer: () => set({ isAddCustomerOpen: false }),
   openAddHall: () => set({ isAddHallOpen: true }),
   closeAddHall: () => set({ isAddHallOpen: false }),
+
+  // Phase 3 Actions
+  openImport: () => set({ isImportOpen: true }),
+  closeImport: () => set({ isImportOpen: false }),
+  openExpenseModal: (expenseId) => set({ isExpenseModalOpen: true, selectedExpenseId: expenseId || null }),
+  closeExpenseModal: () => set({ isExpenseModalOpen: false, selectedExpenseId: null }),
+  openEditLead: (leadId) => set({ isEditLeadOpen: true, selectedEditLeadId: leadId }),
+  closeEditLead: () => set({ isEditLeadOpen: false, selectedEditLeadId: null }),
+  openEditCustomer: (customerId) => set({ isEditCustomerOpen: true, selectedEditCustomerId: customerId }),
+  closeEditCustomer: () => set({ isEditCustomerOpen: false, selectedEditCustomerId: null }),
+  openEditPayment: (paymentId) => set({ isEditPaymentOpen: true, selectedEditPaymentId: paymentId }),
+  closeEditPayment: () => set({ isEditPaymentOpen: false, selectedEditPaymentId: null }),
+
+  openReceiptModal: (mode, id) => set({
+    isReceiptModalOpen: true,
+    receiptMode: mode,
+    receiptPaymentId: mode === 'receipt' ? id : null,
+    receiptBookingId: mode === 'invoice' ? id : null
+  }),
+  closeReceiptModal: () => set({
+    isReceiptModalOpen: false,
+    receiptMode: null,
+    receiptPaymentId: null,
+    receiptBookingId: null
+  }),
+
   showConfirm: (opts) =>
     set({
       confirmDialog: {

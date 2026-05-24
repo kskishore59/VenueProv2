@@ -6,6 +6,8 @@ import { StatusBadge } from '@/components/shared/StatusBadge';
 import { WhatsAppButton } from '@/components/shared/WhatsAppButton';
 import { useUIStore } from '@/stores/ui-store';
 import { eventTypeLabels, type BookingStatus } from '@/types/booking';
+import { useAuthStore } from '@/stores/auth-store';
+import { hasPermission } from '@/lib/permissions';
 
 const statusFilters: { value: BookingStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -25,6 +27,10 @@ export default function Bookings() {
   const bookings = useDataStore((s) => s.bookings);
   const getCustomerById = useDataStore((s) => s.getCustomerById);
   const getHallById = useDataStore((s) => s.getHallById);
+  
+  const role = useAuthStore((s) => s.profile?.role);
+  const organization = useDataStore((s) => s.organization);
+  const canCreateBooking = hasPermission(role, 'bookings', 'create', organization?.settings);
 
   const filtered = bookings
     .filter((b) => {
@@ -49,10 +55,12 @@ export default function Bookings() {
           <h1 className="text-2xl font-bold text-gray-900">Bookings</h1>
           <p className="text-sm text-gray-400 mt-0.5">{bookings.length} total bookings</p>
         </div>
-        <button onClick={() => openQuickAdd()}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 active:scale-95 transition-all shadow-sm">
-          <Plus className="w-4 h-4" /> New Booking
-        </button>
+        {canCreateBooking && (
+          <button onClick={() => openQuickAdd()}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 active:scale-95 transition-all shadow-sm">
+            <Plus className="w-4 h-4" /> New Booking
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -105,7 +113,7 @@ export default function Bookings() {
                   <div className="flex items-center"><span className="text-sm text-gray-600">{booking.guest_count || '—'}</span></div>
                   <div className="flex items-center"><span className="text-sm font-bold text-gray-900">{formatCurrency(booking.total_amount_paise)}</span></div>
                   <div className="flex items-center"><StatusBadge type="booking" status={booking.status} /></div>
-                  <div className="flex items-center justify-end">{customer && <WhatsAppButton phone={customer.phone} size="sm" />}</div>
+                  <div className="flex items-center justify-end">{customer && <WhatsAppButton phone={customer.phone} size="sm" bookingId={booking.id} />}</div>
                 </div>
               );
             })

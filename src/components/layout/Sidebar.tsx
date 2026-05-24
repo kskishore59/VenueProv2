@@ -2,19 +2,27 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, Users, PhoneIncoming,
   IndianRupee, Settings, ChevronLeft, ChevronRight, X,
-  Building2,
+  Building2, Receipt, UploadCloud, HelpCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/stores/ui-store';
 import { useDataStore } from '@/stores/data-store';
+import { useAuthStore } from '@/stores/auth-store';
+import { hasPermission } from '@/lib/permissions';
+import type { PermissionResource } from '@/lib/permissions';
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+
   { path: '/bookings', label: 'Bookings', icon: CalendarDays },
-  { path: '/leads', label: 'Leads', icon: PhoneIncoming },
+  { path: '/leads', label: 'Inquiries', icon: PhoneIncoming },
   { path: '/customers', label: 'Customers', icon: Users },
+  { path: '/expenses', label: 'Expenses', icon: Receipt },
   { path: '/payments', label: 'Payments', icon: IndianRupee },
+  { path: '/import', label: 'Import Data', icon: UploadCloud },
+  { path: '/venues', label: 'Venues', icon: Building2 },
   { path: '/settings', label: 'Settings', icon: Settings },
+  { path: '/help', label: 'Help & Guides', icon: HelpCircle },
 ];
 
 export function Sidebar() {
@@ -24,6 +32,24 @@ export function Sidebar() {
   const setSidebarMobileOpen = useUIStore((s) => s.setSidebarMobileOpen);
   const location = useLocation();
   const orgName = useDataStore((s) => s.organization?.name) || 'VenuePro Workspace';
+  const role = useAuthStore((s) => s.profile?.role);
+  const organization = useDataStore((s) => s.organization);
+
+  const navItemPermissions: Record<string, PermissionResource> = {
+    '/bookings': 'bookings',
+    '/leads': 'leads',
+    '/customers': 'customers',
+    '/expenses': 'expenses',
+    '/payments': 'payments',
+    '/import': 'settings',
+    '/settings': 'settings',
+  };
+
+  const allowedNavItems = navItems.filter((item) => {
+    const permResource = navItemPermissions[item.path];
+    if (!permResource) return true;
+    return hasPermission(role, permResource, 'read', organization?.settings);
+  });
 
   return (
     <>
@@ -52,11 +78,25 @@ export function Sidebar() {
           'flex items-center h-16 border-b border-gray-100 px-4',
           collapsed ? 'justify-center' : 'gap-3',
         )}>
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-600 to-brand-500 flex items-center justify-center flex-shrink-0 shadow-sm">
-            <Building2 className="w-5 h-5 text-white" />
+          <div className="flex items-center">
+            {/* VenuePro logo */}
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-600 to-brand-500 flex items-center justify-center flex-shrink-0 shadow-sm relative z-20">
+              <Building2 className="w-5 h-5 text-white" />
+            </div>
+            
+            {/* Organization custom logo overlapping */}
+            {!collapsed && organization?.logo_url && (
+              <div className="w-9 h-9 rounded-xl bg-white border border-gray-150 overflow-hidden shadow-xs -ml-2.5 relative z-10 flex items-center justify-center transition-transform hover:translate-x-1 duration-300">
+                <img 
+                  src={organization.logo_url} 
+                  alt={orgName} 
+                  className="w-full h-full object-contain p-0.5" 
+                />
+              </div>
+            )}
           </div>
           {!collapsed && (
-            <div className="min-w-0 animate-fade-in">
+            <div className="min-w-0 animate-fade-in ml-1">
               <h1 className="text-sm font-bold text-gray-900 truncate">
                 {orgName}
               </h1>
@@ -73,14 +113,15 @@ export function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
+        <nav id="tour-sidebar-nav" className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+          {allowedNavItems.map((item) => {
             const isActive = location.pathname === item.path ||
               (item.path === '/dashboard' && location.pathname === '/');
             return (
               <NavLink
                 key={item.path}
                 to={item.path}
+                id={item.path === '/dashboard' ? 'tour-nav-dashboard' : undefined}
                 onClick={() => setSidebarMobileOpen(false)}
                 className={cn(
                   'group flex items-center rounded-xl transition-all duration-200',

@@ -168,3 +168,34 @@ export function getRelativeTime(dateStr: string): string {
   if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
   return formatDate(dateStr);
 }
+
+/**
+ * Parse database/RLS error to user friendly message
+ */
+export function parseDatabaseError(err: any): string {
+  if (!err) return 'An unexpected error occurred.';
+  const msg = typeof err === 'string' ? err : err.message || JSON.stringify(err);
+  const msgLower = msg.toLowerCase();
+  
+  if (msgLower.includes('row-level security') || msgLower.includes('violates row-level security') || msgLower.includes('permission denied') || msgLower.includes('new row violates')) {
+    return 'Access Denied: You do not have permission to perform this action.';
+  }
+  if (msgLower.includes('unique constraint') || msgLower.includes('already exists')) {
+    if (msgLower.includes('phone')) {
+      return 'Error: A customer or record with this phone number already exists.';
+    }
+    if (msgLower.includes('booking_number')) {
+      return 'Error: A booking with this booking number already exists.';
+    }
+    return 'Error: A duplicate record already exists in the database.';
+  }
+  if (msgLower.includes('foreign key constraint') || msgLower.includes('violates foreign key')) {
+    return 'Error: This record is linked to other data and cannot be deleted or modified.';
+  }
+  if (msgLower.includes('network') || msgLower.includes('failed to fetch')) {
+    return 'Network Error: Please check your internet connection and try again.';
+  }
+  
+  return msg;
+}
+

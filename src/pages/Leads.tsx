@@ -7,6 +7,8 @@ import { WhatsAppButton } from '@/components/shared/WhatsAppButton';
 import { useUIStore } from '@/stores/ui-store';
 import { type LeadStatus, leadSourceLabels } from '@/types/lead';
 import { eventTypeLabels, type EventType } from '@/types/booking';
+import { useAuthStore } from '@/stores/auth-store';
+import { hasPermission } from '@/lib/permissions';
 
 const statusFilters: { value: LeadStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -25,6 +27,10 @@ export default function Leads() {
   const openAddLead = useUIStore((s) => s.openAddLead);
 
   const leads = useDataStore((s) => s.leads);
+  
+  const role = useAuthStore((s) => s.profile?.role);
+  const organization = useDataStore((s) => s.organization);
+  const canCreateLead = hasPermission(role, 'leads', 'create', organization?.settings);
 
   const filtered = leads
     .filter((l) => {
@@ -44,10 +50,12 @@ export default function Leads() {
           <h1 className="text-2xl font-bold text-gray-900">Leads & Inquiries</h1>
           <p className="text-sm text-gray-400 mt-0.5">{leads.length} total leads</p>
         </div>
-        <button onClick={openAddLead}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 active:scale-95 transition-all shadow-sm">
-          <Plus className="w-4 h-4" /> Add Lead
-        </button>
+        {canCreateLead && (
+          <button onClick={openAddLead}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 active:scale-95 transition-all shadow-sm">
+            <Plus className="w-4 h-4" /> Add Lead
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -102,7 +110,7 @@ export default function Leads() {
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <span className="text-[10px] font-medium text-gray-300 hidden sm:block">{leadSourceLabels[lead.source]}</span>
-                    <WhatsAppButton phone={lead.phone} size="sm" />
+                    <WhatsAppButton phone={lead.phone} size="sm" leadId={lead.id} />
                   </div>
                 </div>
               </div>

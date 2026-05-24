@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Plus, Phone, Mail, MapPin } from 'lucide-react';
+import { Search, Plus, Phone, Mail, MapPin, Edit } from 'lucide-react';
 import { cn, formatCurrency, formatPhone, getInitials } from '@/lib/utils';
 import { useDataStore } from '@/stores/data-store';
 import { WhatsAppButton } from '@/components/shared/WhatsAppButton';
@@ -9,6 +9,7 @@ import { customerSourceLabels } from '@/types/customer';
 export default function Customers() {
   const [search, setSearch] = useState('');
   const openAddCustomer = useUIStore((s) => s.openAddCustomer);
+  const openEditCustomer = useUIStore((s) => s.openEditCustomer);
 
   const customers = useDataStore((s) => s.customers);
   const bookings = useDataStore((s) => s.bookings);
@@ -61,7 +62,12 @@ export default function Customers() {
                     <Phone className="w-3 h-3" />{formatPhone(customer.phone)}
                   </p>
                 </div>
-                <WhatsAppButton phone={customer.phone} size="md" />
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <button onClick={() => openEditCustomer(customer.id)} className="p-2 rounded-xl border border-gray-100 hover:bg-gray-50 text-gray-400 hover:text-gray-600 transition-all" title="Edit Customer">
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <WhatsAppButton phone={customer.phone} size="md" customerId={customer.id} />
+                </div>
               </div>
 
               {customer.tags.length > 0 && (
