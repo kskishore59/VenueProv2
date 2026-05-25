@@ -8,6 +8,8 @@ import { WhatsAppButton } from '@/components/shared/WhatsAppButton';
 import { leadStatusConfig, leadSourceLabels, type LeadStatus } from '@/types/lead';
 import { eventTypeLabels, type EventType } from '@/types/booking';
 import { toast } from 'sonner';
+import { DatePicker } from '@/components/shared/DatePicker';
+import { TimePicker } from '@/components/shared/TimePicker';
 import { useAuthStore } from '@/stores/auth-store';
 import { hasPermission } from '@/lib/permissions';
 
@@ -271,29 +273,23 @@ export function LeadDrawer() {
                     </div>
                     <div>
                       <label className="block text-[11px] font-semibold text-gray-500 mb-1">Date *</label>
-                      <input
-                        type="date"
+                      <DatePicker
                         value={convertDate || lead.tentative_date || ''}
-                        onChange={(e) => setConvertDate(e.target.value)}
-                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none"
+                        onChange={setConvertDate}
                       />
                     </div>
                     <div>
                       <label className="block text-[11px] font-semibold text-gray-500 mb-1">Start</label>
-                      <input
-                        type="time"
+                      <TimePicker
                         value={convertStartTime}
-                        onChange={(e) => setConvertStartTime(e.target.value)}
-                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none"
+                        onChange={setConvertStartTime}
                       />
                     </div>
                     <div>
                       <label className="block text-[11px] font-semibold text-gray-500 mb-1">End</label>
-                      <input
-                        type="time"
+                      <TimePicker
                         value={convertEndTime}
-                        onChange={(e) => setConvertEndTime(e.target.value)}
-                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm outline-none"
+                        onChange={setConvertEndTime}
                       />
                     </div>
                   </div>

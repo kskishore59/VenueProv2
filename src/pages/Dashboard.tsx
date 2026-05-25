@@ -48,14 +48,14 @@ export default function Dashboard() {
             <div className="w-12 h-12 rounded-2xl bg-white text-brand-600 flex items-center justify-center shadow-md relative z-20">
               <Building2 className="w-6.5 h-6.5" />
             </div>
-            
+
             {/* Custom org logo overlapping */}
             {organization?.logo_url && (
               <div className="w-12 h-12 rounded-2xl bg-white border-2 border-brand-600 overflow-hidden shadow-md -ml-4 relative z-10 transition-transform hover:translate-x-1 duration-300">
-                <img 
-                  src={organization.logo_url} 
-                  alt={organization.name} 
-                  className="w-full h-full object-contain p-1" 
+                <img
+                  src={organization.logo_url}
+                  alt={organization.name}
+                  className="w-full h-full object-contain p-1"
                 />
               </div>
             )}
@@ -120,7 +120,7 @@ export default function Dashboard() {
       {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Upcoming Events */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-fade-in-up" style={{ animationDelay: '0.25s' }}>
+        <div className="bg-white rounded-2xl border shadow border-gray-100 overflow-hidden animate-fade-in-up" style={{ animationDelay: '0.25s' }}>
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center">
@@ -171,7 +171,7 @@ export default function Dashboard() {
         </div>
 
         {/* Follow-ups Due */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+        <div className="bg-white rounded-2xl border shadow border-gray-100 overflow-hidden animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-warning-50 flex items-center justify-center">

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
@@ -16,18 +16,20 @@ import { AddHallModal } from '@/components/settings/AddHallModal';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { ErrorFallback } from '@/components/shared/ErrorFallback';
-import Dashboard from '@/pages/Dashboard';
-import Bookings from '@/pages/Bookings';
-import Leads from '@/pages/Leads';
-import Customers from '@/pages/Customers';
-import Payments from '@/pages/Payments';
-import Settings from '@/pages/Settings';
-import Login from '@/pages/Login';
-import Signup from '@/pages/Signup';
-import Venues from '@/pages/Venues';
-import Expenses from '@/pages/Expenses';
-import Import from '@/pages/Import';
-import Help from '@/pages/Help';
+
+const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const Bookings = lazy(() => import('@/pages/Bookings'));
+const Leads = lazy(() => import('@/pages/Leads'));
+const Customers = lazy(() => import('@/pages/Customers'));
+const Payments = lazy(() => import('@/pages/Payments'));
+const Settings = lazy(() => import('@/pages/Settings'));
+const Login = lazy(() => import('@/pages/Login'));
+const Signup = lazy(() => import('@/pages/Signup'));
+const Venues = lazy(() => import('@/pages/Venues'));
+const Expenses = lazy(() => import('@/pages/Expenses'));
+const Import = lazy(() => import('@/pages/Import'));
+const Help = lazy(() => import('@/pages/Help'));
+
 import { FeedbackWidget } from '@/components/shared/FeedbackWidget';
 import { ReceiptModal } from '@/components/payments/ReceiptModal';
 import { EditLeadDrawer } from '@/components/leads/EditLeadDrawer';
@@ -67,31 +69,40 @@ export default function App() {
         )}
       >
         <BrowserRouter>
-          <Routes>
-            {/* Public Auth Routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+          <Suspense
+            fallback={
+              <div className="min-h-screen bg-surface-secondary flex flex-col items-center justify-center gap-3">
+                <div className="w-8 h-8 rounded-full border-2 border-brand-200 border-t-brand-600 animate-spin" />
+                <p className="text-xs font-semibold text-gray-500">Loading VenuePro...</p>
+              </div>
+            }
+          >
+            <Routes>
+              {/* Public Auth Routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
 
-            {/* Protected Workspace Routes */}
-            <Route element={<AuthGuard />}>
-              <Route element={<AppLayout />}>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/bookings" element={<PermissionGuard resource="bookings"><Bookings /></PermissionGuard>} />
-                <Route path="/leads" element={<PermissionGuard resource="leads"><Leads /></PermissionGuard>} />
-                <Route path="/customers" element={<PermissionGuard resource="customers"><Customers /></PermissionGuard>} />
-                <Route path="/payments" element={<PermissionGuard resource="payments"><Payments /></PermissionGuard>} />
-                <Route path="/venues" element={<PermissionGuard resource="bookings"><Venues /></PermissionGuard>} />
-                <Route path="/expenses" element={<PermissionGuard resource="expenses"><Expenses /></PermissionGuard>} />
-                <Route path="/import" element={<PermissionGuard resource="settings"><Import /></PermissionGuard>} />
-                <Route path="/settings" element={<PermissionGuard resource="settings"><Settings /></PermissionGuard>} />
-                <Route path="/help" element={<Help />} />
+              {/* Protected Workspace Routes */}
+              <Route element={<AuthGuard />}>
+                <Route element={<AppLayout />}>
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/bookings" element={<PermissionGuard resource="bookings"><Bookings /></PermissionGuard>} />
+                  <Route path="/leads" element={<PermissionGuard resource="leads"><Leads /></PermissionGuard>} />
+                  <Route path="/customers" element={<PermissionGuard resource="customers"><Customers /></PermissionGuard>} />
+                  <Route path="/payments" element={<PermissionGuard resource="payments"><Payments /></PermissionGuard>} />
+                  <Route path="/venues" element={<PermissionGuard resource="bookings"><Venues /></PermissionGuard>} />
+                  <Route path="/expenses" element={<PermissionGuard resource="expenses"><Expenses /></PermissionGuard>} />
+                  <Route path="/import" element={<PermissionGuard resource="settings"><Import /></PermissionGuard>} />
+                  <Route path="/settings" element={<PermissionGuard resource="settings"><Settings /></PermissionGuard>} />
+                  <Route path="/help" element={<Help />} />
+                </Route>
               </Route>
-            </Route>
 
-            {/* Catch-all Redirect */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+              {/* Catch-all Redirect */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
 
           {/* Global Drawers & Modals */}
           <ErrorBoundary fallback={(error, reset) => <ErrorFallback error={error} reset={reset} variant="widget" title="Quick Add Booking Failed" />}><QuickAddBooking /></ErrorBoundary>

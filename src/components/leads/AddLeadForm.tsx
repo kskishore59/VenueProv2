@@ -6,6 +6,7 @@ import { useDataStore } from '@/stores/data-store';
 import { eventTypes, eventTypeLabels, type EventType } from '@/types/booking';
 import { leadSourceLabels, type LeadSource } from '@/types/lead';
 import { toast } from 'sonner';
+import { DatePicker } from '@/components/shared/DatePicker';
 
 const leadSources: LeadSource[] = ['walk_in', 'phone_call', 'whatsapp', 'google', 'referral', 'social_media', 'justdial', 'website', 'other'];
 
@@ -165,27 +166,11 @@ export function AddLeadForm() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Tentative Date</label>
-              <div className="relative">
-                <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="date"
-                  value={tentativeDate}
-                  onChange={(e) => setTentativeDate(e.target.value)}
-                  className="w-full pl-10 pr-3 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all"
-                />
-              </div>
+              <DatePicker value={tentativeDate} onChange={setTentativeDate} />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Follow-up Date</label>
-              <div className="relative">
-                <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="date"
-                  value={followUpDate}
-                  onChange={(e) => setFollowUpDate(e.target.value)}
-                  className="w-full pl-10 pr-3 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all"
-                />
-              </div>
+              <DatePicker value={followUpDate} onChange={setFollowUpDate} />
             </div>
           </div>
 

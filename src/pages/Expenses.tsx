@@ -6,6 +6,7 @@ import { useUIStore } from '@/stores/ui-store';
 import type { Expense, ExpenseCategory, ExpensePaymentMode } from '@/types/expense';
 import { expenseCategoryLabels, expensePaymentModeLabels } from '@/types/expense';
 import { toast } from 'sonner';
+import { DatePicker } from '@/components/shared/DatePicker';
 
 const categories: ExpenseCategory[] = ['catering', 'maintenance', 'utilities', 'marketing', 'staff_salary', 'decorations', 'miscellaneous'];
 const paymentModes: ExpensePaymentMode[] = ['cash', 'upi', 'bank_transfer', 'cheque', 'card', 'online'];
@@ -434,8 +435,7 @@ export default function Expenses() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Spend Date</label>
-                    <input type="date" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all" />
+                    <DatePicker value={expenseDate} onChange={setExpenseDate} />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Payment Mode</label>

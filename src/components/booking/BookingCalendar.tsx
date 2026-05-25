@@ -56,9 +56,9 @@ export function BookingCalendar() {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
+    <div className="bg-[#fafaf9] rounded-2xl w-full p-4 border border-gray-200 shadow-sm overflow-hidden animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
       {/* Calendar Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100/70">
         <div className="flex items-center gap-3">
           <h3 className="text-lg font-bold text-gray-900">
             {format(currentMonth, 'MMMM yyyy')}
@@ -87,7 +87,7 @@ export function BookingCalendar() {
       </div>
 
       {/* Day Headers */}
-      <div className="grid grid-cols-7 border-b border-gray-50">
+      <div className="grid grid-cols-7 border-b border-gray-100/70">
         {DAY_NAMES.map((day) => (
           <div key={day} className="px-2 py-2.5 text-center text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
             {day}
@@ -105,6 +105,15 @@ export function BookingCalendar() {
           const isTodayDate = isToday(day);
           const maxShow = 2;
 
+          const nonCancelledBookings = dayBookings.filter((b) => b.status !== 'cancelled');
+          const primaryStatus = (() => {
+            if (nonCancelledBookings.length === 0) return null;
+            if (nonCancelledBookings.some((b) => b.status === 'confirmed')) return 'confirmed';
+            if (nonCancelledBookings.some((b) => b.status === 'hold')) return 'hold';
+            if (nonCancelledBookings.some((b) => b.status === 'completed')) return 'completed';
+            return nonCancelledBookings[0].status;
+          })();
+
           return (
             <div
               key={idx}
@@ -115,17 +124,35 @@ export function BookingCalendar() {
                 }
               }}
               className={cn(
-                'calendar-day relative min-h-[80px] md:min-h-[100px] p-1.5 border-b border-r border-gray-50 cursor-pointer',
-                !isCurrentMonth && 'bg-gray-50/50',
-                isSelected && 'ring-2 ring-brand-500 ring-inset bg-brand-50/30',
+                'calendar-day relative min-h-[80px] md:min-h-[100px] p-1.5 border-b border-r border-gray-100/70 cursor-pointer transition-all duration-200',
+                !isCurrentMonth && 'bg-gray-100/30',
+                isCurrentMonth && !primaryStatus && 'bg-white hover:bg-gray-50/50',
+
+                // Color codes for status-based calendar cell backgrounds
+                isCurrentMonth && primaryStatus === 'confirmed' && 'bg-brand-50/60 hover:bg-brand-50/80',
+                isCurrentMonth && primaryStatus === 'hold' && 'bg-warning-50/60 hover:bg-warning-50/80',
+                isCurrentMonth && primaryStatus === 'inquiry' && 'bg-gray-100/50 hover:bg-gray-100/70',
+                isCurrentMonth && primaryStatus === 'completed' && 'bg-success-50/60 hover:bg-success-50/80',
+
+                !isCurrentMonth && primaryStatus === 'confirmed' && 'bg-brand-50/30 hover:bg-brand-50/40',
+                !isCurrentMonth && primaryStatus === 'hold' && 'bg-warning-50/30 hover:bg-warning-50/40',
+                !isCurrentMonth && primaryStatus === 'inquiry' && 'bg-gray-150/40 hover:bg-gray-150/60',
+                !isCurrentMonth && primaryStatus === 'completed' && 'bg-success-50/30 hover:bg-success-50/40',
+
+                isSelected && 'ring-2 ring-brand-500 ring-inset z-10',
                 isTodayDate && !isSelected && 'bg-blue-50/40',
               )}
             >
               {/* Date number */}
               <div className={cn(
                 'flex items-center justify-center w-7 h-7 rounded-full text-sm font-semibold mb-1',
-                isTodayDate && 'bg-brand-600 text-white',
-                !isTodayDate && isCurrentMonth && 'text-gray-700',
+                isTodayDate && 'bg-brand-600 text-white shadow-2xs',
+                !isTodayDate && isCurrentMonth && (
+                  primaryStatus === 'confirmed' ? 'text-brand-800' :
+                    primaryStatus === 'hold' ? 'text-warning-800' :
+                      primaryStatus === 'completed' ? 'text-success-800' :
+                        'text-gray-700'
+                ),
                 !isCurrentMonth && 'text-gray-300',
               )}>
                 {format(day, 'd')}
@@ -168,7 +195,7 @@ export function BookingCalendar() {
       </div>
 
       {/* Status Legend */}
-      <div className="flex items-center gap-4 px-5 py-3 border-t border-gray-50 bg-gray-50/50">
+      <div className="flex items-center gap-4 px-5 py-3 border-t border-gray-100/70 bg-gray-100/20">
         <span className="text-[11px] font-medium text-gray-400">Status:</span>
         {(['confirmed', 'hold', 'inquiry', 'completed'] as BookingStatus[]).map((status) => (
           <div key={status} className="flex items-center gap-1.5">

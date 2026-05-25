@@ -204,3 +204,33 @@ export function parseDatabaseError(err: any): string {
   return msg;
 }
 
+/**
+ * Client-side CSV Exporter utility
+ */
+export function exportToCSV(data: any[], headers: string[], filename: string) {
+  const csvContent = [
+    headers.join(','),
+    ...data.map((row) =>
+      headers
+        .map((header) => {
+          const val = row[header] === null || row[header] === undefined ? '' : String(row[header]);
+          const escaped = val.replace(/"/g, '""');
+          return escaped.includes(',') || escaped.includes('\n') || escaped.includes('"')
+            ? `"${escaped}"`
+            : escaped;
+        })
+        .join(',')
+    ),
+  ].join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+

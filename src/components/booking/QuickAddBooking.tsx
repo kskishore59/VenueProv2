@@ -5,6 +5,8 @@ import { useUIStore } from '@/stores/ui-store';
 import { useDataStore } from '@/stores/data-store';
 import { eventTypes, eventTypeLabels, type EventType } from '@/types/booking';
 import { toast } from 'sonner';
+import { DatePicker } from '@/components/shared/DatePicker';
+import { TimePicker } from '@/components/shared/TimePicker';
 
 export function QuickAddBooking() {
   const isOpen = useUIStore((s) => s.isQuickAddOpen);
@@ -184,8 +186,7 @@ export function QuickAddBooking() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Event Date <span className="text-danger-500">*</span></label>
-              <input id="input-qa-event-date" type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)}
-                className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none" />
+              <DatePicker id="input-qa-event-date" value={eventDate} onChange={setEventDate} />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Hall <span className="text-danger-500">*</span></label>
@@ -230,13 +231,11 @@ export function QuickAddBooking() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Start Time</label>
-              <input id="input-qa-start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)}
-                className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none" />
+              <TimePicker id="input-qa-start-time" value={startTime} onChange={setStartTime} />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">End Time</label>
-              <input id="input-qa-end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)}
-                className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none" />
+              <TimePicker id="input-qa-end-time" value={endTime} onChange={setEndTime} />
             </div>
           </div>
 

@@ -161,18 +161,25 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       profile = profileRes.data;
 
       if (!profile) {
-        // Wait and retry once
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        const retryRes = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', authData.user.id)
-          .maybeSingle();
-
-        if (retryRes.error || !retryRes.data) {
+        let retries = 5;
+        let delay = 100;
+        for (let i = 0; i < retries; i++) {
+          const retryRes = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authData.user.id)
+            .maybeSingle();
+          if (retryRes.data) {
+            profile = retryRes.data;
+            break;
+          }
+          if (i < retries - 1) {
+            await new Promise((resolve) => setTimeout(resolve, delay * Math.pow(2, i)));
+          }
+        }
+        if (!profile) {
           throw new Error('User profile record could not be found. Please contact support.');
         }
-        profile = retryRes.data;
       }
 
       // 3. Set store state
@@ -245,30 +252,22 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       const { session, user } = authData;
 
       if (session && user) {
-        // Fetch newly created profile
+        // Fetch newly created profile with exponential backoff
         let profile = null;
-        // Wait briefly for trigger execution
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        
-        const profileRes = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .maybeSingle();
-
-        if (profileRes.data) {
-          profile = profileRes.data;
-        } else {
-          // Retry once
-          await new Promise((resolve) => setTimeout(resolve, 1500));
-          const retryRes = await supabase
+        let retries = 5;
+        let delay = 100;
+        for (let i = 0; i < retries; i++) {
+          const profileRes = await supabase
             .from('profiles')
             .select('*')
             .eq('id', user.id)
             .maybeSingle();
-
-          if (retryRes.data) {
-            profile = retryRes.data;
+          if (profileRes.data) {
+            profile = profileRes.data;
+            break;
+          }
+          if (i < retries - 1) {
+            await new Promise((resolve) => setTimeout(resolve, delay * Math.pow(2, i)));
           }
         }
 

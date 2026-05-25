@@ -27,7 +27,7 @@ export default function Leads() {
   const openAddLead = useUIStore((s) => s.openAddLead);
 
   const leads = useDataStore((s) => s.leads);
-  
+
   const role = useAuthStore((s) => s.profile?.role);
   const organization = useDataStore((s) => s.organization);
   const canCreateLead = hasPermission(role, 'leads', 'create', organization?.settings);
@@ -62,7 +62,7 @@ export default function Leads() {
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input type="text" placeholder="Search by name or phone..." value={search} onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none bg-white" />
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none bg-white shadow-sm" />
         </div>
         <div className="flex gap-1.5 overflow-x-auto pb-0.5">
           {statusFilters.map((f) => (
@@ -83,7 +83,7 @@ export default function Leads() {
             const isOverdue = lead.follow_up_date && lead.follow_up_date <= new Date().toISOString().split('T')[0] && lead.status !== 'won' && lead.status !== 'lost';
             return (
               <div key={lead.id} onClick={() => openLeadDrawer(lead.id)}
-                className={cn('bg-white rounded-2xl border p-4 cursor-pointer hover:shadow-md transition-all group',
+                className={cn('bg-white rounded-2xl border p-4 cursor-pointer shadow-sm hover:shadow-md transition-all group',
                   isOverdue ? 'border-warning-500/30' : 'border-gray-100')}>
                 <div className="flex items-start gap-4">
                   <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-100 to-violet-200 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
@@ -101,7 +101,7 @@ export default function Leads() {
                       {lead.budget_min_paise && <span>Budget: {formatCurrency(lead.budget_min_paise)}–{formatCurrency(lead.budget_max_paise || lead.budget_min_paise)}</span>}
                     </div>
                     {isOverdue && (
-                      <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-warning-500 animate-pulse-soft">
+                      <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-warning-600 animate-pulse-soft">
                         <span className="w-1.5 h-1.5 rounded-full bg-warning-500" />
                         Follow-up overdue • {getRelativeTime(lead.follow_up_date + 'T00:00:00Z')}
                       </div>
@@ -109,7 +109,7 @@ export default function Leads() {
                     {lead.notes && <p className="mt-2 text-xs text-gray-400 line-clamp-1">{lead.notes}</p>}
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="text-[10px] font-medium text-gray-300 hidden sm:block">{leadSourceLabels[lead.source]}</span>
+                    <span className="text-[12px] font-medium text-gray-500 hidden sm:block">{leadSourceLabels[lead.source]}</span>
                     <WhatsAppButton phone={lead.phone} size="sm" leadId={lead.id} />
                   </div>
                 </div>

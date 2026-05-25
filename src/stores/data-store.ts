@@ -23,10 +23,7 @@ import { format, addDays, startOfMonth, addMonths, subDays } from 'date-fns';
 import { toast } from 'sonner';
 
 function uuid() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
-  });
+  return self.crypto.randomUUID();
 }
 
 function generateBookingNumber(): string {
@@ -97,6 +94,7 @@ interface DataState {
   pendingInvites: StaffInvite[];
   isLoading: boolean;
   isOnline: boolean;
+  realtimeChannel: any | null;
 
   // ─── Sync Action ─────────────────────────────────────────
   syncData: (silent?: boolean) => Promise<void>;
@@ -287,6 +285,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
   notifications: [],
   isLoading: false,
   isOnline: false,
+  realtimeChannel: null,
 
   // ─── Sync Action ─────────────────────────────────────────
   syncData: async (silent = false) => {
@@ -338,21 +337,31 @@ export const useDataStore = create<DataState>()((set, get) => ({
 
       // Retry once after a delay if profiles table trigger was slow
       if (!profile) {
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        const retryRes = await supabase
-          .from('profiles')
-          .select('org_id, full_name, role')
-          .eq('id', user.id)
-          .maybeSingle();
-        
-        if (retryRes.error || !retryRes.data) {
+        let retries = 5;
+        let delay = 100;
+        for (let i = 0; i < retries; i++) {
+          const retryRes = await supabase
+            .from('profiles')
+            .select('org_id, full_name, role')
+            .eq('id', user.id)
+            .maybeSingle();
+          if (retryRes.data) {
+            profile = retryRes.data;
+            break;
+          }
+          if (i < retries - 1) {
+            await new Promise((resolve) => setTimeout(resolve, delay * Math.pow(2, i)));
+          }
+        }
+        if (!profile) {
           throw new Error('Database profile not created yet. Please reload the page.');
         }
-        profile = retryRes.data;
       }
 
       const orgId = profile.org_id;
-      console.log(`Connected to Supabase. Org ID: ${orgId}`);
+      if (import.meta.env.DEV) {
+        console.log(`Connected to Supabase. Org ID: ${orgId}`);
+      }
 
       // 3. Fetch all organization-scoped collections
       const [orgRes, hallsRes, customersRes, bookingsRes, paymentsRes, leadsRes, expensesRes, staffRes, invitesRes, notificationsRes] = await Promise.all([
@@ -426,6 +435,54 @@ export const useDataStore = create<DataState>()((set, get) => ({
         isOnline: true,
       });
 
+      // Setup Real-time Postgres changes subscription
+      const existingChannel = get().realtimeChannel;
+      if (existingChannel) {
+        supabase.removeChannel(existingChannel);
+      }
+
+      const channel = supabase
+        .channel('public-db-changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', filter: `org_id=eq.${orgId}` },
+          (payload: any) => {
+            const { table, eventType, new: newRow, old: oldRow } = payload;
+            const rowOrgId = newRow?.org_id || oldRow?.org_id;
+            if (rowOrgId && rowOrgId !== orgId) return;
+
+            // Format time strings if bookings table
+            if (table === 'bookings' && newRow) {
+              if (newRow.start_time) newRow.start_time = newRow.start_time.slice(0, 5);
+              if (newRow.end_time) newRow.end_time = newRow.end_time.slice(0, 5);
+            }
+
+            set((s: any) => {
+              const collectionName = table;
+              if (!s[collectionName]) return {};
+
+              const list = [...s[collectionName]];
+              if (eventType === 'INSERT') {
+                if (!list.some((item) => item.id === newRow.id)) {
+                  return { [collectionName]: [newRow, ...list] };
+                }
+              } else if (eventType === 'UPDATE') {
+                const index = list.findIndex((item) => item.id === newRow.id);
+                if (index !== -1) {
+                  list[index] = { ...list[index], ...newRow };
+                  return { [collectionName]: list };
+                }
+              } else if (eventType === 'DELETE') {
+                return { [collectionName]: list.filter((item) => item.id !== oldRow.id) };
+              }
+              return {};
+            });
+          }
+        )
+        .subscribe();
+
+      set({ realtimeChannel: channel });
+
       // Run background checks for followups/payment alerts
       setTimeout(() => {
         get().runBackgroundChecks();
@@ -451,6 +508,10 @@ export const useDataStore = create<DataState>()((set, get) => ({
 
   // ─── Data Purging ────────────────────────────────────────
   clearData: () => {
+    const channel = get().realtimeChannel;
+    if (channel) {
+      supabase.removeChannel(channel);
+    }
     set({
       bookings: [],
       customers: [],
@@ -487,6 +548,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
         created_at: '',
       },
       isOnline: false,
+      realtimeChannel: null,
     });
   },
 
@@ -716,6 +778,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
       } catch (err: any) {
         console.error('Database createCustomer failed:', err);
         toast.error(parseDatabaseError(err));
+        throw err;
       }
     }
 
@@ -804,6 +867,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
       } catch (err) {
         console.error('Database recordPayment failed:', err);
         toast.error(parseDatabaseError(err));
+        throw err;
       }
     }
 
@@ -883,6 +947,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
       } catch (err) {
         console.error('Database createLead failed:', err);
         toast.error(parseDatabaseError(err));
+        throw err;
       }
     }
 
@@ -1059,6 +1124,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
       } catch (err: any) {
         console.error('Database createHall failed:', err);
         toast.error(parseDatabaseError(err));
+        throw err;
       }
     }
 
@@ -1257,7 +1323,6 @@ export const useDataStore = create<DataState>()((set, get) => ({
     const state = get();
     if (state.isOnline) {
       try {
-        await supabase.from('payments').delete().eq('booking_id', id);
         const { error } = await supabase.from('bookings').delete().eq('id', id);
         if (error) throw error;
       } catch (err) {
@@ -1594,13 +1659,8 @@ export const useDataStore = create<DataState>()((set, get) => ({
       }
     }
     
-    const categories: Record<string, string> = {
-      'venuepro-media': 'wedding,banquet,hall',
-      'receipts': 'receipt,invoice,bill'
-    };
-    const query = categories[bucket] || 'venue';
-    const rand = Math.floor(Math.random() * 1000);
-    return `https://images.unsplash.com/photo-${1500000000000 + rand}?q=80&w=1000&auto=format&fit=crop&sig=${rand}`;
+    const label = bucket === 'receipts' ? 'Receipt Placeholder' : 'Media Placeholder';
+    return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="system-ui,sans-serif" font-size="14" font-weight="bold" fill="%239ca3af">${label}</text></svg>`;
   },
 
   // ─── Notifications CRUD ──────────────────────────────────

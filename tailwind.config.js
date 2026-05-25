@@ -11,6 +11,19 @@ export default {
         display: ['var(--font-display)', 'sans-serif'],
       },
       colors: {
+        gray: {
+          50: '#f9fafb',
+          100: '#f3f4f6',
+          150: '#eceef1',
+          200: '#e5e7eb',
+          300: '#d1d5db',
+          400: '#71717a', // increased intensity (darker, zinc-500 style)
+          500: '#4b5563', // increased intensity (darker, gray-600 style)
+          600: '#374151', // darker
+          700: '#1f2937',
+          800: '#111827',
+          900: '#090d16',
+        },
         brand: {
           50: 'var(--color-brand-50)',
           100: 'var(--color-brand-100)',
@@ -50,6 +63,10 @@ export default {
       },
       boxShadow: {
         'xs': '0 1px 2px rgba(0, 0, 0, 0.04)',
+        'sm': '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)',
+        'DEFAULT': '0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 8px -1px rgba(0, 0, 0, 0.02)',
+        'md': '0 10px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 16px -6px rgba(0, 0, 0, 0.02)',
+        'lg': '0 20px 35px -10px rgba(0, 0, 0, 0.08), 0 10px 20px -8px rgba(0, 0, 0, 0.03)',
         'glow': '0 0 20px rgba(79, 70, 229, 0.15)',
         'card-hover': '0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -5px rgba(0, 0, 0, 0.04)',
       },

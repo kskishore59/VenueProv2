@@ -6,6 +6,7 @@ import { useDataStore } from '@/stores/data-store';
 import { leadSourceLabels, type LeadSource } from '@/types/lead';
 import { eventTypes, eventTypeLabels, type EventType } from '@/types/booking';
 import { toast } from 'sonner';
+import { DatePicker } from '@/components/shared/DatePicker';
 
 export function EditLeadDrawer() {
   const isOpen = useUIStore((s) => s.isEditLeadOpen);
@@ -174,8 +175,7 @@ export function EditLeadDrawer() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Tentative Date</label>
-              <input id="input-el-tentative-date" type="date" value={tentativeDate} onChange={(e) => setTentativeDate(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all" />
+              <DatePicker id="input-el-tentative-date" value={tentativeDate} onChange={setTentativeDate} />
             </div>
           </div>
 
@@ -224,8 +224,7 @@ export function EditLeadDrawer() {
             <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5 text-brand-600" /> Follow-up Date
             </label>
-            <input id="input-el-follow-up-date" type="date" value={followUpDate} onChange={(e) => setFollowUpDate(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all" />
+            <DatePicker id="input-el-follow-up-date" value={followUpDate} onChange={setFollowUpDate} />
           </div>
 
           {/* Notes */}

@@ -5,6 +5,8 @@ import { useUIStore } from '@/stores/ui-store';
 import { useDataStore } from '@/stores/data-store';
 import { eventTypes, eventTypeLabels, type EventType, type BookingStatus } from '@/types/booking';
 import { toast } from 'sonner';
+import { DatePicker } from '@/components/shared/DatePicker';
+import { TimePicker } from '@/components/shared/TimePicker';
 
 const statusOptions: { value: BookingStatus; label: string }[] = [
   { value: 'inquiry', label: 'Inquiry' },
@@ -119,8 +121,7 @@ export function EditBookingDrawer() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Event Date</label>
-              <input id="input-eb-event-date" type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)}
-                className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all" />
+              <DatePicker id="input-eb-event-date" value={eventDate} onChange={setEventDate} />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Hall</label>
@@ -147,13 +148,11 @@ export function EditBookingDrawer() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Start</label>
-              <input id="input-eb-start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)}
-                className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all" />
+              <TimePicker id="input-eb-start-time" value={startTime} onChange={setStartTime} />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">End</label>
-              <input id="input-eb-end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)}
-                className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all" />
+              <TimePicker id="input-eb-end-time" value={endTime} onChange={setEndTime} />
             </div>
           </div>
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Search, Plus, Phone, Mail, MapPin, Edit } from 'lucide-react';
-import { cn, formatCurrency, formatPhone, getInitials } from '@/lib/utils';
+import { cn, formatCurrency, formatPhone, getInitials, exportToCSV } from '@/lib/utils';
 import { useDataStore } from '@/stores/data-store';
 import { WhatsAppButton } from '@/components/shared/WhatsAppButton';
 import { useUIStore } from '@/stores/ui-store';
@@ -21,6 +21,37 @@ export default function Customers() {
     return c.name.toLowerCase().includes(s) || c.phone.includes(search);
   });
 
+  const handleExport = () => {
+    const csvData = filtered.map((c) => {
+      const bookingCount = bookings.filter((b) => b.customer_id === c.id).length;
+      const paidTotal = payments
+        .filter((p) => {
+          const bk = bookings.find((b) => b.id === p.booking_id);
+          return bk?.customer_id === c.id && p.status === 'received';
+        })
+        .reduce((sum, p) => sum + p.amount_paise, 0);
+
+      return {
+        'Customer ID': c.id,
+        'Name': c.name,
+        'Phone': c.phone,
+        'Email': c.email || 'N/A',
+        'Source': customerSourceLabels[c.source] || c.source,
+        'Address': c.address || 'N/A',
+        'GSTIN': c.gstin || 'N/A',
+        'Total Bookings': bookingCount,
+        'Total Spent (Rs.)': (paidTotal / 100).toFixed(2),
+        'Notes': c.notes || '',
+      };
+    });
+
+    exportToCSV(
+      csvData,
+      ['Customer ID', 'Name', 'Phone', 'Email', 'Source', 'Address', 'GSTIN', 'Total Bookings', 'Total Spent (Rs.)', 'Notes'],
+      `customers_export_${new Date().toISOString().slice(0, 10)}.csv`
+    );
+  };
+
   return (
     <div className="space-y-5 animate-fade-in">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -28,10 +59,18 @@ export default function Customers() {
           <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
           <p className="text-sm text-gray-400 mt-0.5">{customers.length} total customers</p>
         </div>
-        <button onClick={openAddCustomer}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 active:scale-95 transition-all shadow-sm">
-          <Plus className="w-4 h-4" /> Add Customer
-        </button>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button
+            onClick={handleExport}
+            className="px-3.5 py-2.5 rounded-xl text-xs font-bold bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1.5 transition-all shadow-2xs hover:shadow-xs active:scale-95 w-full sm:w-auto justify-center"
+          >
+            <span>📥</span> Export CSV
+          </button>
+          <button onClick={openAddCustomer}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 active:scale-95 transition-all shadow-sm w-full sm:w-auto justify-center">
+            <Plus className="w-4 h-4" /> Add Customer
+          </button>
+        </div>
       </div>
 
       <div className="relative max-w-xl">

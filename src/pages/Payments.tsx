@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { IndianRupee, TrendingUp, AlertCircle, Edit, FileText } from 'lucide-react';
-import { cn, formatCurrency, formatDateReadable } from '@/lib/utils';
+import { cn, formatCurrency, formatDateReadable, exportToCSV } from '@/lib/utils';
 import { useDataStore } from '@/stores/data-store';
 import { useUIStore } from '@/stores/ui-store';
 import { StatusBadge } from '@/components/shared/StatusBadge';
@@ -33,6 +33,31 @@ export default function Payments() {
       return sum + Math.max(0, b.total_amount_paise - paid);
     }, 0);
 
+  const handleExport = () => {
+    const csvData = filtered.map((p) => {
+      const booking = bookings.find((b) => b.id === p.booking_id);
+      const customer = booking ? getCustomerById(booking.customer_id) : null;
+      return {
+        'Payment ID': p.id,
+        'Booking Number': booking?.booking_number || 'N/A',
+        'Customer Name': customer?.name || 'Unknown',
+        'Amount (Rs.)': (p.amount_paise / 100).toFixed(2),
+        'Type': p.payment_type || 'installment',
+        'Mode': paymentModeLabels[p.payment_mode] || p.payment_mode,
+        'Status': p.status,
+        'Transaction Ref': p.transaction_ref || 'N/A',
+        'Paid At': p.paid_at ? formatDateReadable(p.paid_at) : 'N/A',
+        'Notes': p.notes || '',
+      };
+    });
+
+    exportToCSV(
+      csvData,
+      ['Payment ID', 'Booking Number', 'Customer Name', 'Amount (Rs.)', 'Type', 'Mode', 'Status', 'Transaction Ref', 'Paid At', 'Notes'],
+      `payments_export_${new Date().toISOString().slice(0, 10)}.csv`
+    );
+  };
+
   return (
     <div className="space-y-5 animate-fade-in">
       <div><h1 className="text-2xl font-bold text-gray-900">Payments</h1><p className="text-sm text-gray-400 mt-0.5">Track all incoming payments</p></div>
@@ -54,17 +79,25 @@ export default function Payments() {
         </div>
       </div>
 
-      <div className="flex gap-2">
-        {(['all', 'received', 'pending'] as const).map((f) => (
-          <button key={f} onClick={() => setFilter(f)}
-            className={cn('px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-all',
-              filter === f ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50')}>
-            {f === 'all' ? 'All Payments' : f}
-          </button>
-        ))}
+      <div className="flex justify-between items-center">
+        <div className="flex gap-2">
+          {(['all', 'received', 'pending'] as const).map((f) => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={cn('px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-all',
+                filter === f ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50')}>
+              {f === 'all' ? 'All Payments' : f}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={handleExport}
+          className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1.5 transition-all shadow-2xs hover:shadow-xs active:scale-95"
+        >
+          <span>📥</span> Export CSV
+        </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
         <div className="divide-y divide-gray-50">
           {filtered.map((payment) => {
             const booking = bookings.find((b) => b.id === payment.booking_id);

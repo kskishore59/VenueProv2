@@ -119,20 +119,20 @@ export function Header() {
       )}
     >
       {/* Left: Menu + Title */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={() => setSidebarMobileOpen(true)}
-          className="md:hidden p-2 -ml-1 rounded-xl hover:bg-gray-100 transition-colors"
+          className="md:hidden p-2 -ml-1 rounded-xl hover:bg-gray-100 transition-colors flex-shrink-0"
         >
           <Menu className="w-4 h-4 text-gray-600" />
         </button>
-        <div>
-          <h2 className="text-lg font-bold text-gray-900 tracking-tight">{title}</h2>
+        <div className="min-w-0">
+          <h2 className="text-lg font-bold text-gray-900 tracking-tight truncate">{title}</h2>
         </div>
       </div>
 
       {/* Right: Actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-shrink-0">
         {/* Quick Add Dropdown Container */}
         {showQuickAdd && (
           <div id="tour-quick-add-btn" className="relative">
@@ -204,7 +204,7 @@ export function Header() {
         <Link
           to="/help"
           id="tour-help-btn"
-          className="w-9 h-9 rounded-full bg-white border border-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-900 shadow-2xs transition-all duration-200 active:scale-95"
+          className="w-9 h-9 rounded-full bg-white border border-gray-100 hidden sm:flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-900 shadow-2xs transition-all duration-200 active:scale-95"
           title="Help Center"
         >
           <HelpCircle className="w-4 h-4" />
@@ -356,7 +356,7 @@ export function Header() {
         </div>
 
         {/* Visual Divider */}
-        <div className="h-6 w-[1px] bg-gray-200 mx-2.5 self-center" />
+        <div className="h-6 w-[1px] bg-gray-200 mx-2.5 self-center hidden sm:block" />
 
         {/* User Profile Dropdown Container */}
         <div className="relative">
