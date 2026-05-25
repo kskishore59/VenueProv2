@@ -72,7 +72,7 @@ export function FeedbackWidget() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 no-print" ref={widgetRef}>
+    <div className="fixed bottom-16 right-4 md:bottom-6 md:right-6 mb-8 z-40 no-print" ref={widgetRef}>
       {/* Popover Feedback Card */}
       {isOpen && (
         <div className="absolute bottom-16 right-0 w-[360px] max-w-[calc(100vw-2rem)] bg-white border border-gray-150 rounded-2xl shadow-2xl p-5 flex flex-col gap-4 animate-fade-in z-50">
@@ -82,8 +82,8 @@ export function FeedbackWidget() {
               <h3 className="text-sm font-bold text-gray-900">Share Feedback</h3>
               <p className="text-[11px] text-gray-400 font-medium">Help us shape VenuePro register</p>
             </div>
-            <button 
-              onClick={handleClose} 
+            <button
+              onClick={handleClose}
               className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
             >
               <X className="w-4 h-4" />
@@ -105,8 +105,8 @@ export function FeedbackWidget() {
                       onClick={() => setRating(item.rating)}
                       className={cn(
                         "w-11 h-11 rounded-xl text-2xl flex items-center justify-center transition-all duration-250 relative group",
-                        rating === item.rating 
-                          ? "bg-brand-50 border-2 border-brand-500 scale-110 shadow-xs" 
+                        rating === item.rating
+                          ? "bg-brand-50 border-2 border-brand-500 scale-110 shadow-xs"
                           : "hover:bg-gray-100 hover:scale-105 active:scale-95"
                       )}
                       title={item.label}
@@ -157,8 +157,8 @@ export function FeedbackWidget() {
                     value={message}
                     onChange={(e) => setMessage(e.target.value.slice(0, 500))}
                     placeholder={
-                      category === 'bug' 
-                        ? 'What went wrong? Steps to reproduce?' 
+                      category === 'bug'
+                        ? 'What went wrong? Steps to reproduce?'
                         : 'Describe your idea or what we can do better...'
                     }
                     rows={3}
@@ -176,7 +176,7 @@ export function FeedbackWidget() {
                 disabled={rating === null || !message.trim() || isSubmitting}
                 className={cn(
                   "w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-xs active:scale-[0.98]",
-                  rating === null || !message.trim() 
+                  rating === null || !message.trim()
                     ? "bg-gray-300 cursor-not-allowed opacity-75"
                     : "bg-brand-600 hover:bg-brand-700 shadow-sm"
                 )}

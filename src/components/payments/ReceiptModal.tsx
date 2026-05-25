@@ -45,10 +45,10 @@ function PrintSheetContent({
   balanceDue,
 }: PrintSheetContentProps) {
   return (
-    <div className="flex flex-col justify-between h-full min-h-[297mm] bg-white p-8 md:p-12 text-gray-800 text-[13px] font-sans">
+    <div className="flex flex-col justify-between h-full min-h-[297mm] print:min-h-0 print:h-auto bg-white p-8 md:p-12 print:p-0 text-gray-800 text-[13px] font-sans">
       <div>
         {/* Paper Header: Organization Info */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start border-b border-gray-200 pb-6 gap-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start border-b border-gray-200 pb-6 print:pb-4 gap-4 print:gap-2">
           <div className="space-y-2">
             <div className="flex items-center gap-2.5">
               {organization.logo_url ? (
@@ -80,7 +80,7 @@ function PrintSheetContent({
         </div>
 
         {/* Receipt Title and Metadata */}
-        <div className="my-8 flex flex-col sm:flex-row sm:justify-between gap-4">
+        <div className="my-8 print:my-4 flex flex-col sm:flex-row sm:justify-between gap-4 print:gap-2">
           <div>
             <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
               {mode === 'receipt' ? 'Payment Receipt' : 'Booking Invoice'}
@@ -104,7 +104,7 @@ function PrintSheetContent({
         </div>
 
         {/* Client / Venue reference cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 rounded-xl bg-gray-50/50 border border-gray-100 mb-8 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 print:gap-4 p-4 print:p-3 rounded-xl bg-gray-50/50 border border-gray-100 mb-8 print:mb-4 text-xs">
           <div>
             <h4 className="font-bold text-gray-400 uppercase tracking-wider mb-2">Billed To</h4>
             {customer ? (
@@ -136,34 +136,34 @@ function PrintSheetContent({
         </div>
 
         {/* Particulars Table */}
-        <table className="w-full text-left border-collapse mb-8">
+        <table className="w-full text-left border-collapse mb-8 print:mb-4">
           <thead>
             <tr className="border-b border-gray-200 text-xs font-bold text-gray-400 uppercase">
-              <th className="py-2.5">Particulars / Description</th>
-              <th className="py-2.5 text-right w-32">SAC Code</th>
-              <th className="py-2.5 text-right w-36">Amount</th>
+              <th className="py-2.5 print:py-1.5">Particulars / Description</th>
+              <th className="py-2.5 print:py-1.5 text-right w-32">SAC Code</th>
+              <th className="py-2.5 print:py-1.5 text-right w-36">Amount</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {mode === 'receipt' && targetPayment ? (
               <tr>
-                <td className="py-4">
+                <td className="py-4 print:py-2">
                   <p className="font-bold text-gray-900 capitalize">
                     {targetPayment.payment_type} Payment
                   </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-xs text-gray-400 mt-0.5 animate-pulse-soft">
                     Received via {paymentModeLabels[targetPayment.payment_mode]}
                     {targetPayment.transaction_ref && ` (Ref: ${targetPayment.transaction_ref})`}
                   </p>
                 </td>
-                <td className="py-4 text-right font-mono text-xs text-gray-500">996331</td>
-                <td className="py-4 text-right font-semibold text-gray-950">
+                <td className="py-4 print:py-2 text-right font-mono text-xs text-gray-500">996331</td>
+                <td className="py-4 print:py-2 text-right font-semibold text-gray-950">
                   {formatCurrency(targetPayment.amount_paise)}
                 </td>
               </tr>
             ) : (
               <tr>
-                <td className="py-4">
+                <td className="py-4 print:py-2">
                   <p className="font-bold text-gray-900">
                     Hall Booking Services — {hall?.name || 'Venue Rental'}
                   </p>
@@ -172,8 +172,8 @@ function PrintSheetContent({
                     {targetBooking.guest_count && ` (Guests: ${targetBooking.guest_count})`}
                   </p>
                 </td>
-                <td className="py-4 text-right font-mono text-xs text-gray-500">996331</td>
-                <td className="py-4 text-right font-semibold text-gray-950">
+                <td className="py-4 print:py-2 text-right font-mono text-xs text-gray-500">996331</td>
+                <td className="py-4 print:py-2 text-right font-semibold text-gray-950">
                   {formatCurrency(targetBooking.total_amount_paise)}
                 </td>
               </tr>
@@ -182,8 +182,8 @@ function PrintSheetContent({
         </table>
 
         {/* Subtotals & Taxes Computation */}
-        <div className="flex justify-end mb-8">
-          <div className="w-full sm:w-64 space-y-2 border-t border-gray-200 pt-4 text-xs">
+        <div className="flex justify-end mb-8 print:mb-4">
+          <div className="w-full sm:w-64 space-y-2 print:space-y-1 border-t border-gray-200 pt-4 print:pt-2 text-xs">
             {gstEnabled ? (
               <>
                 <div className="flex justify-between text-gray-500">
@@ -200,7 +200,7 @@ function PrintSheetContent({
                 </div>
               </>
             ) : null}
-            <div className="flex justify-between text-base font-black text-gray-900 border-t border-gray-150 pt-2">
+            <div className="flex justify-between text-base font-black text-gray-900 border-t border-gray-150 pt-2 print:pt-1.5">
               <span>Total Amount:</span>
               <span>{formatCurrency(totalAmount)}</span>
             </div>
@@ -209,12 +209,12 @@ function PrintSheetContent({
 
         {/* Log of payments and balances (Only for Booking Invoice) */}
         {mode === 'invoice' && (
-          <div className="border-t border-gray-200 pt-6 mt-6">
+          <div className="border-t border-gray-200 pt-6 print:pt-3 mt-6 print:mt-3">
             <h3 className="font-bold text-gray-900 text-xs mb-3 uppercase tracking-wider">Payments Log</h3>
             {bookingPayments.length === 0 ? (
               <p className="text-xs text-gray-400 italic">No payments logged yet.</p>
             ) : (
-              <div className="space-y-1.5 mb-6">
+              <div className="space-y-1.5 print:space-y-1 mb-6 print:mb-3">
                 {bookingPayments.map((p, idx) => (
                   <div key={p.id} className="flex justify-between text-xs text-gray-600">
                     <span>
@@ -227,7 +227,7 @@ function PrintSheetContent({
                 ))}
               </div>
             )}
-            <div className="p-3 bg-gray-50 rounded-xl flex items-center justify-between border border-gray-100 text-xs mt-4">
+            <div className="p-3 print:p-2 bg-gray-50 rounded-xl flex items-center justify-between border border-gray-100 text-xs mt-4 print:mt-2">
               <div className="font-bold text-success-600">
                 Total Paid: {formatCurrency(totalPaid)}
               </div>
@@ -240,7 +240,7 @@ function PrintSheetContent({
       </div>
 
       {/* T&C and Signatures */}
-      <div className="border-t border-gray-200 pt-8 mt-12 text-[11px] text-gray-400 leading-relaxed space-y-6">
+      <div className="border-t border-gray-200 pt-8 print:pt-3 mt-12 print:mt-4 text-[11px] print:text-[10px] text-gray-450 leading-relaxed space-y-6 print:space-y-3">
         <div>
           <h4 className="font-bold text-gray-500 uppercase tracking-wider mb-1">Terms & Conditions</h4>
           {organization.terms_and_conditions ? (
@@ -256,13 +256,13 @@ function PrintSheetContent({
         </div>
         
         {/* Signature Blocks */}
-        <div className="flex justify-between items-end pt-8">
+        <div className="flex justify-between items-end pt-8 print:pt-4">
           <div className="text-center w-36">
-            <div className="border-b border-gray-200 h-8 mb-1.5" />
+            <div className="border-b border-gray-200 h-8 print:h-6 mb-1.5 print:mb-1" />
             <p className="font-semibold text-gray-500">Customer Signature</p>
           </div>
           <div className="text-center w-40">
-            <div className="border-b border-gray-200 h-8 mb-1.5 flex items-center justify-center">
+            <div className="border-b border-gray-200 h-8 print:h-6 mb-1.5 print:mb-1 flex items-center justify-center">
               <Check className="w-4 h-4 text-success-500 opacity-60 no-print" />
             </div>
             <p className="font-semibold text-gray-700">Authorized Signatory</p>
@@ -437,22 +437,22 @@ export function ReceiptModal() {
           onClick={(e) => e.stopPropagation()}
         >
           {/* Action Header */}
-          <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-150 sticky top-0 z-10">
-            <div>
-              <h3 className="text-base font-bold text-gray-900 capitalize">
+          <div className="flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 bg-white border-b border-gray-150 sticky top-0 z-10 gap-3">
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm sm:text-base font-bold text-gray-900 capitalize truncate">
                 {mode === 'receipt' ? 'Payment Receipt' : 'Booking Invoice'}
               </h3>
-              <p className="text-xs text-gray-400 font-medium mt-0.5">
+              <p className="hidden sm:block text-xs text-gray-400 font-medium mt-0.5">
                 Generate, download or print digital register copies
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
               <button
                 onClick={handlePrint}
-                className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 active:scale-95 transition-all rounded-xl shadow-xs"
+                className="flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 active:scale-95 transition-all rounded-xl shadow-xs shrink-0"
               >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Print / Save PDF</span>
+                <Printer className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>Print<span className="hidden sm:inline"> / Save PDF</span></span>
               </button>
               <button
                 onClick={closeReceiptModal}
@@ -465,10 +465,10 @@ export function ReceiptModal() {
           </div>
 
           {/* Printable Document Preview Area */}
-          <div className="receipt-print-wrapper flex-1 overflow-y-auto p-4 md:p-8 flex justify-center bg-gray-100/50">
+          <div className="receipt-print-wrapper flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 flex justify-center bg-gray-100/50">
             <div 
               id="receipt-screen-sheet"
-              className="bg-white w-full max-w-[210mm] p-8 md:p-12 shadow-md border border-gray-150 rounded-2xl flex flex-col justify-between text-gray-800 text-[13px] font-sans"
+              className="bg-white w-full max-w-[210mm] shadow-md border border-gray-150 rounded-2xl overflow-hidden"
             >
               <PrintSheetContent {...sharedProps} />
             </div>

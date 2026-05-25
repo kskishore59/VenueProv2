@@ -28,10 +28,16 @@ const steps: Step[] = [
     position: 'bottom',
   },
   {
-    selector: '#tour-help-btn',
+    selector: '#tour-sidebar-settings',
+    title: 'Workspace Settings',
+    description: 'Configure your company details, GST registration, payment terms, and invite your staff.',
+    position: 'right',
+  },
+  {
+    selector: '#tour-sidebar-help',
     title: 'Help & Knowledge Base',
     description: 'Access video flows, read FAQs, and check the common blunders list if you get stuck.',
-    position: 'bottom',
+    position: 'right',
   },
 ];
 
@@ -73,7 +79,20 @@ export const OnboardingTour: OnboardingTourComponent = () => {
     if (!active || !activeStep) return;
 
     const updateCoords = () => {
-      const el = document.querySelector(activeStep.selector);
+      const isMobile = window.innerWidth < 768;
+      let targetSelector = activeStep.selector;
+
+      if (isMobile) {
+        if (targetSelector === '#tour-sidebar-nav') {
+          targetSelector = '#tour-mobile-nav';
+        } else if (targetSelector === '#tour-quick-add-btn') {
+          targetSelector = '#tour-mobile-quick-add';
+        } else if (targetSelector === '#tour-sidebar-settings' || targetSelector === '#tour-sidebar-help') {
+          targetSelector = '#tour-mobile-settings';
+        }
+      }
+
+      const el = document.querySelector(targetSelector);
       if (el) {
         const rect = el.getBoundingClientRect();
         setCoords({
@@ -130,7 +149,19 @@ export const OnboardingTour: OnboardingTourComponent = () => {
 
   // Render tooltip styles based on step settings
   let tooltipStyle: React.CSSProperties = {};
-  if (coords) {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+  if (isMobile) {
+    // Dock at the bottom on mobile viewports to prevent screen clipping
+    tooltipStyle = {
+      position: 'fixed',
+      bottom: '88px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      width: 'calc(100% - 2rem)',
+      maxWidth: '380px',
+    };
+  } else if (coords) {
     const gap = 12;
     if (activeStep.position === 'right') {
       tooltipStyle = {

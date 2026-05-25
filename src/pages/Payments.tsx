@@ -79,11 +79,11 @@ export default function Payments() {
         </div>
       </div>
 
-      <div className="flex justify-between items-center">
-        <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+        <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none flex-nowrap">
           {(['all', 'received', 'pending'] as const).map((f) => (
             <button key={f} onClick={() => setFilter(f)}
-              className={cn('px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-all',
+              className={cn('px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-all shrink-0',
                 filter === f ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50')}>
               {f === 'all' ? 'All Payments' : f}
             </button>
@@ -91,7 +91,7 @@ export default function Payments() {
         </div>
         <button
           onClick={handleExport}
-          className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1.5 transition-all shadow-2xs hover:shadow-xs active:scale-95"
+          className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-1.5 transition-all shadow-2xs hover:shadow-xs active:scale-95 shrink-0"
         >
           <span>📥</span> Export CSV
         </button>

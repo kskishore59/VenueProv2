@@ -135,7 +135,7 @@ export function Header() {
       <div className="flex items-center gap-2 flex-shrink-0">
         {/* Quick Add Dropdown Container */}
         {showQuickAdd && (
-          <div id="tour-quick-add-btn" className="relative">
+          <div id="tour-quick-add-btn" className="relative hidden md:block">
             <button
               onClick={() => setQuickAddOpen(!quickAddOpen)}
               className={cn(

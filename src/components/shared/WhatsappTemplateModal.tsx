@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { X, MessageSquare, Copy, Send, HelpCircle } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { X, Copy, HelpCircle } from 'lucide-react';
 import { useDataStore } from '@/stores/data-store';
 import { formatCurrency, formatDateReadable, formatTime } from '@/lib/utils';
 import { eventTypeLabels } from '@/types/booking';
 import { toast } from 'sonner';
+import { WhatsAppIcon } from './WhatsAppButton';
 
 interface WhatsappTemplateModalProps {
   isOpen: boolean;
@@ -217,19 +219,19 @@ export function WhatsappTemplateModal({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <>
       <div className="fixed inset-0 bg-black/50 z-50 drawer-overlay animate-fade-in" onClick={onClose} />
-      <div className="fixed inset-0 flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <div className="fixed inset-0 flex items-start sm:items-center justify-center p-4 z-50 overflow-y-auto">
         <div
-          className="relative bg-white border border-gray-250 rounded-3xl w-full max-w-2xl shadow-2xl flex flex-col p-6 overflow-hidden animate-scale-up"
+          className="relative bg-white border border-gray-250 rounded-3xl w-full max-w-2xl shadow-2xl flex flex-col p-4 md:p-6 my-auto overflow-hidden animate-scale-up"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-gray-150 pb-4 mb-4">
             <div>
               <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-emerald-600" />
+                <WhatsAppIcon className="w-5 h-5 text-emerald-600" />
                 WhatsApp message templates
               </h3>
               <p className="text-xs text-gray-400 mt-0.5">
@@ -287,7 +289,7 @@ export function WhatsappTemplateModal({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-between border-t border-gray-150 pt-4 mt-5 gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between border-t border-gray-150 pt-4 mt-5 gap-3">
             <button
               onClick={handleCopy}
               className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-250 text-gray-600 hover:text-gray-900 hover:bg-gray-50 active:scale-95 transition-all text-xs font-bold"
@@ -302,12 +304,13 @@ export function WhatsappTemplateModal({
               className="flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white active:scale-95 transition-all text-xs font-bold shadow-sm"
               title="Open WhatsApp Web or app to send text"
             >
-              <Send className="w-4 h-4" />
+              <WhatsAppIcon className="w-4 h-4" />
               <span>Send via WhatsApp</span>
             </button>
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }

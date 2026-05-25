@@ -5,6 +5,7 @@ import { Toaster } from 'sonner';
 import { useAuthStore } from '@/stores/auth-store';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AuthGuard } from '@/components/shared/AuthGuard';
+import { GlobalLoader } from '@/components/shared/GlobalLoader';
 import { QuickAddBooking } from '@/components/booking/QuickAddBooking';
 import { BookingDrawer } from '@/components/booking/BookingDrawer';
 import { EditBookingDrawer } from '@/components/booking/EditBookingDrawer';
@@ -71,10 +72,7 @@ export default function App() {
         <BrowserRouter>
           <Suspense
             fallback={
-              <div className="min-h-screen bg-surface-secondary flex flex-col items-center justify-center gap-3">
-                <div className="w-8 h-8 rounded-full border-2 border-brand-200 border-t-brand-600 animate-spin" />
-                <p className="text-xs font-semibold text-gray-500">Loading VenuePro...</p>
-              </div>
+              <GlobalLoader message="Loading VenuePro..." />
             }
           >
             <Routes>

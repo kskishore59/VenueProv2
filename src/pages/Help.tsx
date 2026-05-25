@@ -130,11 +130,11 @@ export default function Help() {
       </div>
 
       {/* Tabs Menu */}
-      <div className="flex gap-2 border-b border-gray-150 pb-px">
+      <div className="flex gap-2 border-b border-gray-150 pb-px overflow-x-auto whitespace-nowrap flex-nowrap scrollbar-none">
         <button
           onClick={() => setActiveTab('flows')}
           className={cn(
-            'px-4 py-2 text-xs font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5',
+            'px-4 py-2 text-xs font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5 shrink-0',
             activeTab === 'flows'
               ? 'border-brand-600 text-brand-600 font-extrabold'
               : 'border-transparent text-gray-400 hover:text-gray-600'
@@ -146,7 +146,7 @@ export default function Help() {
         <button
           onClick={() => setActiveTab('blunders')}
           className={cn(
-            'px-4 py-2 text-xs font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5',
+            'px-4 py-2 text-xs font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5 shrink-0',
             activeTab === 'blunders'
               ? 'border-brand-600 text-brand-600 font-extrabold'
               : 'border-transparent text-gray-400 hover:text-gray-600'
@@ -158,7 +158,7 @@ export default function Help() {
         <button
           onClick={() => setActiveTab('faqs')}
           className={cn(
-            'px-4 py-2 text-xs font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5',
+            'px-4 py-2 text-xs font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5 shrink-0',
             activeTab === 'faqs'
               ? 'border-brand-600 text-brand-600 font-extrabold'
               : 'border-transparent text-gray-400 hover:text-gray-600'

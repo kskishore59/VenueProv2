@@ -28,3 +28,4 @@ create index if not exists idx_payments_booking on public.payments(booking_id);
 
 -- Composite index for lead pipeline stage views
 create index if not exists idx_leads_org_status on public.leads(org_id, status);
+

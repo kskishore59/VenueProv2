@@ -78,15 +78,16 @@ export function Sidebar() {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-40 md:hidden drawer-overlay"
+          className="fixed inset-0 bg-black/40 z-[60] md:hidden drawer-overlay"
           onClick={() => setSidebarMobileOpen(false)}
         />
       )}
 
       {/* Sidebar aside panel */}
       <aside
+        id="tour-sidebar-nav"
         className={cn(
-          'fixed top-0 left-0 h-screen bg-white border-r border-gray-100 z-50',
+          'fixed top-0 left-0 h-screen bg-white border-r border-gray-100 z-[70]',
           'flex flex-col transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-xs',
           // Desktop
           'hidden md:flex',
@@ -191,6 +192,7 @@ export function Sidebar() {
             {showSettings && (
               <NavLink
                 to="/settings"
+                id="tour-sidebar-settings"
                 onClick={() => setSidebarMobileOpen(false)}
                 className={cn(
                   'group flex items-center rounded-xl transition-all duration-250 ease-out',
@@ -236,6 +238,7 @@ export function Sidebar() {
 
             <NavLink
               to="/help"
+              id="tour-sidebar-help"
               onClick={() => setSidebarMobileOpen(false)}
               className={cn(
                 'group flex items-center rounded-xl transition-all duration-250 ease-out',

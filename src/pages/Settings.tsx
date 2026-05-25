@@ -79,11 +79,11 @@ export default function Settings() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b border-gray-150 pb-px">
+      <div className="flex gap-4 border-b border-gray-150 pb-px overflow-x-auto whitespace-nowrap flex-nowrap scrollbar-none">
         <button
           onClick={() => setActiveTab('organization')}
           className={cn(
-            'px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5',
+            'px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5 shrink-0',
             activeTab === 'organization'
               ? 'border-brand-600 text-brand-600'
               : 'border-transparent text-gray-400 hover:text-gray-600'
@@ -97,7 +97,7 @@ export default function Settings() {
             <button
               onClick={() => setActiveTab('staff')}
               className={cn(
-                'px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5',
+                'px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5 shrink-0',
                 activeTab === 'staff'
                   ? 'border-brand-600 text-brand-600'
                   : 'border-transparent text-gray-400 hover:text-gray-600'
@@ -109,7 +109,7 @@ export default function Settings() {
             <button
               onClick={() => setActiveTab('access')}
               className={cn(
-                'px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5',
+                'px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5 shrink-0',
                 activeTab === 'access'
                   ? 'border-brand-600 text-brand-600'
                   : 'border-transparent text-gray-400 hover:text-gray-600'

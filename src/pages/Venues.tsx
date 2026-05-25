@@ -626,7 +626,7 @@ export default function Venues() {
                       className="p-2 rounded-xl border border-gray-150 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 hover:border-emerald-250 transition-all flex items-center justify-center"
                       title="Share Hall Details on WhatsApp"
                     >
-                      <WhatsAppIcon className="w-3.5 h-3.5" />
+                      <WhatsAppIcon className="w-5 h-5" />
                     </button>
                     <button
                       onClick={() => {
