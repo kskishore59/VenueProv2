@@ -110,7 +110,7 @@ export function LeadDrawer() {
           <div className="absolute top-4 right-4 flex items-center gap-1">
             {canUpdateLeads && (
               <button onClick={() => { closeLeadDrawer(); openEditLead(leadId); }} className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-400" title="Edit Lead">
-                <Edit className="w-4.5 h-4.5" />
+                <Edit className="w-4 h-4" />
               </button>
             )}
             <button onClick={closeLeadDrawer} className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-400">

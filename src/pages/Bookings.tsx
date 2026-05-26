@@ -8,6 +8,7 @@ import { useUIStore } from '@/stores/ui-store';
 import { eventTypeLabels, type BookingStatus } from '@/types/booking';
 import { useAuthStore } from '@/stores/auth-store';
 import { hasPermission } from '@/lib/permissions';
+import { DateRangeFilter } from '@/components/shared/DateRangeFilter';
 
 const statusFilters: { value: BookingStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -21,6 +22,7 @@ const statusFilters: { value: BookingStatus | 'all'; label: string }[] = [
 export default function Bookings() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<BookingStatus | 'all'>('all');
+  const [dateRange, setDateRange] = useState<{ start: string | null; end: string | null }>({ start: null, end: null });
   const openBookingDrawer = useUIStore((s) => s.openBookingDrawer);
   const openQuickAdd = useUIStore((s) => s.openQuickAdd);
 
@@ -35,6 +37,8 @@ export default function Bookings() {
   const filtered = bookings
     .filter((b) => {
       if (statusFilter !== 'all' && b.status !== statusFilter) return false;
+      if (dateRange.start && b.event_date < dateRange.start) return false;
+      if (dateRange.end && b.event_date > dateRange.end) return false;
       if (search) {
         const customer = getCustomerById(b.customer_id);
         const searchLower = search.toLowerCase();
@@ -100,20 +104,26 @@ export default function Bookings() {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input type="text" placeholder="Search by name, phone, or booking number..." value={search} onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none bg-white shadow-sm" />
         </div>
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5">
-          {statusFilters.map((f) => (
-            <button key={f.value} onClick={() => setStatusFilter(f.value)}
-              className={cn('px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all',
-                statusFilter === f.value ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50')}>
-              {f.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-3">
+          <DateRangeFilter
+            align="left"
+            onChange={(start, end) => setDateRange({ start, end })}
+          />
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+            {statusFilters.map((f) => (
+              <button key={f.value} onClick={() => setStatusFilter(f.value)}
+                className={cn('px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all',
+                  statusFilter === f.value ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50')}>
+                {f.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -130,8 +140,8 @@ export default function Bookings() {
               const hall = getHallById(booking.hall_id);
               return (
                 <div key={booking.id} onClick={() => openBookingDrawer(booking.id)}
-                  className="grid grid-cols-1 md:grid-cols-[1fr_120px_140px_100px_120px_120px_50px] gap-2 md:gap-4 px-5 py-4 cursor-pointer hover:bg-gray-50/70 transition-all group">
-                  <div className="flex items-center gap-3">
+                  className="grid grid-cols-2 md:grid-cols-[1fr_120px_140px_100px_120px_120px_50px] gap-x-4 gap-y-3.5 md:gap-4 px-5 py-4 cursor-pointer hover:bg-gray-50/70 transition-all group">
+                  <div className="flex items-center gap-3 col-span-2 md:col-span-1">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-100 to-brand-50 flex items-center justify-center flex-shrink-0">
                       <span className="text-sm font-bold text-brand-700">{customer?.name[0] || '?'}</span>
                     </div>
@@ -140,17 +150,42 @@ export default function Bookings() {
                       <p className="text-xs text-gray-400">{eventTypeLabels[booking.event_type]} • {booking.booking_number}</p>
                     </div>
                   </div>
-                  <div className="flex items-center">
+                  <div className="flex items-center col-span-1">
                     <div>
                       <p className="text-sm font-medium text-gray-700">{formatDateReadable(booking.event_date)}</p>
                       <p className="text-[11px] text-gray-400">{formatTime(booking.start_time)} – {formatTime(booking.end_time)}</p>
                     </div>
                   </div>
-                  <div className="flex items-center"><span className="text-sm text-gray-600 truncate">{hall?.name}</span></div>
-                  <div className="flex items-center"><span className="text-sm text-gray-600">{booking.guest_count || '—'}</span></div>
-                  <div className="flex items-center"><span className="text-sm font-bold text-gray-900">{formatCurrency(booking.total_amount_paise)}</span></div>
-                  <div className="flex items-center"><StatusBadge type="booking" status={booking.status} /></div>
-                  <div className="flex items-center justify-end">{customer && <WhatsAppButton phone={customer.phone} size="sm" bookingId={booking.id} />}</div>
+                  <div className="flex items-center col-span-1 md:col-span-1 justify-end md:justify-start text-right md:text-left">
+                    <span className="text-sm text-gray-600 truncate">
+                      <span className="md:hidden font-semibold text-gray-450 block text-[9px] uppercase tracking-wider mb-0.5">Venue</span>
+                      {hall?.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center col-span-1">
+                    <span className="text-sm text-gray-600">
+                      <span className="md:hidden font-semibold text-gray-450 block text-[9px] uppercase tracking-wider mb-0.5">Guests</span>
+                      {booking.guest_count || '—'}
+                    </span>
+                  </div>
+                  <div className="flex items-center col-span-1 md:col-span-1 justify-end md:justify-start text-right md:text-left">
+                    <span className="text-sm font-bold text-gray-900">
+                      <span className="md:hidden font-semibold text-gray-450 block text-[9px] uppercase tracking-wider mb-0.5">Amount</span>
+                      {formatCurrency(booking.total_amount_paise)}
+                    </span>
+                  </div>
+                  <div className="flex items-center col-span-1">
+                    <div>
+                      <span className="md:hidden font-semibold text-gray-450 block text-[9px] uppercase tracking-wider mb-0.5">Status</span>
+                      <StatusBadge type="booking" status={booking.status} />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-end col-span-1">
+                    <div>
+                      <span className="md:hidden font-semibold text-gray-450 block text-[9px] uppercase tracking-wider mb-0.5 text-right opacity-0">Share</span>
+                      {customer && <WhatsAppButton phone={customer.phone} size="sm" bookingId={booking.id} />}
+                    </div>
+                  </div>
                 </div>
               );
             })

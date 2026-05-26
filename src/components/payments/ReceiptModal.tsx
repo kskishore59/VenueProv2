@@ -428,16 +428,16 @@ export function ReceiptModal() {
 
       {/* Screen Backdrop */}
       <div 
-        className="receipt-modal-backdrop no-print fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto"
+        className="receipt-modal-backdrop no-print fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-start md:items-center justify-center p-2 sm:p-4 overflow-y-auto"
         onClick={closeReceiptModal}
       >
         {/* Modal Container */}
         <div 
-          className="receipt-modal-container relative bg-gray-50/95 backdrop-blur-xl border border-gray-200/50 rounded-3xl w-full max-w-3xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh] md:max-h-[95vh] animate-scale-up"
+          className="receipt-modal-container relative bg-gray-50/95 backdrop-blur-xl border border-gray-200/50 rounded-3xl w-full max-w-3xl shadow-2xl flex flex-col overflow-hidden my-4 md:my-0 h-auto md:max-h-[95vh] animate-scale-up"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Action Header */}
-          <div className="flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 bg-white border-b border-gray-150 sticky top-0 z-10 gap-3">
+          <div className="flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 bg-white border-b border-gray-150 sticky top-0 z-10 gap-3 rounded-t-3xl">
             <div className="min-w-0 flex-1">
               <h3 className="text-sm sm:text-base font-bold text-gray-900 capitalize truncate">
                 {mode === 'receipt' ? 'Payment Receipt' : 'Booking Invoice'}
@@ -465,7 +465,7 @@ export function ReceiptModal() {
           </div>
 
           {/* Printable Document Preview Area */}
-          <div className="receipt-print-wrapper flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 flex justify-center bg-gray-100/50">
+          <div className="receipt-print-wrapper flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 flex justify-center bg-gray-100/50 rounded-b-3xl">
             <div 
               id="receipt-screen-sheet"
               className="bg-white w-full max-w-[210mm] shadow-md border border-gray-150 rounded-2xl overflow-hidden"

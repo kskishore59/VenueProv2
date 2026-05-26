@@ -113,7 +113,7 @@ export function Header() {
   return (
     <header
       className={cn(
-        'fixed top-0 right-0 h-16 bg-white/85 backdrop-blur-md border-b  z-30',
+        'fixed top-0 right-0 h-16 backdrop-blur-md   z-30',
         'flex items-center justify-between px-4 md:px-6 transition-all duration-300',
         collapsed ? 'left-0 md:left-[72px]' : 'left-0 md:left-[260px]',
       )}
@@ -126,9 +126,9 @@ export function Header() {
         >
           <Menu className="w-4 h-4 text-gray-600" />
         </button>
-        <div className="min-w-0">
+        {/* <div className="min-w-0">
           <h2 className="text-lg font-bold text-gray-900 tracking-tight truncate">{title}</h2>
-        </div>
+        </div> */}
       </div>
 
       {/* Right: Actions */}
@@ -312,7 +312,7 @@ export function Header() {
                           )}
                         >
                           {/* Left icon wrapper */}
-                          <div className={cn("w-8.5 h-8.5 rounded-lg flex items-center justify-center flex-shrink-0 shadow-3xs", colorClass)}>
+                          <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 shadow-3xs", colorClass)}>
                             <Icon className="w-4 h-4" />
                           </div>
 

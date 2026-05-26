@@ -5,9 +5,11 @@ import { useDataStore } from '@/stores/data-store';
 import { WhatsAppButton } from '@/components/shared/WhatsAppButton';
 import { useUIStore } from '@/stores/ui-store';
 import { customerSourceLabels } from '@/types/customer';
+import { DateRangeFilter } from '@/components/shared/DateRangeFilter';
 
 export default function Customers() {
   const [search, setSearch] = useState('');
+  const [dateRange, setDateRange] = useState<{ start: string | null; end: string | null }>({ start: null, end: null });
   const openAddCustomer = useUIStore((s) => s.openAddCustomer);
   const openEditCustomer = useUIStore((s) => s.openEditCustomer);
 
@@ -16,6 +18,14 @@ export default function Customers() {
   const payments = useDataStore((s) => s.payments);
 
   const filtered = customers.filter((c) => {
+    if (dateRange.start) {
+      const createdDate = c.created_at.slice(0, 10);
+      if (createdDate < dateRange.start) return false;
+    }
+    if (dateRange.end) {
+      const createdDate = c.created_at.slice(0, 10);
+      if (createdDate > dateRange.end) return false;
+    }
     if (!search) return true;
     const s = search.toLowerCase();
     return c.name.toLowerCase().includes(s) || c.phone.includes(search);
@@ -73,10 +83,16 @@ export default function Customers() {
         </div>
       </div>
 
-      <div className="relative max-w-xl">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-        <input type="text" placeholder="Search by phone number or name..." value={search} onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none bg-white shadow-sm text-base" autoFocus />
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+        <div className="relative flex-1 max-w-xl">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input type="text" placeholder="Search by phone number or name..." value={search} onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none bg-white shadow-sm text-base" autoFocus />
+        </div>
+        <DateRangeFilter
+          align="left"
+          onChange={(start, end) => setDateRange({ start, end })}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">

@@ -150,7 +150,7 @@ export default function Signup() {
 
           {/* Alert Messages */}
           {(localError || error) && (
-            <div className="mb-4.5 p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/20 text-rose-200 text-xs flex items-start gap-2.5 animate-fade-in">
+            <div className="mb-4 p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/20 text-rose-200 text-xs flex items-start gap-2.5 animate-fade-in">
               <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-400 mt-0.5" />
               <span>{localError || error}</span>
             </div>
@@ -161,7 +161,7 @@ export default function Signup() {
             <div>
               <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Full Name</label>
               <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-500" />
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input
                   type="text"
                   placeholder="Rahul Sharma"
@@ -179,7 +179,7 @@ export default function Signup() {
             <div>
               <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-500" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input
                   type="email"
                   placeholder="rahul@myvenue.com"
@@ -197,7 +197,7 @@ export default function Signup() {
             <div>
               <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Venue / Organization Name</label>
               <div className="relative">
-                <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-500" />
+                <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input
                   type="text"
                   placeholder="Royal Heritage Banquet"
@@ -221,7 +221,7 @@ export default function Signup() {
               <div>
                 <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Password</label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-500" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
@@ -239,7 +239,7 @@ export default function Signup() {
               <div>
                 <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Confirm</label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-500" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
@@ -256,7 +256,7 @@ export default function Signup() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-500 hover:text-white transition-colors"
                   >
-                    {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
@@ -269,7 +269,7 @@ export default function Signup() {
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4.5 h-4.5 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Registering...</span>
                 </>
               ) : (

@@ -92,9 +92,9 @@ export function WhatsAppButton({
         )}
       >
         <WhatsAppIcon className={cn(
-          size === 'sm' && 'w-4.5 h-4.5',
+          size === 'sm' && 'w-4 h-4',
           size === 'md' && 'w-5 h-5',
-          size === 'lg' && 'w-5.5 h-5.5',
+          size === 'lg' && 'w-5 h-5',
         )} />
         {label}
       </a>

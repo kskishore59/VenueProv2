@@ -21,6 +21,7 @@ import {
 } from '@/lib/mock-data';
 import { format, addDays, startOfMonth, addMonths, subDays } from 'date-fns';
 import { toast } from 'sonner';
+import { compressAndConvertToWebp } from '@/lib/image';
 
 function uuid() {
   return self.crypto.randomUUID();
@@ -1638,13 +1639,22 @@ export const useDataStore = create<DataState>()((set, get) => ({
     const state = get();
     if (state.isOnline) {
       try {
-        const fileExt = file.name.split('.').pop();
+        let uploadFile: File | Blob = file;
+        let fileExt = file.name.split('.').pop() || 'jpg';
+        
+        // Compress and convert to webp if it's an image (excluding SVG)
+        if (file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
+          const webpBlob = await compressAndConvertToWebp(file);
+          uploadFile = new File([webpBlob], `${file.name.split('.')[0]}.webp`, { type: 'image/webp' });
+          fileExt = 'webp';
+        }
+
         const fileName = `${uuid()}.${fileExt}`;
         const filePath = `${state.organization.id}/${fileName}`;
         
         const { error: uploadError } = await supabase.storage
           .from(bucket)
-          .upload(filePath, file);
+          .upload(filePath, uploadFile);
         
         if (uploadError) throw uploadError;
         

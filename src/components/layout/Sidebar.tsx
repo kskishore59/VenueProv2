@@ -165,7 +165,7 @@ export function Sidebar() {
                     >
                       <item.icon className={cn(
                         'flex-shrink-0 transition-colors duration-250',
-                        collapsed ? 'w-5.5 h-5.5' : 'w-5 h-5',
+                        collapsed ? 'w-6 h-6' : 'w-5 h-5',
                         isActive
                           ? 'text-brand-100 bg-brand-600'
                           : 'text-gray-400 group-hover:text-brand-600',
@@ -204,7 +204,7 @@ export function Sidebar() {
               >
                 <Settings className={cn(
                   'flex-shrink-0 transition-colors duration-250',
-                  collapsed ? 'w-5.5 h-5.5' : 'w-5 h-5',
+                  collapsed ? 'w-6 h-6' : 'w-5 h-5',
                   location.pathname === '/settings' ? 'text-brand-600' : 'text-gray-400 group-hover:text-brand-600',
                 )} />
                 {!collapsed && (
@@ -227,7 +227,7 @@ export function Sidebar() {
               >
                 <UploadCloud className={cn(
                   'flex-shrink-0 transition-colors duration-250',
-                  collapsed ? 'w-5.5 h-5.5' : 'w-5 h-5',
+                  collapsed ? 'w-6 h-6' : 'w-5 h-5',
                   location.pathname === '/import' ? 'text-brand-600' : 'text-gray-400 group-hover:text-brand-600',
                 )} />
                 {!collapsed && (
@@ -250,7 +250,7 @@ export function Sidebar() {
             >
               <HelpCircle className={cn(
                 'flex-shrink-0 transition-colors duration-250',
-                collapsed ? 'w-5.5 h-5.5' : 'w-5 h-5',
+                collapsed ? 'w-6 h-6' : 'w-5 h-5',
                 location.pathname === '/help' ? 'text-brand-600' : 'text-gray-400 group-hover:text-brand-600',
               )} />
               {!collapsed && (
@@ -269,7 +269,7 @@ export function Sidebar() {
             >
               <LogOut className={cn(
                 'flex-shrink-0 transition-colors duration-250 text-rose-400 group-hover:text-rose-500',
-                collapsed ? 'w-5.5 h-5.5' : 'w-5 h-5',
+                collapsed ? 'w-6 h-6' : 'w-5 h-5',
               )} />
               {!collapsed && (
                 <span className="text-[13.5px] font-semibold tracking-[-0.01em]">Logout</span>

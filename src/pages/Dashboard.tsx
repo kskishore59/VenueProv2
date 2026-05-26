@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { CalendarCheck, IndianRupee, AlertCircle, Clock, ArrowRight, PhoneIncoming, Building2 } from 'lucide-react';
 import { StatCard } from '@/components/shared/StatCard';
 import { BookingCalendar } from '@/components/booking/BookingCalendar';
@@ -11,6 +11,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { eventTypeLabels, type EventType } from '@/types/booking';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { ErrorFallback } from '@/components/shared/ErrorFallback';
+import { DateRangeFilter, type DateRangePreset } from '@/components/shared/DateRangeFilter';
 
 export default function Dashboard() {
   const bookings = useDataStore((s) => s.bookings);
@@ -29,7 +30,86 @@ export default function Dashboard() {
   const profile = useAuthStore((s) => s.profile);
   const organization = useDataStore((s) => s.organization);
 
+  const [dateRange, setDateRange] = useState<{ start: string | null; end: string | null; preset: DateRangePreset }>({
+    start: null,
+    end: null,
+    preset: 'all',
+  });
+
   const stats = useMemo(() => getDashboardStats(), [getDashboardStats, bookings, payments]);
+  
+  const activeStats = useMemo(() => {
+    if (dateRange.preset === 'all') {
+      return {
+        eventsLabel: "Today's Events",
+        eventsValue: String(stats.todaysEvents),
+        eventsSub: `${stats.tomorrowEvents} event${stats.tomorrowEvents !== 1 ? 's' : ''} tomorrow`,
+        revenueLabel: "This Month Revenue",
+        revenueValue: stats.thisMonthRevenue,
+        revenueSub: `${stats.thisMonthBookings} booking${stats.thisMonthBookings !== 1 ? 's' : ''}`,
+        pendingLabel: "Pending Collections",
+        pendingValue: stats.pendingAmount,
+        pendingSub: `${stats.pendingCustomers} customer${stats.pendingCustomers !== 1 ? 's' : ''} owe money`,
+      };
+    }
+
+    const rangeEventsList = bookings.filter((b) => {
+      if (b.status === 'cancelled') return false;
+      if (dateRange.start && b.event_date < dateRange.start) return false;
+      if (dateRange.end && b.event_date > dateRange.end) return false;
+      return b.status === 'confirmed' || b.status === 'completed';
+    });
+
+    const rangeBookingsList = bookings.filter((b) => {
+      if (b.status === 'cancelled') return false;
+      if (dateRange.start && b.event_date < dateRange.start) return false;
+      if (dateRange.end && b.event_date > dateRange.end) return false;
+      return true;
+    });
+
+    const rangeRevenueVal = payments
+      .filter((p) => {
+        if (!p.paid_at || p.status !== 'received') return false;
+        const paidDate = p.paid_at.slice(0, 10);
+        if (dateRange.start && paidDate < dateRange.start) return false;
+        if (dateRange.end && paidDate > dateRange.end) return false;
+        return true;
+      })
+      .reduce((sum, p) => sum + p.amount_paise, 0);
+
+    const rangeOwed = rangeBookingsList
+      .filter(b => b.status === 'confirmed' || b.status === 'hold')
+      .reduce((sum, b) => sum + b.total_amount_paise, 0);
+    const rangePaid = payments
+      .filter((p) => p.status === 'received' && rangeBookingsList.some((b) => b.id === p.booking_id))
+      .reduce((sum, p) => sum + p.amount_paise, 0);
+    const rangePending = rangeOwed - rangePaid;
+
+    const rangePendingCustomers = new Set(
+      rangeBookingsList
+        .filter((b) => {
+          if (b.status !== 'confirmed' && b.status !== 'hold') return false;
+          const paid = payments
+            .filter((p) => p.booking_id === b.id && p.status === 'received')
+            .reduce((s, p) => s + p.amount_paise, 0);
+          return paid < b.total_amount_paise;
+        })
+        .map((b) => b.customer_id)
+    ).size;
+
+    return {
+      eventsLabel: "Events in Selected Period",
+      eventsValue: String(rangeEventsList.length),
+      eventsSub: `${rangeBookingsList.length} booking${rangeBookingsList.length !== 1 ? 's' : ''} total`,
+      revenueLabel: "Revenue in Selected Period",
+      revenueValue: rangeRevenueVal,
+      revenueSub: `${rangeBookingsList.length} booking${rangeBookingsList.length !== 1 ? 's' : ''}`,
+      pendingLabel: "Outstanding Collections",
+      pendingValue: rangePending,
+      pendingSub: `${rangePendingCustomers} customer${rangePendingCustomers !== 1 ? 's' : ''} with balance`,
+    };
+  }, [dateRange, bookings, payments, stats]);
+
   const upcoming = useMemo(() => getUpcomingBookings(7), [getUpcomingBookings, bookings]);
   const followUps = useMemo(() => getFollowUpsDue(), [getFollowUpsDue, leads]);
 
@@ -46,7 +126,7 @@ export default function Dashboard() {
           <div className="flex items-center">
             {/* VenuePro logo */}
             <div className="w-12 h-12 rounded-2xl bg-white text-brand-600 flex items-center justify-center shadow-md relative z-20">
-              <Building2 className="w-6.5 h-6.5" />
+              <Building2 className="w-6 h-6" />
             </div>
 
             {/* Custom org logo overlapping */}
@@ -86,29 +166,39 @@ export default function Dashboard() {
         </div>
       </div>
 
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white/40 backdrop-blur-xs p-4 rounded-2xl border border-gray-100/50">
+        <div>
+          <h2 className="text-sm font-bold text-gray-900 tracking-tight">Performance Overview</h2>
+          <p className="text-[11px] text-gray-400 mt-0.5">Real-time statistics for the selected interval.</p>
+        </div>
+        <DateRangeFilter
+          onChange={(start, end, preset) => setDateRange({ start, end, preset })}
+        />
+      </div>
+
       {/* Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
         <StatCard
           icon={CalendarCheck}
-          label="Today's Events"
-          value={String(stats.todaysEvents)}
-          sublabel={`${stats.tomorrowEvents} event${stats.tomorrowEvents !== 1 ? 's' : ''} tomorrow`}
+          label={activeStats.eventsLabel}
+          value={activeStats.eventsValue}
+          sublabel={activeStats.eventsSub}
           color="blue"
           delay={50}
         />
         <StatCard
           icon={IndianRupee}
-          label="This Month Revenue"
-          value={stats.thisMonthRevenue}
-          sublabel={`${stats.thisMonthBookings} booking${stats.thisMonthBookings !== 1 ? 's' : ''}`}
+          label={activeStats.revenueLabel}
+          value={activeStats.revenueValue}
+          sublabel={activeStats.revenueSub}
           color="green"
           delay={100}
         />
         <StatCard
           icon={AlertCircle}
-          label="Pending Collections"
-          value={stats.pendingAmount}
-          sublabel={`${stats.pendingCustomers} customer${stats.pendingCustomers !== 1 ? 's' : ''} owe money`}
+          label={activeStats.pendingLabel}
+          value={activeStats.pendingValue}
+          sublabel={activeStats.pendingSub}
           color="amber"
           delay={150}
         />

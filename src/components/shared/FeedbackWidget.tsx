@@ -227,10 +227,10 @@ export function FeedbackWidget() {
         title="Send Feedback"
       >
         {isOpen ? (
-          <X className="w-5.5 h-5.5 text-white" />
+          <X className="w-5 h-5 text-white" />
         ) : (
           <>
-            <MessageSquarePlus className="w-5.5 h-5.5 text-white" />
+            <MessageSquarePlus className="w-5 h-5 text-white" />
             {/* Tooltip on hover */}
             <span className="absolute right-full mr-3.5 px-3 py-1.5 rounded-xl bg-gray-900 text-xs font-bold text-white shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap translate-x-2 group-hover:translate-x-0 transition-transform">
               Feedback

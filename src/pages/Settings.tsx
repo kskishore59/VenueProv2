@@ -4,6 +4,7 @@ import { useDataStore } from '@/stores/data-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { toast } from 'sonner';
 import { useState } from 'react';
+import { compressAndConvertToWebp } from '@/lib/image';
 import { StaffManagement } from '@/components/settings/StaffManagement';
 import { AccessControl } from '@/components/settings/AccessControl';
 
@@ -26,21 +27,23 @@ export default function Settings() {
   const [shouldCrash, setShouldCrash] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 1024 * 1024) {
-      toast.error('Logo image must be smaller than 1MB');
-      return;
+    try {
+      // Compress logo to a maximum width of 400px (standard logo size) and convert to WebP
+      const compressedBlob = await compressAndConvertToWebp(file, 400, 0.8);
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoUrl(reader.result as string);
+        toast.success('Logo optimized and selected! Hit Save Changes to save. 🖼️');
+      };
+      reader.readAsDataURL(compressedBlob);
+    } catch (err: any) {
+      toast.error(`Failed to process logo image: ${err.message || err}`);
     }
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setLogoUrl(reader.result as string);
-      toast.success('Logo selected! Hit Save Changes to upload. 🖼️');
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleSave = async () => {

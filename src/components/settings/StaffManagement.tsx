@@ -91,7 +91,7 @@ export function StaffManagement() {
       {/* Invite Form */}
       <div className="bg-white rounded-2xl border border-gray-150 p-5 sm:p-6 shadow-2xs">
         <h3 className="text-sm font-bold text-gray-900 mb-1 flex items-center gap-2">
-          <Shield className="w-4.5 h-4.5 text-brand-600" />
+          <Shield className="w-4 h-4 text-brand-600" />
           Invite Staff Member
         </h3>
         <p className="text-xs text-gray-400 mb-4">
@@ -213,7 +213,7 @@ export function StaffManagement() {
               <div key={invite.id} className="flex items-center justify-between gap-4 px-6 py-4 hover:bg-gray-50/30 transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg bg-warning-50 flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-4.5 h-4.5 text-warning-500" />
+                    <Mail className="w-4 h-4 text-warning-500" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-gray-700">{invite.email}</p>

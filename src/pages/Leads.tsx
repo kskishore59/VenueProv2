@@ -9,6 +9,7 @@ import { type LeadStatus, leadSourceLabels } from '@/types/lead';
 import { eventTypeLabels, type EventType } from '@/types/booking';
 import { useAuthStore } from '@/stores/auth-store';
 import { hasPermission } from '@/lib/permissions';
+import { DateRangeFilter } from '@/components/shared/DateRangeFilter';
 
 const statusFilters: { value: LeadStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -23,6 +24,7 @@ const statusFilters: { value: LeadStatus | 'all'; label: string }[] = [
 export default function Leads() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<LeadStatus | 'all'>('all');
+  const [dateRange, setDateRange] = useState<{ start: string | null; end: string | null }>({ start: null, end: null });
   const openLeadDrawer = useUIStore((s) => s.openLeadDrawer);
   const openAddLead = useUIStore((s) => s.openAddLead);
 
@@ -35,6 +37,14 @@ export default function Leads() {
   const filtered = leads
     .filter((l) => {
       if (statusFilter !== 'all' && l.status !== statusFilter) return false;
+      if (dateRange.start) {
+        const createdDate = l.created_at.slice(0, 10);
+        if (createdDate < dateRange.start) return false;
+      }
+      if (dateRange.end) {
+        const createdDate = l.created_at.slice(0, 10);
+        if (createdDate > dateRange.end) return false;
+      }
       if (search) {
         const s = search.toLowerCase();
         return l.name.toLowerCase().includes(s) || l.phone.includes(search);
@@ -58,20 +68,26 @@ export default function Leads() {
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input type="text" placeholder="Search by name or phone..." value={search} onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none bg-white shadow-sm" />
         </div>
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5">
-          {statusFilters.map((f) => (
-            <button key={f.value} onClick={() => setStatusFilter(f.value)}
-              className={cn('px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all',
-                statusFilter === f.value ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50')}>
-              {f.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-3">
+          <DateRangeFilter
+            align="left"
+            onChange={(start, end) => setDateRange({ start, end })}
+          />
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+            {statusFilters.map((f) => (
+              <button key={f.value} onClick={() => setStatusFilter(f.value)}
+                className={cn('px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all',
+                  statusFilter === f.value ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50')}>
+                {f.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

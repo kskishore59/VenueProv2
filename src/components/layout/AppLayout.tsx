@@ -84,7 +84,7 @@ export function AppLayout() {
     setQuickAddOpen(false);
     setTransitionLoading(true);
     const isDataLoaded = !dataLoading;
-    const targetDuration = isDataLoaded ? 150 : 500;
+    const targetDuration = isDataLoaded ? 0 : 500;
     const startTime = Date.now();
 
     let timer: any;
@@ -155,7 +155,7 @@ export function AppLayout() {
   const showSkeleton = dataLoading;
 
   return (
-    <div className="min-h-screen bg-surface-secondary">
+    <div className="min-h-screen bg-[#e6e6fa]/10">
       <Sidebar />
       <Header />
       <main
@@ -187,7 +187,7 @@ export function AppLayout() {
       )}
 
       {/* Mobile Bottom Navigation Bar (Application Bar style) */}
-      <div id="tour-mobile-nav" className="fixed z-50 w-[calc(100%-1.5rem)] max-w-lg h-16 -translate-x-1/2 bg-white backdrop-blur-md border border-gray-150 rounded-full bottom-4 left-1/2 shadow-xl md:hidden p-2">
+      <div id="tour-mobile-nav" className="fixed z-50 w-[calc(100%-1.5rem)] max-w-lg h-18 -translate-x-1/2 bg-white backdrop-blur-md border border-gray-150 rounded-full bottom-4 left-1/2 shadow-xl md:hidden p-2">
         <div className="grid h-full max-w-lg grid-cols-5 mx-auto font-small">
           {/* Tab 1 */}
           {mobileTabs[0] && (
@@ -228,7 +228,7 @@ export function AppLayout() {
                   className="inline-flex items-center justify-center w-11 h-11 font-bold bg-brand-600 text-white rounded-full hover:bg-brand-700 active:scale-95 transition-all shadow-md focus:outline-none focus:ring-4 focus:ring-brand-200"
                   title="Quick Add"
                 >
-                  <Plus className={cn("w-5.5 h-5.5 transition-transform duration-200", quickAddOpen && "rotate-45")} />
+                  <Plus className={cn("w-5 h-5 transition-transform duration-200", quickAddOpen && "rotate-45")} />
                   <span className="sr-only">New booking/lead</span>
                 </button>
 
@@ -271,7 +271,7 @@ export function AppLayout() {
               </>
             ) : (
               <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-300">
-                <Plus className="w-5.5 h-5.5" />
+                <Plus className="w-5 h-5" />
               </div>
             )}
           </div>

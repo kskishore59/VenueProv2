@@ -30,6 +30,7 @@ const Venues = lazy(() => import('@/pages/Venues'));
 const Expenses = lazy(() => import('@/pages/Expenses'));
 const Import = lazy(() => import('@/pages/Import'));
 const Help = lazy(() => import('@/pages/Help'));
+const Landing = lazy(() => import('@/pages/Landing'));
 
 import { FeedbackWidget } from '@/components/shared/FeedbackWidget';
 import { ReceiptModal } from '@/components/payments/ReceiptModal';
@@ -76,14 +77,14 @@ export default function App() {
             }
           >
             <Routes>
-              {/* Public Auth Routes */}
+              {/* Public Routes */}
+              <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
 
               {/* Protected Workspace Routes */}
               <Route element={<AuthGuard />}>
                 <Route element={<AppLayout />}>
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/bookings" element={<PermissionGuard resource="bookings"><Bookings /></PermissionGuard>} />
                   <Route path="/leads" element={<PermissionGuard resource="leads"><Leads /></PermissionGuard>} />

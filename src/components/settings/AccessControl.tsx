@@ -84,7 +84,7 @@ export function AccessControl() {
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-gray-150 p-5 sm:p-6 shadow-2xs">
         <h3 className="text-sm font-bold text-gray-900 mb-1 flex items-center gap-2">
-          <Shield className="w-4.5 h-4.5 text-brand-600" />
+          <Shield className="w-4 h-4 text-brand-600" />
           Role-Based Access Control (RBAC)
         </h3>
         <p className="text-xs text-gray-400 mb-4">

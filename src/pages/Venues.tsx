@@ -1209,7 +1209,7 @@ export default function Venues() {
                           Bridal Suite / Getting Ready Room
                         </label>
                         {bridalSuite && (
-                          <div className="pl-6.5">
+                          <div className="pl-6">
                             <input
                               type="number"
                               placeholder="Suite Area in Sq Ft"
@@ -1288,7 +1288,7 @@ export default function Venues() {
                           Attached Outdoor Space (Garden / Balcony)
                         </label>
                         {outdoorSpaceAttached && (
-                          <div className="pl-6.5">
+                          <div className="pl-6">
                             <input
                               type="number"
                               placeholder="Outdoor Area in Sq Ft"

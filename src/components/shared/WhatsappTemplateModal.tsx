@@ -280,7 +280,7 @@ export function WhatsappTemplateModal({
 
               {/* Tips banner */}
               <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-start gap-2 mt-3">
-                <HelpCircle className="w-4.5 h-4.5 text-brand-500 flex-shrink-0 mt-0.5" />
+                <HelpCircle className="w-4 h-4 text-brand-500 flex-shrink-0 mt-0.5" />
                 <p className="text-[10px] text-gray-500 leading-relaxed">
                   Variables are parsed below. Text formatting like *bold* is kept intact for WhatsApp display. You can edit this text freely before sending.
                 </p>
