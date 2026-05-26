@@ -33,9 +33,14 @@ import { WhatsappShareModal, getHallSpecsMessage } from '@/components/venues/Wha
 import { useAuthStore } from '@/stores/auth-store';
 import { hasPermission } from '@/lib/permissions';
 
-const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" stroke="currentColor" strokeWidth="0" fill="currentColor" {...props}>
-    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.717-1.454L0 24zm6.59-4.846c1.6.95 3.198 1.451 4.772 1.453 5.425.002 9.843-4.393 9.847-9.81.002-2.623-1.012-5.09-2.856-6.938C16.57 1.994 14.1 1.01 11.493 1.01 6.068 1.01 1.65 5.406 1.646 10.825c-.001 1.61.425 3.18 1.232 4.58l-.936 3.42 3.51-.92 1.2.711zm12.502-8.312c-.328-.164-1.94-.959-2.24-1.07-.3-.11-.52-.165-.74.164-.22.33-.85 1.07-1.04 1.29-.19.22-.38.247-.71.082-.33-.164-1.39-.512-2.647-1.635-.98-.874-1.64-1.953-1.83-2.28-.19-.33-.02-.508.14-.671.15-.15.33-.356.5-.534.17-.178.22-.3.33-.5.11-.2.05-.38-.02-.54-.07-.16-.54-1.314-.74-1.8-.2-.48-.4-.41-.54-.41-.14 0-.3-.008-.46-.008-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2.01 0 1.188.86 2.336 1.08 2.63.22.3 1.7 2.593 4.11 3.633.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.09.46-.07 1.94-.79 2.22-1.52.27-.72.27-1.34.19-1.48-.08-.14-.3-.22-.62-.39z"/>
+const WhatsAppIcon = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 0 0 1.37 5.054L2 22l5.132-1.347a9.936 9.936 0 0 0 4.88 1.28h.005c5.502 0 9.985-4.479 9.988-9.987C22 6.478 17.518 2 12.012 2zm5.835 14.288c-.24.672-1.214 1.272-1.665 1.342-.456.07-1.048.14-3.011-.64-2.505-1.01-4.14-3.57-4.26-3.73-.125-.16-1.002-1.32-1.002-2.52 0-1.2.626-1.79.845-2.04.223-.25.485-.31.646-.31.162 0 .324.004.464.01.146.007.342-.056.536.4.2.47.68 1.656.738 1.777.06.12.097.26.018.42-.078.16-.178.26-.297.394-.12.133-.25.28-.358.375-.12.1-.247.21-.106.45.142.24.63 1.03 1.353 1.67.93.824 1.708 1.08 1.95 1.2.24.12.38.1.522-.06.14-.17.61-.71.772-.95.163-.24.325-.2.548-.12.223.08 1.417.67 1.66.79.243.12.404.18.463.28.06.1.06.58-.18 1.25z" />
   </svg>
 );
 
@@ -536,10 +541,10 @@ export default function Venues() {
       {/* Venues Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {halls.map((hall) => {
-          const coverPhoto = hall.images && hall.images.length > 0 
+          const coverPhoto = hall.images && hall.images.length > 0
             ? hall.images[hall.media_config?.cover_photo_index || 0] || hall.images[0]
             : 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=1000&auto=format&fit=crop';
-          
+
           const pricingConf = hall.pricing_config || {};
           const basePrice = pricingConf.base_rental || (hall.pricing.base_price_paise / 100);
           const vegPlate = pricingConf.catering_veg || (hall.pricing.per_plate_veg_paise ? hall.pricing.per_plate_veg_paise / 100 : null);
@@ -555,7 +560,7 @@ export default function Venues() {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                
+
                 {/* Badges */}
                 <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-black/60 text-white backdrop-blur-xs uppercase tracking-wider">
@@ -571,8 +576,8 @@ export default function Venues() {
                 <div className="absolute top-3 right-3">
                   <span className={cn(
                     "px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-xs tracking-wider uppercase",
-                    hall.is_active 
-                      ? "bg-success-100 text-success-700 border border-success-200" 
+                    hall.is_active
+                      ? "bg-success-100 text-success-700 border border-success-200"
                       : "bg-gray-100 text-gray-400 border border-gray-200"
                   )}>
                     {hall.is_active ? 'Active' : 'Inactive'}
@@ -626,7 +631,9 @@ export default function Venues() {
                       className="p-2 rounded-xl border border-gray-150 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 hover:border-emerald-250 transition-all flex items-center justify-center"
                       title="Share Hall Details on WhatsApp"
                     >
-                      <WhatsAppIcon className="w-5 h-5" />
+                      <WhatsAppIcon className={cn(
+                        'w-5 h-5',
+                      )} />
                     </button>
                     <button
                       onClick={() => {
@@ -671,7 +678,7 @@ export default function Venues() {
         <>
           <div className="fixed inset-0 bg-black/50 z-40 drawer-overlay animate-fade-in" onClick={() => setIsDrawerOpen(false)} />
           <div className="fixed inset-y-0 right-0 max-w-2xl w-full z-50 bg-white shadow-2xl flex flex-col animate-slide-in">
-            
+
             {/* Drawer Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-150 bg-gray-50/50">
               <div>
@@ -691,8 +698,8 @@ export default function Venues() {
                   onClick={() => setActiveTab(tab)}
                   className={cn(
                     'px-4 py-3 text-xs font-bold border-b-2 -mb-px transition-all capitalize flex items-center gap-1.5 whitespace-nowrap flex-shrink-0',
-                    activeTab === tab 
-                      ? 'border-brand-600 text-brand-600' 
+                    activeTab === tab
+                      ? 'border-brand-600 text-brand-600'
                       : 'border-transparent text-gray-400 hover:text-gray-600'
                   )}
                 >
@@ -709,7 +716,7 @@ export default function Venues() {
 
             {/* Drawer Content */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              
+
               {/* Tab 1: Basic Info */}
               {activeTab === 'basic' && (
                 <div className="space-y-5">
@@ -895,7 +902,7 @@ export default function Venues() {
               {/* Tab 3: Amenities Checkbox Grid */}
               {activeTab === 'amenities' && (
                 <div className="space-y-6">
-                  
+
                   {/* Seating Style */}
                   <div className="space-y-3">
                     <h4 className="text-xs font-bold text-gray-700 uppercase tracking-widest border-b border-gray-100 pb-2">Seating Style</h4>
@@ -1141,7 +1148,7 @@ export default function Venues() {
               {/* Tab 4: Facilities */}
               {activeTab === 'facilities' && (
                 <div className="space-y-6">
-                  
+
                   {/* Washrooms */}
                   <div className="space-y-4">
                     <h4 className="text-xs font-bold text-gray-700 uppercase tracking-widest border-b border-gray-100 pb-2">Washrooms</h4>
@@ -1190,7 +1197,7 @@ export default function Venues() {
                   <div className="space-y-4">
                     <h4 className="text-xs font-bold text-gray-700 uppercase tracking-widest border-b border-gray-100 pb-2">Changing Suites & Green Rooms</h4>
                     <div className="grid grid-cols-2 gap-4">
-                      
+
                       <div className="col-span-2 space-y-2">
                         <label className="flex items-center gap-2.5 text-xs text-gray-600 font-semibold cursor-pointer">
                           <input
@@ -1320,7 +1327,7 @@ export default function Venues() {
               {/* Tab 5: Pricing */}
               {activeTab === 'pricing' && (
                 <div className="space-y-6">
-                  
+
                   {/* Slots and Rent */}
                   <div className="space-y-4">
                     <h4 className="text-xs font-bold text-gray-700 uppercase tracking-widest border-b border-gray-100 pb-2">Base Rentals</h4>
@@ -1476,7 +1483,7 @@ export default function Venues() {
                   {/* Decoration Packages */}
                   <div className="space-y-4">
                     <h4 className="text-xs font-bold text-gray-700 uppercase tracking-widest border-b border-gray-100 pb-2">Decoration Packages</h4>
-                    
+
                     <div className="flex gap-2">
                       <input
                         type="text"
@@ -1529,11 +1536,11 @@ export default function Venues() {
               {/* Tab 6: Media and Links */}
               {activeTab === 'media' && (
                 <div className="space-y-6">
-                  
+
                   {/* Photo Upload Grid */}
                   <div className="space-y-3">
                     <h4 className="text-xs font-bold text-gray-700 uppercase tracking-widest border-b border-gray-100 pb-2">Photos (Up to 10)</h4>
-                    
+
                     <div className="flex items-center gap-3">
                       <button
                         type="button"
@@ -1563,15 +1570,15 @@ export default function Venues() {
                       {images.map((img, idx) => (
                         <div key={idx} className="relative aspect-video rounded-xl border border-gray-150 overflow-hidden bg-gray-50 group shadow-3xs">
                           <img src={img} alt="Preview" className="w-full h-full object-cover" />
-                          
+
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-2">
                             <button
                               type="button"
                               onClick={() => setCoverPhotoIndex(idx)}
                               className={cn(
                                 "p-1.5 rounded-lg text-xs font-bold transition-all active:scale-95",
-                                coverPhotoIndex === idx 
-                                  ? "bg-success-600 text-white" 
+                                coverPhotoIndex === idx
+                                  ? "bg-success-600 text-white"
                                   : "bg-white text-gray-700 hover:bg-gray-100"
                               )}
                               title="Set Primary Cover"

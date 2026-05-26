@@ -21,7 +21,7 @@ export function getHallSpecsMessage(hall: Hall, orgName: string, recipientName?:
   // Extract selected amenities dynamically
   const activeAmenities: string[] = [];
   const cfg = hall.amenities_config || {};
-  
+
   // Comfort
   if (cfg.comfort) {
     if (cfg.comfort.central_ac) {
@@ -56,8 +56,8 @@ export function getHallSpecsMessage(hall: Hall, orgName: string, recipientName?:
   }
 
   // Fallback to static list if empty
-  const finalAmenities = activeAmenities.length > 0 
-    ? activeAmenities.join(', ') 
+  const finalAmenities = activeAmenities.length > 0
+    ? activeAmenities.join(', ')
     : (hall.amenities && hall.amenities.length > 0 ? hall.amenities.join(', ') : 'N/A');
 
   // Facilities info
@@ -156,7 +156,7 @@ export function WhatsappShareModal({ isOpen, onClose, hall }: Props) {
     <>
       <div className="fixed inset-0 bg-black/50 z-50 drawer-overlay animate-fade-in" onClick={onClose} />
       <div className="fixed inset-0 flex items-start sm:items-center justify-center p-4 z-50 overflow-y-auto">
-        <div 
+        <div
           className="relative bg-white border border-gray-200 rounded-3xl w-full max-w-xl shadow-2xl flex flex-col p-4 md:p-6 my-auto overflow-hidden animate-scale-up"
           onClick={(e) => e.stopPropagation()}
         >

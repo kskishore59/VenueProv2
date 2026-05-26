@@ -240,7 +240,7 @@ export function Header() {
               />
 
               {/* Dropdown Menu */}
-              <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-white border border-gray-150 shadow-2xl p-4 z-50 animate-fade-in flex flex-col max-h-[480px]">
+              <div className="fixed left-4 right-4 top-16 md:absolute md:left-auto md:right-0 md:top-auto md:mt-2 md:w-96 rounded-2xl bg-white border border-gray-150 shadow-2xl p-4 z-50 animate-fade-in flex flex-col max-h-[480px]">
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-gray-100 pb-2.5 mb-2.5">
                   <div className="flex items-center gap-2">

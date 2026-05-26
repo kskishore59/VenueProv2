@@ -187,7 +187,7 @@ export function AppLayout() {
       )}
 
       {/* Mobile Bottom Navigation Bar (Application Bar style) */}
-      <div id="tour-mobile-nav" className="fixed z-50 w-[calc(100%-1.5rem)] max-w-lg h-16 -translate-x-1/2 bg-white backdrop-blur-md border border-gray-150 rounded-full bottom-4 left-1/2 shadow-xl md:hidden p-1">
+      <div id="tour-mobile-nav" className="fixed z-50 w-[calc(100%-1.5rem)] max-w-lg h-16 -translate-x-1/2 bg-white backdrop-blur-md border border-gray-150 rounded-full bottom-4 left-1/2 shadow-xl md:hidden p-2">
         <div className="grid h-full max-w-lg grid-cols-5 mx-auto font-small">
           {/* Tab 1 */}
           {mobileTabs[0] && (
@@ -195,11 +195,11 @@ export function AppLayout() {
               to={mobileTabs[0].path}
               className={({ isActive }) => cn(
                 "inline-flex flex-col items-center justify-center px-2 rounded-s-full group transition-all duration-200 hover:bg-gray-50/55 active:scale-98",
-                isActive ? "text-brand-600 font-bold" : "text-gray-500 hover:text-brand-600"
+                isActive ? "text-brand-600 font-bold" : "text-gray-400 hover:text-brand-600"
               )}
             >
-              {Tab1Icon && <Tab1Icon className="w-5.5 h-5.5 mb-0.5" />}
-              <span className="text-[10px] font-bold">{mobileTabs[0].label}</span>
+              {Tab1Icon && <Tab1Icon className="w-5 h-5 mb-0.5" />}
+              <span className="text-[9px] font-bold">{mobileTabs[0].label}</span>
             </NavLink>
           )}
 
@@ -209,11 +209,11 @@ export function AppLayout() {
               to={mobileTabs[1].path}
               className={({ isActive }) => cn(
                 "inline-flex flex-col items-center justify-center px-2 group transition-all duration-200 hover:bg-gray-50/55 active:scale-98",
-                isActive ? "text-brand-600 font-bold" : "text-gray-500 hover:text-brand-600"
+                isActive ? "text-brand-600 font-bold" : "text-gray-400 hover:text-brand-600"
               )}
             >
-              {Tab2Icon && <Tab2Icon className="w-5.5 h-5.5 mb-0.5" />}
-              <span className="text-[10px] font-bold">{mobileTabs[1].label}</span>
+              {Tab2Icon && <Tab2Icon className="w-5 h-5 mb-0.5" />}
+              <span className="text-[9px] font-bold">{mobileTabs[1].label}</span>
             </NavLink>
           )}
 
@@ -282,11 +282,11 @@ export function AppLayout() {
               to={mobileTabs[2].path}
               className={({ isActive }) => cn(
                 "inline-flex flex-col items-center justify-center px-2 group transition-all duration-200 hover:bg-gray-50/55 active:scale-98",
-                isActive ? "text-brand-600 font-bold" : "text-gray-500 hover:text-brand-600"
+                isActive ? "text-brand-600 font-bold" : "text-gray-400 hover:text-brand-600"
               )}
             >
-              {Tab3Icon && <Tab3Icon className="w-5.5 h-5.5 mb-0.5" />}
-              <span className="text-[10px] font-bold">{mobileTabs[2].label}</span>
+              {Tab3Icon && <Tab3Icon className="w-5 h-5 mb-0.5" />}
+              <span className="text-[9px] font-bold">{mobileTabs[2].label}</span>
             </NavLink>
           )}
 
@@ -297,11 +297,11 @@ export function AppLayout() {
               id="tour-mobile-settings"
               className={({ isActive }) => cn(
                 "inline-flex flex-col items-center justify-center px-2 rounded-e-full group transition-all duration-200 hover:bg-gray-50/55 active:scale-98",
-                isActive ? "text-brand-600 font-bold" : "text-gray-500 hover:text-brand-600"
+                isActive ? "text-brand-600 font-bold" : "text-gray-400 hover:text-brand-600"
               )}
             >
-              {Tab4Icon && <Tab4Icon className="w-5.5 h-5.5 mb-0.5" />}
-              <span className="text-[10px] font-bold">{mobileTabs[3].label}</span>
+              {Tab4Icon && <Tab4Icon className="w-5 h-5 mb-0.5" />}
+              <span className="text-[9px] font-bold">{mobileTabs[3].label}</span>
             </NavLink>
           )}
         </div>
