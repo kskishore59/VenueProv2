@@ -479,12 +479,12 @@ export default function Landing() {
               />
             </a>
             {/* Desktop Navigation Links */}
-            <div className="hidden md:flex items-center gap-6">
-              <a href="#features" className="text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors">Features</a>
-              <a href="#demo" className="text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors">Interactive Estimator</a>
-              <a href="#pipeline-section" className="text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors">How It Works</a>
-              <a href="#pricing" className="text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors">Pricing Plans</a>
-              <a href="#faq" className="text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors">Q&A Help</a>
+            <div className="hidden md:flex items-center gap-10">
+              <a href="#features" className="text-md text-slate-500 hover:text-slate-900 transition-colors">Features</a>
+              <a href="#demo" className="text-md text-slate-500 hover:text-slate-900 transition-colors">Interactive Estimator</a>
+              <a href="#pipeline-section" className="text-md text-slate-500 hover:text-slate-900 transition-colors">How It Works</a>
+              <a href="#pricing" className="text-md text-slate-500 hover:text-slate-900 transition-colors">Pricing Plans</a>
+              <a href="#faq" className="text-md text-slate-500 hover:text-slate-900 transition-colors">FAQ's</a>
             </div>
           </div>
 
@@ -494,7 +494,7 @@ export default function Landing() {
                 type="button"
                 id="btn-goto-dashboard"
                 onClick={() => handleNavigate('/dashboard')}
-                className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-full text-xs font-bold transition-all hover:scale-[1.03] active:scale-98 shadow-md shadow-brand-200"
+                className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-full text-md font-bold transition-all hover:scale-[1.03] active:scale-98 shadow-md shadow-brand-200"
               >
                 Go to Dashboard
               </button>
@@ -504,7 +504,7 @@ export default function Landing() {
                   type="button"
                   id="btn-login"
                   onClick={() => handleNavigate('/login')}
-                  className="px-4 py-2.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors hidden sm:block"
+                  className="px-4 py-2.5 text-xs font-bold  text-slate-500 hover:text-slate-900 transition-colors hidden sm:block"
                 >
                   Log In
                 </button>
@@ -512,7 +512,7 @@ export default function Landing() {
                   type="button"
                   id="btn-signup"
                   onClick={() => handleNavigate('/signup')}
-                  className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-full text-xs font-bold transition-all hover:scale-[1.03] active:scale-98 shadow-md shadow-brand-200"
+                  className=" hidden sm:block px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-full text-xs font-bold transition-all hover:scale-[1.03] active:scale-98 shadow-md shadow-brand-200"
                 >
                   Try Free Now
                 </button>
@@ -534,17 +534,17 @@ export default function Landing() {
         {/* Mobile Navigation Drawer */}
         {isMobileMenuOpen && (
           <div className="absolute top-16 left-0 right-0 bg-white/95 border border-slate-100 rounded-3xl p-5 shadow-2xl animate-scale-up md:hidden flex flex-col gap-3">
-            <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold text-slate-600 hover:text-slate-900 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-all">Features</a>
-            <a href="#demo" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold text-slate-600 hover:text-slate-900 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-all">Interactive Estimator</a>
-            <a href="#pipeline-section" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold text-slate-600 hover:text-slate-900 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-all">How It Works</a>
-            <a href="#pricing" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold text-slate-600 hover:text-slate-900 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-all">Pricing Plans</a>
-            <a href="#faq" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold text-slate-600 hover:text-slate-900 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-all">Q&A Help</a>
+            <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="text-md font-bold text-slate-600 hover:text-slate-900 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-all">Features</a>
+            <a href="#demo" onClick={() => setIsMobileMenuOpen(false)} className="text-md font-bold text-slate-600 hover:text-slate-900 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-all">Interactive Estimator</a>
+            <a href="#pipeline-section" onClick={() => setIsMobileMenuOpen(false)} className="text-md font-bold text-slate-600 hover:text-slate-900 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-all">How It Works</a>
+            <a href="#pricing" onClick={() => setIsMobileMenuOpen(false)} className="text-md font-bold text-slate-600 hover:text-slate-900 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-all">Pricing Plans</a>
+            <a href="#faq" onClick={() => setIsMobileMenuOpen(false)} className="text-md font-bold text-slate-600 hover:text-slate-900 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-all">Q&A Help</a>
             {!user && (
               <button
                 type="button"
                 id="btn-mobile-login"
                 onClick={() => { setIsMobileMenuOpen(false); handleNavigate('/login'); }}
-                className="w-full text-center py-2.5 text-sm font-bold text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50"
+                className="w-full text-center py-2.5 text-md font-bold text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50"
               >
                 Log In
               </button>
@@ -576,7 +576,7 @@ export default function Landing() {
               & Bills, Effortlessly
             </h1>
 
-            <p className="text-sm sm:text-base text-slate-500 leading-relaxed max-w-xl font-medium">
+            <p className="text-md sm:text-base text-slate-500 leading-relaxed max-w-xl font-medium">
               Ditch the confusing diaries and paper books. VenuePro lets you record booked dates, manage client details, create GST tax invoices automatically, and share booking confirmations instantly on WhatsApp. Simple, fast, and secure.
             </p>
 
@@ -585,13 +585,13 @@ export default function Landing() {
                 type="button"
                 id="btn-hero-cta"
                 onClick={() => navigate('/signup')}
-                className="px-7 py-3.5 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl text-sm font-bold transition-all shadow-lg shadow-brand-100 flex items-center justify-center gap-2"
+                className="px-7 py-3.5 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl text-md font-bold transition-all shadow-lg shadow-brand-100 flex items-center justify-center gap-2"
               >
                 Try It Free <ArrowRight className="w-4 h-4" />
               </button>
               <a
                 href="#demo"
-                className="px-7 py-3.5 bg-white border border-slate-200 hover:bg-slate-50 rounded-2xl text-sm font-bold transition-all text-slate-700 flex items-center justify-center gap-1.5 shadow-sm"
+                className="px-7 py-3.5 bg-white border border-slate-200 hover:bg-slate-50 rounded-2xl text-md font-bold transition-all text-slate-700 flex items-center justify-center gap-1.5 shadow-sm"
               >
                 Calculate Event Price
               </a>
@@ -629,7 +629,7 @@ export default function Landing() {
               <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
                 <div>
                   <span className="text-[10px] font-bold text-brand-600 uppercase tracking-widest block">Interactive Live Demo</span>
-                  <span className="text-sm font-extrabold text-slate-900 font-display">Hall Availability Schedule</span>
+                  <span className="text-md font-extrabold text-slate-900 font-display">Hall Availability Schedule</span>
                 </div>
                 <div className="text-[11px] font-semibold text-slate-400">June 2026</div>
               </div>
@@ -686,7 +686,7 @@ export default function Landing() {
                     <div className="w-12 h-12 rounded-full bg-brand-50 flex items-center justify-center mb-3">
                       <CalendarIcon className="w-6 h-6 text-brand-600" />
                     </div>
-                    <h4 className="text-sm font-bold text-slate-900 mb-1">Book Slot for June {selectedDay}th</h4>
+                    <h4 className="text-md font-bold text-slate-900 mb-1">Book Slot for June {selectedDay}th</h4>
                     <p className="text-[11px] text-slate-500 text-center max-w-xs mb-4">Enter a client or wedding event name to instantly book this date.</p>
 
                     <input
@@ -737,7 +737,7 @@ export default function Landing() {
             <h2 className="text-3xl sm:text-[34px] font-extrabold text-slate-900 tracking-tight font-display">
               Why 500+ Venue Owners Left Paper Registers Behind
             </h2>
-            <p className="text-sm text-slate-500 max-w-xl mx-auto font-medium">
+            <p className="text-md text-slate-500 max-w-xl mx-auto font-medium">
               Running a venue with paper diaries, Excel sheets, and mental notes is a recipe for double bookings and lost income. Here is how VenuePro brings order to the chaos.
             </p>
           </motion.div>
@@ -854,7 +854,7 @@ export default function Landing() {
             <h2 className="text-3xl sm:text-[34px] font-extrabold text-slate-900 tracking-tight font-display">
               Designed Exclusively to Secure and Grow Your Venue
             </h2>
-            <p className="text-sm text-slate-500 max-w-xl mx-auto font-medium">
+            <p className="text-md text-slate-500 max-w-xl mx-auto font-medium">
               We focus on simple tools that solve daily venue operational problems and increase booking success.
             </p>
           </motion.div>
@@ -957,7 +957,7 @@ export default function Landing() {
               <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight font-display leading-[1.2]">
                 All Your Inquiries, Unified into One Pipeline
               </h2>
-              <p className="text-sm text-slate-500 leading-relaxed font-semibold">
+              <p className="text-md text-slate-500 leading-relaxed font-semibold">
                 Stop checking five different apps for customer inquiries. Whether a client messages you on WhatsApp, calls your phone, fills a contact form on your website, walks into your office, or leaves a message on social media—every single lead is captured and organized automatically.
               </p>
 
@@ -1080,7 +1080,7 @@ export default function Landing() {
             <h2 className="text-3xl sm:text-[34px] font-extrabold text-slate-900 tracking-tight font-display">
               Calculate Hall Bookings and GST Instantly
             </h2>
-            <p className="text-sm text-slate-500 leading-relaxed font-semibold">
+            <p className="text-md text-slate-500 leading-relaxed font-semibold">
               Try changing the numbers below. See how the invoice automatically calculates subtotal, catering charges, and taxes (CGST/SGST at 9% each) in real time.
             </p>
 
@@ -1267,7 +1267,7 @@ export default function Landing() {
                 {/* Grand Total */}
                 <div className="border-t border-slate-200 border-double pt-4 mt-2 flex justify-between items-center">
                   <div>
-                    <span className="text-sm font-bold text-slate-900 block">Total Amount Customer Pays</span>
+                    <span className="text-md font-bold text-slate-900 block">Total Amount Customer Pays</span>
                     <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">({gstMode} GST base)</span>
                   </div>
                   <span className="text-2xl font-extrabold text-slate-900 font-display">₹{costs.total.toLocaleString('en-IN')}</span>
@@ -1386,7 +1386,7 @@ export default function Landing() {
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-display leading-tight">
               Share Booking Logs and Invoices on WhatsApp with One Click
             </h2>
-            <p className="text-sm text-slate-500 leading-relaxed font-semibold">
+            <p className="text-md text-slate-500 leading-relaxed font-semibold">
               No need to download files and attach them manually. Send wedding quotes, booking vouchers, and payment receipts directly to client numbers via visual chat templates.
             </p>
 
@@ -1437,7 +1437,7 @@ export default function Landing() {
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-display">
               Track Customer Bookings From Inquiry to Advance Payment
             </h2>
-            <p className="text-sm text-slate-500 max-w-xl mx-auto font-medium">
+            <p className="text-md text-slate-500 max-w-xl mx-auto font-medium">
               See how easy it is to track customer requests. Click the blue arrow on the lead cards to progress them to the next stage.
             </p>
           </motion.div>
@@ -1551,7 +1551,7 @@ export default function Landing() {
             <h2 className="text-3xl sm:text-[34px] font-extrabold text-slate-900 tracking-tight font-display">
               Simple Monthly or Yearly Pricing Tiers
             </h2>
-            <p className="text-sm text-slate-500 max-w-xl mx-auto font-medium">
+            <p className="text-md text-slate-500 max-w-xl mx-auto font-medium">
               Choose the plan that matches your hall size. Save 20% on all plans by choosing Yearly billing.
             </p>
 
@@ -1710,7 +1710,7 @@ export default function Landing() {
             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight font-display">
               Usage, Benefits & Practical Questions
             </h2>
-            <p className="text-sm text-slate-500 max-w-xl mx-auto font-semibold">
+            <p className="text-md text-slate-500 max-w-xl mx-auto font-semibold">
               Find simple answers about moving data, training venue managers, offline logs, and helpline support.
             </p>
 
@@ -1743,7 +1743,7 @@ export default function Landing() {
                 <button
                   type="button"
                   onClick={() => setOpenFaqIndex(openFaqIndex === idx ? null : idx)}
-                  className="w-full text-left px-6 py-4 flex justify-between items-center text-sm font-bold text-slate-800 hover:text-brand-600 transition-colors focus:outline-none"
+                  className="w-full text-left px-6 py-4 flex justify-between items-center text-md font-bold text-slate-800 hover:text-brand-600 transition-colors focus:outline-none"
                 >
                   <span className="flex items-center gap-3">
                     <HelpCircle className="w-4 h-4 text-brand-600 shrink-0" />

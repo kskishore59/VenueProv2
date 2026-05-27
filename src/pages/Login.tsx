@@ -84,7 +84,7 @@ export default function Login() {
   const handleDemoLogin = async () => {
     setEmail('demo@venuepro.com');
     setPassword('demo1234');
-    
+
     // Slight timeout so user sees it autofill before submitting
     setTimeout(async () => {
       try {
@@ -100,13 +100,10 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden font-sans">
-      {/* Background Glows */}
-      <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-brand-600/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-indigo-600/10 blur-[120px] pointer-events-none" />
-
-      {/* Decorative floating grids */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none" />
+    <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4 relative overflow-hidden font-sans bg-grid-pattern">
+      {/* Decorative luxury gradient ambient blobs */}
+      <div className="absolute top-[-10%] right-[-10%] w-[50%] aspect-square rounded-full bg-gradient-to-tr from-brand-100/30 to-purple-100/20 blur-[120px] -z-10 animate-pulse-slow" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[45%] aspect-square rounded-full bg-gradient-to-tr from-indigo-100/30 to-brand-100/20 blur-[120px] -z-10 animate-pulse-slow" style={{ animationDelay: '3s' }} />
 
       <div className="w-full max-w-[440px] z-10 animate-fade-in">
         {/* Logo / Title */}
@@ -114,41 +111,39 @@ export default function Login() {
           <img
             src={venueProLogo}
             alt="VenuePro Logo"
-            className="h-10 w-auto object-contain mb-3"
-            style={{ filter: 'brightness(0) invert(1)' }}
+            className="h-20 w-auto object-contain mb-3"
           />
-          <p className="text-sm text-slate-400 mt-1">Premium Indian Venue Management System</p>
+          <p className="text-sm text-slate-500 mt-1 font-medium">Premium Indian Venue Management System</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white/[0.04] backdrop-blur-xl border border-white/[0.08] shadow-2xl rounded-3xl p-8 relative">
-          <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-          
-          <h2 className="text-xl font-bold text-white mb-6">Sign In</h2>
+        <div className="bg-white border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl p-8 relative">
+
+          <h2 className="text-xl font-bold text-slate-900 font-display mb-6">Sign In</h2>
 
           {/* Alert Messages */}
           {localError && (
-            <div className="mb-5 p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/20 text-rose-200 text-xs flex items-start gap-2.5 animate-fade-in">
-              <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-400 mt-0.5" />
+            <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-800 text-xs flex items-start gap-2.5 animate-fade-in">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-500 mt-0.5" />
               <span>{localError}</span>
             </div>
           )}
 
           {error && (
             error.includes('Email not confirmed') ? (
-              <div className="mb-5 p-3.5 rounded-xl bg-amber-500/15 border border-amber-500/20 text-amber-200 text-xs flex flex-col gap-2.5 animate-fade-in">
+              <div className="mb-5 p-3.5 rounded-xl bg-amber-50 border border-amber-100 text-amber-800 text-xs flex flex-col gap-2.5 animate-fade-in">
                 <div className="flex items-start gap-2.5">
-                  <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-400 mt-0.5" />
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-500 mt-0.5" />
                   <div>
-                    <span className="font-semibold block text-amber-300">Email Verification Required</span>
-                    <span>Please check your inbox to confirm your email before signing in.</span>
+                    <span className="font-semibold block text-amber-900">Email Verification Required</span>
+                    <span className="text-amber-700">Please check your inbox to confirm your email before signing in.</span>
                   </div>
                 </div>
                 <button
                   type="button"
                   disabled={resendingEmail || isLoading}
                   onClick={handleResendConfirmation}
-                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 active:scale-95 disabled:opacity-50 font-semibold text-xs transition-all border border-amber-500/30"
+                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200 active:scale-95 disabled:opacity-50 font-semibold text-xs transition-all border border-amber-200"
                 >
                   {resendingEmail ? (
                     <>
@@ -161,8 +156,8 @@ export default function Login() {
                 </button>
               </div>
             ) : (
-              <div className="mb-5 p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/20 text-rose-200 text-xs flex items-start gap-2.5 animate-fade-in">
-                <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-400 mt-0.5" />
+              <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-800 text-xs flex items-start gap-2.5 animate-fade-in">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-500 mt-0.5" />
                 <span>{error}</span>
               </div>
             )
@@ -170,18 +165,18 @@ export default function Login() {
 
           {/* Mock Mode Alert Banner */}
           {isMockMode && (
-            <div className="mb-5 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs flex flex-col gap-2 animate-fade-in">
+            <div className="mb-5 p-3.5 rounded-xl bg-amber-50 border border-amber-100 text-amber-800 text-xs flex flex-col gap-2 animate-fade-in">
               <div className="flex items-start gap-2.5">
-                <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-400 mt-0.5" />
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-500 mt-0.5" />
                 <div>
-                  <span className="font-semibold block text-amber-300">Local Mock Mode Active</span>
-                  <span>Supabase credentials are not configured. You can use any credentials to sign in, or click below.</span>
+                  <span className="font-semibold block text-amber-900">Local Mock Mode Active</span>
+                  <span className="text-amber-700">Supabase credentials are not configured. You can use any credentials to sign in, or click below.</span>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={handleDemoLogin}
-                className="w-full mt-1.5 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 active:scale-95 font-semibold text-xs transition-all border border-amber-500/30"
+                className="w-full mt-1.5 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200 active:scale-95 font-semibold text-xs transition-all border border-amber-200"
               >
                 <Sparkles className="w-3.5 h-3.5" /> Login with Demo Account
               </button>
@@ -191,9 +186,9 @@ export default function Login() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Email Address</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="email"
                   placeholder="name@venue.com"
@@ -203,15 +198,15 @@ export default function Login() {
                     setEmail(e.target.value);
                     if (localError) setLocalError(null);
                   }}
-                  className="w-full bg-slate-900/50 border border-white/[0.08] text-white pl-11 pr-4 py-3 rounded-xl text-sm placeholder-slate-600 focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-slate-50 border border-slate-100 text-slate-800 pl-11 pr-4 py-3 rounded-xl text-sm placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Password</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
@@ -221,12 +216,12 @@ export default function Login() {
                     setPassword(e.target.value);
                     if (localError) setLocalError(null);
                   }}
-                  className="w-full bg-slate-900/50 border border-white/[0.08] text-white pl-11 pr-11 py-3 rounded-xl text-sm placeholder-slate-600 focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-slate-50 border border-slate-100 text-slate-800 pl-11 pr-11 py-3 rounded-xl text-sm placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-500 hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-700 transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -236,7 +231,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed text-white font-bold text-sm transition-all shadow-lg shadow-brand-600/10 mt-6"
+              className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed text-white font-bold text-sm transition-all shadow-md shadow-brand-200 mt-6"
             >
               {isLoading ? (
                 <>
@@ -250,16 +245,16 @@ export default function Login() {
           </form>
 
           {/* Footer inside Card */}
-          <div className="mt-6 text-center text-xs text-slate-400 border-t border-white/[0.06] pt-5">
+          <div className="mt-6 text-center text-xs text-slate-500 border-t border-slate-50 pt-5">
             Don't have an account?{' '}
-            <Link to="/signup" className="text-brand-400 hover:text-brand-300 font-semibold hover:underline">
+            <Link to="/signup" className="text-brand-600 hover:text-brand-700 font-semibold hover:underline">
               Create one now
             </Link>
           </div>
         </div>
 
         {/* Security badge at bottom */}
-        <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500 mt-6">
+        <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400 mt-6">
           <ShieldCheck className="w-4 h-4" />
           <span>Secured with Supabase SSL/TLS • Row-Level Access Policies</span>
         </div>

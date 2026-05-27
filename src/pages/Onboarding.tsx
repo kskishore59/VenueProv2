@@ -260,7 +260,7 @@ export default function Onboarding() {
         {activeStep !== 'success' && (
           <button
             onClick={handleSkipOnboarding}
-            className="text-xs font-semibold text-slate-400 hover:text-slate-900 transition-colors"
+            className="text-md font-semibold text-slate-400 hover:text-slate-900 transition-colors"
           >
             Skip setup
           </button>
@@ -292,7 +292,7 @@ export default function Onboarding() {
                       Welcome to VenuePro! <br />
                       Let's set up your workspace
                     </h1>
-                    <p className="text-sm text-slate-500 leading-relaxed font-medium text-left">
+                    <p className="text-md text-slate-500 leading-relaxed font-medium text-left">
                       Join 500+ Indian wedding halls, banquets, and convention centers who digitize their operations. Lock booking dates, generate clean GST tax bills, and share vouchers on WhatsApp in seconds.
                     </p>
                   </div>
@@ -301,7 +301,7 @@ export default function Onboarding() {
                 <div className="space-y-3 pt-6">
                   <button
                     onClick={handleNextStep}
-                    className="w-full py-3.5 bg-brand-600 hover:bg-brand-700 active:scale-98 transition-all rounded-2xl text-white text-sm font-bold shadow-md shadow-brand-100 flex items-center justify-center gap-1.5"
+                    className="w-full py-3.5 bg-brand-600 hover:bg-brand-700 active:scale-98 transition-all rounded-2xl text-white text-md font-bold shadow-md shadow-brand-100 flex items-center justify-center gap-1.5"
                   >
                     Set Up My Venue Space <ArrowRight className="w-4 h-4" />
                   </button>
@@ -629,7 +629,7 @@ export default function Onboarding() {
                               : "border-slate-100 bg-white text-slate-500 hover:border-slate-200 hover:text-slate-900"
                           )}
                         >
-                          <span className="text-sm">{t.icon}</span>
+                          <span className="text-md">{t.icon}</span>
                           <span>{t.label}</span>
                         </button>
                       ))}
@@ -960,7 +960,7 @@ export default function Onboarding() {
                 <div className="pt-6 space-y-2">
                   <button
                     onClick={handleFinishOnboarding}
-                    className="w-full py-3.5 bg-brand-600 hover:bg-brand-700 active:scale-98 transition-all rounded-2xl text-white text-sm font-bold shadow-md shadow-brand-100 flex items-center justify-center gap-1.5"
+                    className="w-full py-3.5 bg-brand-600 hover:bg-brand-700 active:scale-98 transition-all rounded-2xl text-white text-md font-bold shadow-md shadow-brand-100 flex items-center justify-center gap-1.5"
                   >
                     Enter Workspace Dashboard <ChevronRight className="w-4 h-4" />
                   </button>

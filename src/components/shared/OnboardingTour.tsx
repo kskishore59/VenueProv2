@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, ChevronRight, ChevronLeft, Award } from 'lucide-react';
+import { useAuthStore } from '@/stores/auth-store';
 
 interface Step {
   selector: string;
@@ -49,6 +50,7 @@ export const OnboardingTour: OnboardingTourComponent = () => {
   const [active, setActive] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [coords, setCoords] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const user = useAuthStore((s) => s.user);
 
   useEffect(() => {
     const handleStart = () => {
@@ -58,19 +60,28 @@ export const OnboardingTour: OnboardingTourComponent = () => {
 
     window.addEventListener('start-onboarding-tour', handleStart);
 
-    // Auto-start check
-    const completed = localStorage.getItem('venuepro_onboarding_completed');
-    if (!completed) {
-      const timer = setTimeout(() => {
-        setActive(true);
-      }, 1500);
-      return () => clearTimeout(timer);
+    // Auto-start check only for logged-in users on authenticated dashboard pages
+    const pathname = window.location.pathname;
+    const isPublicOrSetupPage = ['/', '/login', '/signup', '/onboarding'].includes(pathname);
+
+    if (user && !isPublicOrSetupPage) {
+      const tourKey = `venuepro_tour_completed_${user.id}`;
+      const completed = localStorage.getItem(tourKey);
+      if (!completed) {
+        const timer = setTimeout(() => {
+          setActive(true);
+        }, 1500);
+        return () => {
+          clearTimeout(timer);
+          window.removeEventListener('start-onboarding-tour', handleStart);
+        };
+      }
     }
 
     return () => {
       window.removeEventListener('start-onboarding-tour', handleStart);
     };
-  }, []);
+  }, [user]);
 
   const activeStep = steps[stepIndex];
 
@@ -137,12 +148,16 @@ export const OnboardingTour: OnboardingTourComponent = () => {
 
   const handleFinish = () => {
     setActive(false);
-    localStorage.setItem('venuepro_onboarding_completed', 'true');
+    if (user) {
+      localStorage.setItem(`venuepro_tour_completed_${user.id}`, 'true');
+    }
   };
 
   const handleSkip = () => {
     setActive(false);
-    localStorage.setItem('venuepro_onboarding_completed', 'true');
+    if (user) {
+      localStorage.setItem(`venuepro_tour_completed_${user.id}`, 'true');
+    }
   };
 
   if (!active) return null;

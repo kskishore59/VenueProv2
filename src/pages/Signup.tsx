@@ -23,7 +23,7 @@ export default function Signup() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  
+
   const [localError, setLocalError] = useState<string | null>(null);
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
 
@@ -61,7 +61,7 @@ export default function Signup() {
 
     try {
       const res = await signUp(email, password, fullName, orgName);
-      
+
       if (res.sessionCreated) {
         toast.success('Organization registered successfully! 🎉', {
           description: `Logged in as ${fullName} @ ${orgName}`,
@@ -83,27 +83,26 @@ export default function Signup() {
   // Render Verification Success Screen
   if (registeredEmail) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden font-sans">
-        {/* Background Glows */}
-        <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-brand-600/10 blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-indigo-600/10 blur-[120px] pointer-events-none" />
+      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4 relative overflow-hidden font-sans bg-grid-pattern">
+        {/* Decorative luxury gradient ambient blobs */}
+        <div className="absolute top-[-10%] right-[-10%] w-[50%] aspect-square rounded-full bg-gradient-to-tr from-brand-100/30 to-purple-100/20 blur-[120px] -z-10 animate-pulse-slow" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[45%] aspect-square rounded-full bg-gradient-to-tr from-indigo-100/30 to-brand-100/20 blur-[120px] -z-10 animate-pulse-slow" style={{ animationDelay: '3s' }} />
 
         <div className="w-full max-w-[460px] z-10 animate-fade-in text-center">
-          <div className="bg-white/[0.04] backdrop-blur-xl border border-white/[0.08] shadow-2xl rounded-3xl p-8 relative">
-            <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-            
-            <div className="w-16 h-16 rounded-full bg-brand-500/15 flex items-center justify-center border border-brand-500/30 mx-auto mb-6">
-              <Inbox className="w-8 h-8 text-brand-400" />
+          <div className="bg-white border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl p-8 relative">
+
+            <div className="w-16 h-16 rounded-full bg-brand-5 flex items-center justify-center border border-brand-100 mx-auto mb-6">
+              <Inbox className="w-8 h-8 text-brand-600" />
             </div>
 
-            <h2 className="text-2xl font-extrabold text-white mb-2">Check Your Inbox</h2>
-            <p className="text-sm text-slate-400 mb-6">
-              We've sent a verification link to <strong className="text-brand-300">{registeredEmail}</strong>.
+            <h2 className="text-2xl font-extrabold text-slate-900 font-display mb-2">Check Your Inbox</h2>
+            <p className="text-sm text-slate-500 mb-6">
+              We've sent a verification link to <strong className="text-brand-600">{registeredEmail}</strong>.
             </p>
 
-            <div className="bg-slate-900/50 rounded-2xl border border-white/[0.06] p-4 text-left text-xs text-slate-400 space-y-2 mb-6">
-              <p className="font-semibold text-slate-200">What's next?</p>
-              <ul className="list-disc pl-4 space-y-1.5">
+            <div className="bg-slate-50 rounded-2xl border border-slate-100 p-4 text-left text-xs text-slate-500 space-y-2 mb-6">
+              <p className="font-bold text-slate-800">What's next?</p>
+              <ul className="list-disc pl-4 space-y-1.5 font-semibold">
                 <li>Click the confirmation link in the email to activate your account.</li>
                 <li>Your venue database, settings, and tables will be instantly provisioned.</li>
                 <li>You'll then be redirected to log into your dashboard.</li>
@@ -112,7 +111,7 @@ export default function Signup() {
 
             <Link
               to="/login"
-              className="w-full flex items-center justify-center px-5 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-[0.98] text-white font-bold text-sm transition-all"
+              className="w-full flex items-center justify-center px-5 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-[0.98] text-white font-bold text-sm transition-all shadow-md shadow-brand-200"
             >
               Back to Login
             </Link>
@@ -123,13 +122,10 @@ export default function Signup() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden font-sans">
-      {/* Background Glows */}
-      <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-brand-600/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-indigo-600/10 blur-[120px] pointer-events-none" />
-
-      {/* Decorative floating grids */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none" />
+    <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4 relative overflow-hidden font-sans bg-grid-pattern">
+      {/* Decorative luxury gradient ambient blobs */}
+      <div className="absolute top-[-10%] right-[-10%] w-[50%] aspect-square rounded-full bg-gradient-to-tr from-brand-100/30 to-purple-100/20 blur-[120px] -z-10 animate-pulse-slow" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[45%] aspect-square rounded-full bg-gradient-to-tr from-indigo-100/30 to-brand-100/20 blur-[120px] -z-10 animate-pulse-slow" style={{ animationDelay: '3s' }} />
 
       <div className="w-full max-w-[460px] z-10 animate-fade-in">
         {/* Logo / Title */}
@@ -137,22 +133,20 @@ export default function Signup() {
           <img
             src={venueProLogo}
             alt="VenuePro Logo"
-            className="h-10 w-auto object-contain mb-3"
-            style={{ filter: 'brightness(0) invert(1)' }}
+            className="h-20 w-auto object-contain mb-3"
           />
-          <p className="text-sm text-slate-400 mt-1">Register your venue and start managing events</p>
+          <p className="text-sm text-slate-505 mt-1 font-medium">Register your venue and start managing events</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white/[0.04] backdrop-blur-xl border border-white/[0.08] shadow-2xl rounded-3xl p-8 relative">
-          <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-          
-          <h2 className="text-xl font-bold text-white mb-5">Create Account</h2>
+        <div className="bg-white border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl p-8 relative">
+
+          <h2 className="text-xl font-bold text-slate-900 font-display mb-5">Create Account</h2>
 
           {/* Alert Messages */}
           {(localError || error) && (
-            <div className="mb-4 p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/20 text-rose-200 text-xs flex items-start gap-2.5 animate-fade-in">
-              <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-400 mt-0.5" />
+            <div className="mb-4 p-3.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-800 text-xs flex items-start gap-2.5 animate-fade-in">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-505 mt-0.5" />
               <span>{localError || error}</span>
             </div>
           )}
@@ -160,9 +154,9 @@ export default function Signup() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Full Name</label>
+              <label className="block text-xs font-bold text-slate-505 mb-1.5 uppercase tracking-wider">Full Name</label>
               <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
                   placeholder="Rahul Sharma"
@@ -172,15 +166,15 @@ export default function Signup() {
                     setFullName(e.target.value);
                     if (localError) setLocalError(null);
                   }}
-                  className="w-full bg-slate-900/50 border border-white/[0.08] text-white pl-11 pr-4 py-2.5 rounded-xl text-sm placeholder-slate-600 focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none transition-all disabled:opacity-50"
+                  className="w-full bg-slate-50 border border-slate-100 text-slate-800 pl-11 pr-4 py-2.5 rounded-xl text-sm placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all disabled:opacity-50"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Email Address</label>
+              <label className="block text-xs font-bold text-slate-505 mb-1.5 uppercase tracking-wider">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="email"
                   placeholder="rahul@myvenue.com"
@@ -190,15 +184,15 @@ export default function Signup() {
                     setEmail(e.target.value);
                     if (localError) setLocalError(null);
                   }}
-                  className="w-full bg-slate-900/50 border border-white/[0.08] text-white pl-11 pr-4 py-2.5 rounded-xl text-sm placeholder-slate-600 focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none transition-all disabled:opacity-50"
+                  className="w-full bg-slate-50 border border-slate-100 text-slate-800 pl-11 pr-4 py-2.5 rounded-xl text-sm placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all disabled:opacity-50"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Venue / Organization Name</label>
+              <label className="block text-xs font-bold text-slate-550 mb-1.5 uppercase tracking-wider">Venue / Organization Name</label>
               <div className="relative">
-                <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
                   placeholder="Royal Heritage Banquet"
@@ -208,11 +202,11 @@ export default function Signup() {
                     setOrgName(e.target.value);
                     if (localError) setLocalError(null);
                   }}
-                  className="w-full bg-slate-900/50 border border-white/[0.08] text-white pl-11 pr-4 py-2.5 rounded-xl text-sm placeholder-slate-600 focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none transition-all disabled:opacity-50"
+                  className="w-full bg-slate-50 border border-slate-100 text-slate-800 pl-11 pr-4 py-2.5 rounded-xl text-sm placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all disabled:opacity-50"
                 />
               </div>
               {emailParam && (
-                <p className="text-[10px] text-brand-400 mt-1 font-medium">
+                <p className="text-[10px] text-brand-600 mt-1 font-semibold">
                   Joining existing team organization automatically.
                 </p>
               )}
@@ -220,9 +214,9 @@ export default function Signup() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Password</label>
+                <label className="block text-xs font-bold text-slate-505 mb-1.5 uppercase tracking-wider">Password</label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
@@ -232,15 +226,15 @@ export default function Signup() {
                       setPassword(e.target.value);
                       if (localError) setLocalError(null);
                     }}
-                    className="w-full bg-slate-900/50 border border-white/[0.08] text-white pl-11 pr-4 py-2.5 rounded-xl text-sm placeholder-slate-600 focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none transition-all disabled:opacity-50"
+                    className="w-full bg-slate-50 border border-slate-100 text-slate-800 pl-11 pr-4 py-2.5 rounded-xl text-sm placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all disabled:opacity-50"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Confirm</label>
+                <label className="block text-xs font-bold text-slate-505 mb-1.5 uppercase tracking-wider">Confirm</label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
@@ -250,12 +244,12 @@ export default function Signup() {
                       setConfirmPassword(e.target.value);
                       if (localError) setLocalError(null);
                     }}
-                    className="w-full bg-slate-900/50 border border-white/[0.08] text-white pl-11 pr-11 py-2.5 rounded-xl text-sm placeholder-slate-600 focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none transition-all disabled:opacity-50"
+                    className="w-full bg-slate-50 border border-slate-100 text-slate-800 pl-11 pr-11 py-2.5 rounded-xl text-sm placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all disabled:opacity-50"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-500 hover:text-white transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-700 transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -266,7 +260,7 @@ export default function Signup() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed text-white font-bold text-sm transition-all shadow-lg shadow-brand-600/10 mt-6"
+              className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed text-white font-bold text-sm transition-all shadow-md shadow-brand-200 mt-6"
             >
               {isLoading ? (
                 <>
@@ -280,16 +274,16 @@ export default function Signup() {
           </form>
 
           {/* Footer inside Card */}
-          <div className="mt-6 text-center text-xs text-slate-400 border-t border-white/[0.06] pt-5">
+          <div className="mt-6 text-center text-xs text-slate-500 border-t border-slate-50 pt-5">
             Already have an account?{' '}
-            <Link to="/login" className="text-brand-400 hover:text-brand-300 font-semibold hover:underline">
+            <Link to="/login" className="text-brand-600 hover:text-brand-700 font-semibold hover:underline">
               Sign In instead
             </Link>
           </div>
         </div>
 
         {/* Security badge at bottom */}
-        <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500 mt-5">
+        <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400 mt-5">
           <ShieldCheck className="w-4 h-4" />
           <span>Automatic organization profile creation on SQL trigger</span>
         </div>
