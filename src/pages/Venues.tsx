@@ -32,6 +32,7 @@ import { toast } from 'sonner';
 import { WhatsappShareModal, getHallSpecsMessage } from '@/components/venues/WhatsappShareModal';
 import { useAuthStore } from '@/stores/auth-store';
 import { hasPermission } from '@/lib/permissions';
+import { EmptyState } from '@/components/shared/EmptyState';
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg
@@ -539,139 +540,148 @@ export default function Venues() {
       </div>
 
       {/* Venues Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {halls.map((hall) => {
-          const coverPhoto = hall.images && hall.images.length > 0
-            ? hall.images[hall.media_config?.cover_photo_index || 0] || hall.images[0]
-            : 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=1000&auto=format&fit=crop';
+      {halls.length === 0 ? (
+        <EmptyState
+          icon={Building2}
+          title="No spaces configured"
+          description="Add your first banquet hall, outdoor lawn, or conference room, define seating capacities, and set rental pricing."
+          action={canManageVenues ? { label: "Add First Space", onClick: handleOpenAdd } : undefined}
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {halls.map((hall) => {
+            const coverPhoto = hall.images && hall.images.length > 0
+              ? hall.images[hall.media_config?.cover_photo_index || 0] || hall.images[0]
+              : 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=1000&auto=format&fit=crop';
 
-          const pricingConf = hall.pricing_config || {};
-          const basePrice = pricingConf.base_rental || (hall.pricing.base_price_paise / 100);
-          const vegPlate = pricingConf.catering_veg || (hall.pricing.per_plate_veg_paise ? hall.pricing.per_plate_veg_paise / 100 : null);
-          const nonvegPlate = pricingConf.catering_nonveg || (hall.pricing.per_plate_nonveg_paise ? hall.pricing.per_plate_nonveg_paise / 100 : null);
+            const pricingConf = hall.pricing_config || {};
+            const basePrice = pricingConf.base_rental || (hall.pricing.base_price_paise / 100);
+            const vegPlate = pricingConf.catering_veg || (hall.pricing.per_plate_veg_paise ? hall.pricing.per_plate_veg_paise / 100 : null);
+            const nonvegPlate = pricingConf.catering_nonveg || (hall.pricing.per_plate_nonveg_paise ? hall.pricing.per_plate_nonveg_paise / 100 : null);
 
-          return (
-            <div key={hall.id} className="bg-white rounded-2xl border border-gray-150 overflow-hidden shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col group">
-              {/* Card Thumbnail */}
-              <div className="relative h-48 overflow-hidden bg-gray-100 flex-shrink-0">
-                <img
-                  src={coverPhoto}
-                  alt={hall.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+            return (
+              <div key={hall.id} className="bg-white rounded-2xl border border-gray-150 overflow-hidden shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col group">
+                {/* Card Thumbnail */}
+                <div className="relative h-48 overflow-hidden bg-gray-100 flex-shrink-0">
+                  <img
+                    src={coverPhoto}
+                    alt={hall.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
-                {/* Badges */}
-                <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-black/60 text-white backdrop-blur-xs uppercase tracking-wider">
-                    {hallTypeLabels[hall.type] || hall.type}
-                  </span>
-                  {hall.floor_number !== undefined && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/90 text-gray-700 backdrop-blur-xs">
-                      Floor {hall.floor_number === 0 ? 'G' : hall.floor_number}
+                  {/* Badges */}
+                  <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-black/60 text-white backdrop-blur-xs uppercase tracking-wider">
+                      {hallTypeLabels[hall.type] || hall.type}
                     </span>
-                  )}
-                </div>
-
-                <div className="absolute top-3 right-3">
-                  <span className={cn(
-                    "px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-xs tracking-wider uppercase",
-                    hall.is_active
-                      ? "bg-success-100 text-success-700 border border-success-200"
-                      : "bg-gray-100 text-gray-400 border border-gray-200"
-                  )}>
-                    {hall.is_active ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
-
-                {/* Capacity Overlay at bottom-left */}
-                <div className="absolute bottom-3 left-3 text-white flex items-center gap-1.5">
-                  <Users className="w-4 h-4 text-white/95" />
-                  <span className="text-xs font-bold">{hall.capacity_comfortable || hall.capacity_max} guests comfortable</span>
-                </div>
-              </div>
-
-              {/* Card Body */}
-              <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                <div className="space-y-1.5">
-                  <h3 className="text-base font-bold text-gray-900 truncate">{hall.name}</h3>
-                  {hall.description ? (
-                    <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">{hall.description}</p>
-                  ) : (
-                    <p className="text-xs text-gray-300 italic">No description provided</p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 border-y border-gray-100 py-3 text-xs">
-                  <div>
-                    <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Base Price</span>
-                    <span className="font-bold text-gray-900">{formatCurrency(basePrice * 100)}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Area (Sq Ft)</span>
-                    <span className="font-bold text-gray-800">{hall.area_sqft ? `${hall.area_sqft.toLocaleString()} sqft` : 'N/A'}</span>
-                  </div>
-                  <div className="mt-1">
-                    <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Veg Catering</span>
-                    <span className="font-bold text-success-600">{vegPlate ? `₹${vegPlate}/pl` : 'N/A'}</span>
-                  </div>
-                  <div className="mt-1">
-                    <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Non-Veg Catering</span>
-                    <span className="font-bold text-rose-600">{nonvegPlate ? `₹${nonvegPlate}/pl` : 'N/A'}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-1">
-                  <div className="flex gap-1.5">
-                    <button
-                      onClick={() => {
-                        setSelectedHallForShare(hall);
-                        setIsShareModalOpen(true);
-                      }}
-                      className="p-2 rounded-xl border border-gray-150 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 hover:border-emerald-250 transition-all flex items-center justify-center"
-                      title="Share Hall Details on WhatsApp"
-                    >
-                      <WhatsAppIcon className={cn(
-                        'w-5 h-5',
-                      )} />
-                    </button>
-                    <button
-                      onClick={() => {
-                        const orgName = useDataStore.getState().organization.name;
-                        const message = getHallSpecsMessage(hall, orgName);
-                        navigator.clipboard.writeText(message);
-                        toast.success('Hall specifications copied to clipboard! 📋');
-                      }}
-                      className="p-2 rounded-xl border border-gray-150 text-gray-400 hover:text-brand-600 hover:bg-brand-50 hover:border-brand-250 transition-all flex items-center justify-center"
-                      title="Copy Specifications to Clipboard"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
-                    {hall.media_config?.tour_360_url && (
-                      <a href={hall.media_config.tour_360_url} target="_blank" rel="noreferrer" title="360 Tour" className="p-2 rounded-xl border border-gray-150 text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition-all">
-                        <Maximize2 className="w-3.5 h-3.5" />
-                      </a>
-                    )}
-                    {hall.media_config?.youtube_video_url && (
-                      <a href={hall.media_config.youtube_video_url} target="_blank" rel="noreferrer" title="Youtube video" className="p-2 rounded-xl border border-gray-150 text-gray-400 hover:text-danger-600 hover:bg-danger-50 transition-all">
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
+                    {hall.floor_number !== undefined && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/90 text-gray-700 backdrop-blur-xs">
+                        Floor {hall.floor_number === 0 ? 'G' : hall.floor_number}
+                      </span>
                     )}
                   </div>
-                  {canManageVenues && (
-                    <button
-                      onClick={() => handleOpenEdit(hall)}
-                      className="flex items-center gap-1 px-3.5 py-2 text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-xl transition-colors active:scale-95"
-                    >
-                      Configure Details <ChevronRight className="w-3 h-3" />
-                    </button>
-                  )}
+
+                  <div className="absolute top-3 right-3">
+                    <span className={cn(
+                      "px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-xs tracking-wider uppercase",
+                      hall.is_active
+                        ? "bg-success-100 text-success-700 border border-success-200"
+                        : "bg-gray-100 text-gray-400 border border-gray-200"
+                    )}>
+                      {hall.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+
+                  {/* Capacity Overlay at bottom-left */}
+                  <div className="absolute bottom-3 left-3 text-white flex items-center gap-1.5">
+                    <Users className="w-4 h-4 text-white/95" />
+                    <span className="text-xs font-bold">{hall.capacity_comfortable || hall.capacity_max} guests comfortable</span>
+                  </div>
+                </div>
+
+                {/* Card Body */}
+                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                  <div className="space-y-1.5">
+                    <h3 className="text-base font-bold text-gray-900 truncate">{hall.name}</h3>
+                    {hall.description ? (
+                      <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">{hall.description}</p>
+                    ) : (
+                      <p className="text-xs text-gray-300 italic">No description provided</p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 border-y border-gray-100 py-3 text-xs">
+                    <div>
+                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Base Price</span>
+                      <span className="font-bold text-gray-900">{formatCurrency(basePrice * 100)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Area (Sq Ft)</span>
+                      <span className="font-bold text-gray-800">{hall.area_sqft ? `${hall.area_sqft.toLocaleString()} sqft` : 'N/A'}</span>
+                    </div>
+                    <div className="mt-1">
+                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Veg Catering</span>
+                      <span className="font-bold text-success-600">{vegPlate ? `₹${vegPlate}/pl` : 'N/A'}</span>
+                    </div>
+                    <div className="mt-1">
+                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Non-Veg Catering</span>
+                      <span className="font-bold text-rose-600">{nonvegPlate ? `₹${nonvegPlate}/pl` : 'N/A'}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex gap-1.5">
+                      <button
+                        onClick={() => {
+                          setSelectedHallForShare(hall);
+                          setIsShareModalOpen(true);
+                        }}
+                        className="p-2 rounded-xl border border-gray-150 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 hover:border-emerald-250 transition-all flex items-center justify-center"
+                        title="Share Hall Details on WhatsApp"
+                      >
+                        <WhatsAppIcon className={cn(
+                          'w-5 h-5',
+                        )} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          const orgName = useDataStore.getState().organization.name;
+                          const message = getHallSpecsMessage(hall, orgName);
+                          navigator.clipboard.writeText(message);
+                          toast.success('Hall specifications copied to clipboard! 📋');
+                        }}
+                        className="p-2 rounded-xl border border-gray-150 text-gray-400 hover:text-brand-600 hover:bg-brand-50 hover:border-brand-250 transition-all flex items-center justify-center"
+                        title="Copy Specifications to Clipboard"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                      {hall.media_config?.tour_360_url && (
+                        <a href={hall.media_config.tour_360_url} target="_blank" rel="noreferrer" title="360 Tour" className="p-2 rounded-xl border border-gray-150 text-gray-400 hover:text-brand-600 hover:bg-brand-50 transition-all">
+                          <Maximize2 className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                      {hall.media_config?.youtube_video_url && (
+                        <a href={hall.media_config.youtube_video_url} target="_blank" rel="noreferrer" title="Youtube video" className="p-2 rounded-xl border border-gray-150 text-gray-400 hover:text-danger-600 hover:bg-danger-50 transition-all">
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                    </div>
+                    {canManageVenues && (
+                      <button
+                        onClick={() => handleOpenEdit(hall)}
+                        className="flex items-center gap-1 px-3.5 py-2 text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-xl transition-colors active:scale-95"
+                      >
+                        Configure Details <ChevronRight className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* 6-Tab Edit/Add Drawer */}
       {isDrawerOpen && (

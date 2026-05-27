@@ -10,6 +10,7 @@ import { eventTypeLabels, type EventType } from '@/types/booking';
 import { useAuthStore } from '@/stores/auth-store';
 import { hasPermission } from '@/lib/permissions';
 import { DateRangeFilter } from '@/components/shared/DateRangeFilter';
+import { EmptyState } from '@/components/shared/EmptyState';
 
 const statusFilters: { value: LeadStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -91,11 +92,16 @@ export default function Leads() {
         </div>
       </div>
 
-      <div className="space-y-3 stagger-children">
-        {filtered.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 py-16 text-center text-sm text-gray-400">No leads found</div>
-        ) : (
-          filtered.map((lead) => {
+      {filtered.length === 0 ? (
+        <EmptyState
+          icon={PhoneIncoming}
+          title="No leads found"
+          description="Create your first inquiry, log caller details, event preferences, and start tracking wedding conversions."
+          action={canCreateLead ? { label: "Add First Lead", onClick: openAddLead } : undefined}
+        />
+      ) : (
+        <div className="space-y-3 stagger-children">
+          {filtered.map((lead) => {
             const isOverdue = lead.follow_up_date && lead.follow_up_date <= new Date().toISOString().split('T')[0] && lead.status !== 'won' && lead.status !== 'lost';
             return (
               <div key={lead.id} onClick={() => openLeadDrawer(lead.id)}
@@ -131,9 +137,9 @@ export default function Leads() {
                 </div>
               </div>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
     </div>
   );
 }

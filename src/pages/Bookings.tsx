@@ -9,6 +9,7 @@ import { eventTypeLabels, type BookingStatus } from '@/types/booking';
 import { useAuthStore } from '@/stores/auth-store';
 import { hasPermission } from '@/lib/permissions';
 import { DateRangeFilter } from '@/components/shared/DateRangeFilter';
+import { EmptyState } from '@/components/shared/EmptyState';
 
 const statusFilters: { value: BookingStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -127,15 +128,20 @@ export default function Bookings() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-        <div className="hidden md:grid grid-cols-[1fr_120px_140px_100px_120px_120px_50px] gap-4 px-5 py-3 bg-gray-50 border-b border-gray-100 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-          <span>Customer / Event</span><span>Date</span><span>Hall</span><span>Guests</span><span>Amount</span><span>Status</span><span></span>
-        </div>
-        <div className="divide-y divide-gray-50">
-          {filtered.length === 0 ? (
-            <div className="py-16 text-center text-sm text-gray-400">No bookings found</div>
-          ) : (
-            filtered.map((booking) => {
+      {filtered.length === 0 ? (
+        <EmptyState
+          icon={Search}
+          title="No bookings recorded yet"
+          description="Create your first booking slot, lock availability calendars, and track advance deposits."
+          action={canCreateBooking ? { label: "Create First Booking", onClick: () => openQuickAdd() } : undefined}
+        />
+      ) : (
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+          <div className="hidden md:grid grid-cols-[1fr_120px_140px_100px_120px_120px_50px] gap-4 px-5 py-3 bg-gray-50 border-b border-gray-100 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+            <span>Customer / Event</span><span>Date</span><span>Hall</span><span>Guests</span><span>Amount</span><span>Status</span><span></span>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {filtered.map((booking) => {
               const customer = getCustomerById(booking.customer_id);
               const hall = getHallById(booking.hall_id);
               return (
@@ -188,10 +194,10 @@ export default function Bookings() {
                   </div>
                 </div>
               );
-            })
-          )}
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

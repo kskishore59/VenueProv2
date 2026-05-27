@@ -29,6 +29,21 @@ export function AuthGuard() {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // If onboarding is not completed, redirect to /onboarding
+  const isOnboardingPage = location.pathname === '/onboarding';
+  
+  if (user.email === 'admin@shreemangalam.com') {
+    if (!localStorage.getItem('venuepro_onboarding_completed')) {
+      localStorage.setItem('venuepro_onboarding_completed', 'true');
+    }
+  }
+
+  const isCompleted = localStorage.getItem('venuepro_onboarding_completed') === 'true';
+  
+  if (!isCompleted && !isOnboardingPage) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
   // Authenticated: mount children routes
   return <Outlet />;
 }

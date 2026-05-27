@@ -31,6 +31,7 @@ const Expenses = lazy(() => import('@/pages/Expenses'));
 const Import = lazy(() => import('@/pages/Import'));
 const Help = lazy(() => import('@/pages/Help'));
 const Landing = lazy(() => import('@/pages/Landing'));
+const Onboarding = lazy(() => import('@/pages/Onboarding'));
 
 import { FeedbackWidget } from '@/components/shared/FeedbackWidget';
 import { ReceiptModal } from '@/components/payments/ReceiptModal';
@@ -84,6 +85,7 @@ export default function App() {
 
               {/* Protected Workspace Routes */}
               <Route element={<AuthGuard />}>
+                <Route path="/onboarding" element={<Onboarding />} />
                 <Route element={<AppLayout />}>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/bookings" element={<PermissionGuard resource="bookings"><Bookings /></PermissionGuard>} />
