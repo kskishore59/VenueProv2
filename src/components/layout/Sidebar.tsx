@@ -2,9 +2,11 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, Users, PhoneIncoming,
   IndianRupee, Settings, ChevronLeft, ChevronRight, X,
-  Building2, Receipt, UploadCloud, HelpCircle, Sparkle, LogOut,
+  Building2, Receipt, UploadCloud, HelpCircle, LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import venueProLogo from '@/assets/venueProLogo.svg';
+import favicon from '@/assets/favicon.svg';
 import { useUIStore } from '@/stores/ui-store';
 import { useDataStore } from '@/stores/data-store';
 import { useAuthStore } from '@/stores/auth-store';
@@ -102,14 +104,26 @@ export function Sidebar() {
           collapsed ? 'justify-center' : 'gap-3',
         )}>
           <div className="flex items-center">
-            {/* Sparkle star logo */}
-            <div className="w-9 h-9 rounded-full bg-brand-600 flex items-center justify-center flex-shrink-0 shadow-sm relative z-20 transition-transform duration-300 hover:rotate-12">
-              <Sparkle className="w-4 h-4 text-white fill-white" />
-            </div>
+            {/* VenuePro Custom Logo */}
+            {collapsed ? (
+              <div className="w-9 h-9 rounded-xl bg-white border border-slate-100 flex items-center justify-center overflow-hidden shadow-2xs">
+                <img
+                  src={favicon}
+                  alt="VenuePro Logo"
+                  className="w-10 h-10 object-contain"
+                />
+              </div>
+            ) : (
+              <img
+                src={venueProLogo}
+                alt="VenuePro Logo"
+                className="h-16 w-auto object-contain max-w-[160px]"
+              />
+            )}
 
             {/* Organization custom logo overlapping */}
             {!collapsed && organization?.logo_url && (
-              <div className="w-9 h-9 rounded-full bg-white border border-gray-150 overflow-hidden shadow-2xs -ml-2.5 relative z-10 flex items-center justify-center transition-transform hover:translate-x-1 duration-300">
+              <div className="w-8 h-8 rounded-full bg-white border border-gray-150 overflow-hidden shadow-2xs -ml-2 relative z-10 flex items-center justify-center transition-transform hover:translate-x-1 duration-300">
                 <img
                   src={organization.logo_url}
                   alt={orgName}
@@ -118,12 +132,11 @@ export function Sidebar() {
               </div>
             )}
           </div>
-          {!collapsed && (
+          {!collapsed && organization?.logo_url && (
             <div className="min-w-0 animate-fade-in ml-1.5">
-              <span className="text-sm font-bold text-gray-900 truncate block font-sans tracking-tight">
+              <span className="text-xs font-bold text-gray-900 truncate block font-sans tracking-tight">
                 {orgName.split(' ')[0]}
               </span>
-              <p className="text-[10px] text-gray-400 font-semibold tracking-wider uppercase">VenuePro</p>
             </div>
           )}
           {/* Mobile close button */}

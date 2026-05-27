@@ -53,10 +53,39 @@ const queryClient = new QueryClient({
 
 export default function App() {
   const checkSession = useAuthStore((s) => s.checkSession);
+  const user = useAuthStore((s) => s.user);
+  const sessionChecked = useAuthStore((s) => s.sessionChecked);
 
   useEffect(() => {
     checkSession();
   }, [checkSession]);
+
+  useEffect(() => {
+    if (!sessionChecked) return;
+
+    const hostname = window.location.hostname;
+    const pathname = window.location.pathname;
+
+    if (hostname === 'app.venuepro.in') {
+      if (pathname === '/') {
+        if (user) {
+          window.location.replace('/dashboard');
+        } else {
+          window.location.replace('/login');
+        }
+      }
+    } else if (hostname === 'venuepro.in') {
+      if (pathname === '/') {
+        window.location.replace('https://www.venuepro.in/');
+      } else {
+        window.location.replace(`https://app.venuepro.in${pathname}`);
+      }
+    } else if (hostname === 'www.venuepro.in') {
+      if (pathname !== '/') {
+        window.location.replace(`https://app.venuepro.in${pathname}`);
+      }
+    }
+  }, [user, sessionChecked]);
 
   return (
     <QueryClientProvider client={queryClient}>

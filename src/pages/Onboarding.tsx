@@ -2,24 +2,25 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { 
-  Sparkles, Check, ArrowRight, ChevronRight, ChevronLeft, 
-  Building2, Users, CheckCircle2, Shield, AlertCircle, Plus, 
+import {
+  Sparkles, Check, ArrowRight, ChevronRight, ChevronLeft,
+  Building2, Users, CheckCircle2, Shield, AlertCircle, Plus,
   Trash2, Mail, Landmark, CheckSquare, Zap, Gift
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useDataStore } from '@/stores/data-store';
 import { cn } from '@/lib/utils';
+import venueProLogo from '@/assets/venueProLogo.svg';
 import { toast } from 'sonner';
 
-type OnboardingStep = 
-  | 'welcome' 
-  | 'benefits' 
-  | 'role_selection' 
-  | 'wizard_org' 
-  | 'wizard_venue' 
-  | 'wizard_pricing' 
-  | 'wizard_staff' 
+type OnboardingStep =
+  | 'welcome'
+  | 'benefits'
+  | 'role_selection'
+  | 'wizard_org'
+  | 'wizard_venue'
+  | 'wizard_pricing'
+  | 'wizard_staff'
   | 'success';
 
 export default function Onboarding() {
@@ -49,7 +50,7 @@ export default function Onboarding() {
   // Form states
   const [role, setRole] = useState<'owner' | 'manager' | 'coordinator'>('owner');
   const [venueCategory, setVenueCategory] = useState<'banquet' | 'shadi_mahal' | 'mandapam' | 'resort' | 'hotel' | 'lawn'>('banquet');
-  
+
   // 1. Org details
   const [orgName, setOrgName] = useState(organization?.name || '');
   const [orgPhone, setOrgPhone] = useState('');
@@ -71,7 +72,7 @@ export default function Onboarding() {
   const [hasDj, setHasDj] = useState(false);
   const [hasParking, setHasParking] = useState(true);
   const [hasPowerBackup, setHasPowerBackup] = useState(true);
-  
+
   const [baseRental, setBaseRental] = useState('80000');
   const [vegPlatePrice, setVegPlatePrice] = useState('750');
   const [nonVegPlatePrice, setNonVegPlatePrice] = useState('950');
@@ -139,10 +140,20 @@ export default function Onboarding() {
           state: orgState.trim() || null,
         });
 
+        // Map UI onboarding type to database check constraint allowed value
+        let dbHallType: 'banquet_hall' | 'conference_room' | 'lawn' | 'terrace' | 'boardroom' | 'other' = 'banquet_hall';
+        if (hallType === 'party_lawn') {
+          dbHallType = 'lawn';
+        } else if (hallType === 'conference_room') {
+          dbHallType = 'conference_room';
+        } else if (hallType === 'rooms') {
+          dbHallType = 'other';
+        }
+
         // Save Primary Hall Space
         await createHall({
           name: hallName.trim(),
-          type: hallType,
+          type: dbHallType,
           capacity_min: Number(capacityMin),
           capacity_max: Number(capacityMax),
           capacity_comfortable: Math.round((Number(capacityMin) + Number(capacityMax)) / 2),
@@ -191,12 +202,20 @@ export default function Onboarding() {
   };
 
   const handleSkipOnboarding = () => {
+    const userId = profile?.id || useAuthStore.getState().user?.id;
+    if (userId) {
+      localStorage.setItem(`venuepro_onboarding_completed_${userId}`, 'true');
+    }
     localStorage.setItem('venuepro_onboarding_completed', 'true');
     toast.success('Onboarding skipped. Seeding demo register.');
     navigate('/dashboard');
   };
 
   const handleFinishOnboarding = () => {
+    const userId = profile?.id || useAuthStore.getState().user?.id;
+    if (userId) {
+      localStorage.setItem(`venuepro_onboarding_completed_${userId}`, 'true');
+    }
     localStorage.setItem('venuepro_onboarding_completed', 'true');
     toast.success('Onboarding complete! Welcome to VenuePro.');
     navigate('/dashboard');
@@ -223,24 +242,23 @@ export default function Onboarding() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col justify-between font-sans relative overflow-hidden bg-grid-pattern py-12 px-4 select-none">
-      
+
       {/* Decorative luxury gradient ambient blobs */}
       <div className="absolute top-[-10%] right-[-10%] w-[50%] aspect-square rounded-full bg-gradient-to-tr from-brand-100/30 to-purple-100/20 blur-[120px] -z-10 animate-pulse-slow" />
       <div className="absolute bottom-[-10%] left-[-10%] w-[45%] aspect-square rounded-full bg-gradient-to-tr from-indigo-100/30 to-brand-100/20 blur-[120px] -z-10 animate-pulse-slow" style={{ animationDelay: '3s' }} />
 
       {/* Floating small top header */}
       <header className="max-w-xl w-full mx-auto flex items-center justify-between mb-4 px-2">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-brand-600 flex items-center justify-center shadow-md">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-display font-extrabold text-slate-900 text-sm tracking-tight">
-            Venue<span className="text-brand-600">Pro</span>
-          </span>
+        <div className="flex items-center">
+          <img
+            src={venueProLogo}
+            alt="VenuePro Logo"
+            className="h-14 w-auto object-contain max-w-[120px]"
+          />
         </div>
 
         {activeStep !== 'success' && (
-          <button 
+          <button
             onClick={handleSkipOnboarding}
             className="text-xs font-semibold text-slate-400 hover:text-slate-900 transition-colors"
           >
@@ -257,7 +275,7 @@ export default function Onboarding() {
           <AnimatePresence mode="wait">
             {/* STEP 1: WELCOME SCREEN */}
             {activeStep === 'welcome' && (
-              <motion.div 
+              <motion.div
                 key="welcome"
                 variants={panelVariants}
                 initial="initial"
@@ -296,7 +314,7 @@ export default function Onboarding() {
 
             {/* STEP 2: BENEFITS SHOWCASE */}
             {activeStep === 'benefits' && (
-              <motion.div 
+              <motion.div
                 key="benefits"
                 variants={panelVariants}
                 initial="initial"
@@ -335,7 +353,7 @@ export default function Onboarding() {
                   </button>
                   <button
                     onClick={handleNextStep}
-                    className="flex-2 py-3 bg-brand-600 hover:bg-brand-700 rounded-2xl text-xs font-bold text-white transition-all flex items-center justify-center gap-1.5"
+                    className="flex-1 py-3 bg-brand-600 hover:bg-brand-700 rounded-2xl text-xs font-bold text-white transition-all flex items-center justify-center gap-1"
                   >
                     Understand, Continue <ChevronRight className="w-4 h-4" />
                   </button>
@@ -345,7 +363,7 @@ export default function Onboarding() {
 
             {/* STEP 3: ROLE & CATEGORY SELECTION */}
             {activeStep === 'role_selection' && (
-              <motion.div 
+              <motion.div
                 key="role"
                 variants={panelVariants}
                 initial="initial"
@@ -373,7 +391,7 @@ export default function Onboarding() {
                           onClick={() => setRole(r.id as any)}
                           className={cn(
                             "p-3 rounded-2xl border flex flex-col items-center justify-center gap-1 text-center transition-all",
-                            role === r.id 
+                            role === r.id
                               ? "bg-brand-50 border-brand-200 text-brand-700 font-bold"
                               : "border-slate-100 bg-white text-slate-500 hover:border-slate-200 hover:text-slate-900"
                           )}
@@ -402,7 +420,7 @@ export default function Onboarding() {
                           onClick={() => setVenueCategory(v.id as any)}
                           className={cn(
                             "p-3 rounded-2xl border flex flex-col items-center justify-center gap-1 text-center transition-all",
-                            venueCategory === v.id 
+                            venueCategory === v.id
                               ? "bg-brand-50 border-brand-200 text-brand-700 font-bold"
                               : "border-slate-100 bg-white text-slate-500 hover:border-slate-200 hover:text-slate-900"
                           )}
@@ -424,7 +442,7 @@ export default function Onboarding() {
                   </button>
                   <button
                     onClick={handleNextStep}
-                    className="flex-2 py-3 bg-brand-600 hover:bg-brand-700 rounded-2xl text-xs font-bold text-white transition-all flex items-center justify-center gap-1.5"
+                    className="flex-1 py-3 bg-brand-600 hover:bg-brand-700 rounded-2xl text-xs font-bold text-white transition-all flex items-center justify-center gap-1"
                   >
                     Continue to Setup <ChevronRight className="w-4 h-4" />
                   </button>
@@ -434,7 +452,7 @@ export default function Onboarding() {
 
             {/* STEP 4: WIZARD STEP 1 (ORG DETAILS) */}
             {activeStep === 'wizard_org' && (
-              <motion.div 
+              <motion.div
                 key="org"
                 variants={panelVariants}
                 initial="initial"
@@ -450,12 +468,12 @@ export default function Onboarding() {
                   </div>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4].map(num => (
-                      <span 
-                        key={num} 
+                      <span
+                        key={num}
                         className={cn(
                           "w-3.5 h-1.5 rounded-full transition-all duration-300",
                           num === 1 ? "bg-brand-600 w-6" : "bg-slate-200"
-                        )} 
+                        )}
                       />
                     ))}
                   </div>
@@ -465,9 +483,9 @@ export default function Onboarding() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Company / Venue Name</label>
-                      <input 
-                        type="text" 
-                        value={orgName} 
+                      <input
+                        type="text"
+                        value={orgName}
                         onChange={(e) => setOrgName(e.target.value)}
                         placeholder="e.g., Shree Mangalam Palace"
                         className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-brand-200 outline-none"
@@ -475,9 +493,9 @@ export default function Onboarding() {
                     </div>
                     <div>
                       <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Helpline Phone (Voucher Footer)</label>
-                      <input 
-                        type="tel" 
-                        value={orgPhone} 
+                      <input
+                        type="tel"
+                        value={orgPhone}
                         onChange={(e) => setOrgPhone(e.target.value)}
                         placeholder="e.g., 9876543210"
                         className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-brand-200 outline-none"
@@ -490,9 +508,9 @@ export default function Onboarding() {
                       GSTIN (Optional)
                       <span className="text-[8px] text-slate-350 bg-slate-100 px-1 rounded">CGST/SGST splitting</span>
                     </label>
-                    <input 
-                      type="text" 
-                      value={orgGstin} 
+                    <input
+                      type="text"
+                      value={orgGstin}
                       onChange={(e) => setOrgGstin(e.target.value)}
                       placeholder="e.g., 29AAAAA1111A1Z1"
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono font-bold uppercase focus:ring-2 focus:ring-brand-200 outline-none"
@@ -501,9 +519,9 @@ export default function Onboarding() {
 
                   <div>
                     <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Street Address</label>
-                    <input 
-                      type="text" 
-                      value={orgAddress} 
+                    <input
+                      type="text"
+                      value={orgAddress}
                       onChange={(e) => setOrgAddress(e.target.value)}
                       placeholder="e.g., Main Ring Road, Opposite Town Hall"
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-brand-200 outline-none"
@@ -513,9 +531,9 @@ export default function Onboarding() {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">City</label>
-                      <input 
-                        type="text" 
-                        value={orgCity} 
+                      <input
+                        type="text"
+                        value={orgCity}
                         onChange={(e) => setOrgCity(e.target.value)}
                         placeholder="e.g., Bengaluru"
                         className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-brand-200 outline-none"
@@ -523,9 +541,9 @@ export default function Onboarding() {
                     </div>
                     <div>
                       <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">State</label>
-                      <input 
-                        type="text" 
-                        value={orgState} 
+                      <input
+                        type="text"
+                        value={orgState}
                         onChange={(e) => setOrgState(e.target.value)}
                         placeholder="e.g., Karnataka"
                         className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-brand-200 outline-none"
@@ -543,7 +561,7 @@ export default function Onboarding() {
                   </button>
                   <button
                     onClick={handleNextStep}
-                    className="flex-2 py-3 bg-brand-600 hover:bg-brand-700 rounded-2xl text-xs font-bold text-white transition-all flex items-center justify-center gap-1.5"
+                    className="flex-1 py-3 bg-brand-600 hover:bg-brand-700 rounded-2xl text-xs font-bold text-white transition-all flex items-center justify-center gap-1"
                   >
                     Next Step <ChevronRight className="w-4 h-4" />
                   </button>
@@ -553,7 +571,7 @@ export default function Onboarding() {
 
             {/* STEP 5: WIZARD STEP 2 (VENUE DETAILS) */}
             {activeStep === 'wizard_venue' && (
-              <motion.div 
+              <motion.div
                 key="venue"
                 variants={panelVariants}
                 initial="initial"
@@ -569,12 +587,12 @@ export default function Onboarding() {
                   </div>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4].map(num => (
-                      <span 
-                        key={num} 
+                      <span
+                        key={num}
                         className={cn(
                           "w-3.5 h-1.5 rounded-full transition-all duration-300",
                           num === 2 ? "bg-brand-600 w-6" : "bg-slate-200"
-                        )} 
+                        )}
                       />
                     ))}
                   </div>
@@ -583,9 +601,9 @@ export default function Onboarding() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Space Name (e.g. Hall, Lawn)</label>
-                    <input 
-                      type="text" 
-                      value={hallName} 
+                    <input
+                      type="text"
+                      value={hallName}
                       onChange={(e) => setHallName(e.target.value)}
                       placeholder="e.g., Grand Royal AC Hall, Shanti Lawn"
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-brand-200 outline-none"
@@ -606,7 +624,7 @@ export default function Onboarding() {
                           onClick={() => setHallType(t.id as any)}
                           className={cn(
                             "p-3 rounded-2xl border flex items-center gap-2 transition-all text-left text-xs font-semibold",
-                            hallType === t.id 
+                            hallType === t.id
                               ? "bg-brand-50 border-brand-200 text-brand-700"
                               : "border-slate-100 bg-white text-slate-500 hover:border-slate-200 hover:text-slate-900"
                           )}
@@ -621,18 +639,18 @@ export default function Onboarding() {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Min Guests Capacity</label>
-                      <input 
-                        type="number" 
-                        value={capacityMin} 
+                      <input
+                        type="number"
+                        value={capacityMin}
                         onChange={(e) => setCapacityMin(Number(e.target.value))}
                         className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-brand-200 outline-none"
                       />
                     </div>
                     <div>
                       <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Max Capacity (Overcrowd)</label>
-                      <input 
-                        type="number" 
-                        value={capacityMax} 
+                      <input
+                        type="number"
+                        value={capacityMax}
                         onChange={(e) => setCapacityMax(Number(e.target.value))}
                         className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-brand-200 outline-none"
                       />
@@ -649,7 +667,7 @@ export default function Onboarding() {
                   </button>
                   <button
                     onClick={handleNextStep}
-                    className="flex-2 py-3 bg-brand-600 hover:bg-brand-700 rounded-2xl text-xs font-bold text-white transition-all flex items-center justify-center gap-1.5"
+                    className="flex-1 py-3 bg-brand-600 hover:bg-brand-700 rounded-2xl text-xs font-bold text-white transition-all flex items-center justify-center gap-1"
                   >
                     Next Step <ChevronRight className="w-4 h-4" />
                   </button>
@@ -659,7 +677,7 @@ export default function Onboarding() {
 
             {/* STEP 6: WIZARD STEP 3 (PRICING & AMENITIES) */}
             {activeStep === 'wizard_pricing' && (
-              <motion.div 
+              <motion.div
                 key="pricing"
                 variants={panelVariants}
                 initial="initial"
@@ -675,12 +693,12 @@ export default function Onboarding() {
                   </div>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4].map(num => (
-                      <span 
-                        key={num} 
+                      <span
+                        key={num}
                         className={cn(
                           "w-3.5 h-1.5 rounded-full transition-all duration-300",
                           num === 3 ? "bg-brand-600 w-6" : "bg-slate-200"
-                        )} 
+                        )}
                       />
                     ))}
                   </div>
@@ -692,9 +710,9 @@ export default function Onboarding() {
                     <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Base Space Rental Price (₹ / day)</label>
                     <div className="relative">
                       <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-extrabold text-slate-400">₹</span>
-                      <input 
-                        type="number" 
-                        value={baseRental} 
+                      <input
+                        type="number"
+                        value={baseRental}
                         onChange={(e) => setBaseRental(e.target.value)}
                         placeholder="e.g. 150000"
                         className="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold focus:ring-2 focus:ring-brand-200 outline-none"
@@ -719,7 +737,7 @@ export default function Onboarding() {
                           onClick={() => item.set(!item.checked)}
                           className={cn(
                             "px-3 py-2 border rounded-xl flex items-center justify-between text-left transition-all",
-                            item.checked 
+                            item.checked
                               ? "bg-indigo-50/50 border-indigo-200 text-indigo-700"
                               : "border-slate-100 bg-white text-slate-500 hover:border-slate-200"
                           )}
@@ -727,7 +745,7 @@ export default function Onboarding() {
                           <span>{item.label}</span>
                           <span className={cn(
                             "w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ml-1.5",
-                            item.checked 
+                            item.checked
                               ? "bg-brand-600 border-brand-600 text-white"
                               : "border-slate-200 bg-white"
                           )}>
@@ -743,18 +761,18 @@ export default function Onboarding() {
                     <div className="grid grid-cols-2 gap-3 p-3.5 bg-slate-50 border border-slate-100 rounded-2xl animate-fade-in">
                       <div>
                         <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Veg Plate Rate (₹)</label>
-                        <input 
-                          type="number" 
-                          value={vegPlatePrice} 
+                        <input
+                          type="number"
+                          value={vegPlatePrice}
                           onChange={(e) => setVegPlatePrice(e.target.value)}
                           className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-brand-200 outline-none bg-white"
                         />
                       </div>
                       <div>
                         <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Non-Veg Rate (₹)</label>
-                        <input 
-                          type="number" 
-                          value={nonVegPlatePrice} 
+                        <input
+                          type="number"
+                          value={nonVegPlatePrice}
                           onChange={(e) => setNonVegPlatePrice(e.target.value)}
                           className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-brand-200 outline-none bg-white"
                         />
@@ -773,7 +791,7 @@ export default function Onboarding() {
                   <button
                     onClick={handleNextStep}
                     disabled={isSubmitting}
-                    className="flex-2 py-3 bg-brand-600 hover:bg-brand-700 rounded-2xl text-xs font-bold text-white transition-all flex items-center justify-center gap-1.5"
+                    className="flex-1 py-3 bg-brand-600 hover:bg-brand-700 rounded-2xl text-xs font-bold text-white transition-all flex items-center justify-center gap-1"
                   >
                     {isSubmitting ? (
                       <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
@@ -787,7 +805,7 @@ export default function Onboarding() {
 
             {/* STEP 7: WIZARD STEP 4 (STAFF INVITATION) */}
             {activeStep === 'wizard_staff' && (
-              <motion.div 
+              <motion.div
                 key="staff"
                 variants={panelVariants}
                 initial="initial"
@@ -803,12 +821,12 @@ export default function Onboarding() {
                   </div>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4].map(num => (
-                      <span 
-                        key={num} 
+                      <span
+                        key={num}
                         className={cn(
                           "w-3.5 h-1.5 rounded-full transition-all duration-300",
                           num === 4 ? "bg-brand-600 w-6" : "bg-slate-200"
-                        )} 
+                        )}
                       />
                     ))}
                   </div>
@@ -822,9 +840,9 @@ export default function Onboarding() {
                   <form onSubmit={handleSendInvite} className="flex gap-2 items-end">
                     <div className="flex-1">
                       <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Email Address</label>
-                      <input 
-                        type="email" 
-                        value={staffEmail} 
+                      <input
+                        type="email"
+                        value={staffEmail}
                         onChange={(e) => setStaffEmail(e.target.value)}
                         placeholder="coordinator@yourvenue.com"
                         className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-brand-200 outline-none"
@@ -832,8 +850,8 @@ export default function Onboarding() {
                     </div>
                     <div className="w-28">
                       <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Role</label>
-                      <select 
-                        value={staffRole} 
+                      <select
+                        value={staffRole}
                         onChange={(e) => setStaffRole(e.target.value as any)}
                         className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold focus:ring-2 focus:ring-brand-200 outline-none bg-white"
                       >
@@ -842,7 +860,7 @@ export default function Onboarding() {
                         <option value="staff">Staff</option>
                       </select>
                     </div>
-                    <button 
+                    <button
                       type="submit"
                       disabled={!staffEmail.trim()}
                       className="px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 disabled:opacity-50 transition-all flex items-center justify-center shrink-0"
@@ -892,7 +910,7 @@ export default function Onboarding() {
 
             {/* STEP 8: SUCCESS / ACTIVATION DASHBOARD */}
             {activeStep === 'success' && (
-              <motion.div 
+              <motion.div
                 key="success"
                 variants={panelVariants}
                 initial="initial"
@@ -904,7 +922,7 @@ export default function Onboarding() {
                   <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 mx-auto">
                     <CheckCircle2 className="w-8 h-8 animate-bounce-slow" />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight font-display">Your Venue is Online! 🎉</h2>
                     <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed font-semibold">
@@ -915,7 +933,7 @@ export default function Onboarding() {
                   {/* Onboarding Checklist Widget */}
                   <div className="bg-slate-50/50 rounded-2xl border border-slate-100 p-4 text-left space-y-3 max-w-sm mx-auto">
                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">Onboarding Checklist</span>
-                    
+
                     <div className="space-y-2.5">
                       {[
                         { label: "Configure your spaces & pricing", checked: true },
@@ -926,7 +944,7 @@ export default function Onboarding() {
                         <div key={index} className="flex items-center gap-2.5 text-xs font-semibold text-slate-750">
                           <span className={cn(
                             "w-4 h-4 rounded-full border flex items-center justify-center shrink-0",
-                            item.checked 
+                            item.checked
                               ? "bg-emerald-500 border-emerald-500 text-white"
                               : "border-slate-350 bg-white"
                           )}>

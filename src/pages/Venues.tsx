@@ -69,7 +69,7 @@ export default function Venues() {
 
   // Form states
   const [name, setName] = useState('');
-  const [type, setType] = useState<HallType>('main_banquet_hall');
+  const [type, setType] = useState<HallType>('banquet_hall');
   const [floorNumber, setFloorNumber] = useState(0);
   const [description, setDescription] = useState('');
   const [isActive, setIsActive] = useState(true);
@@ -176,7 +176,7 @@ export default function Venues() {
 
   const resetForm = () => {
     setName('');
-    setType('main_banquet_hall');
+    setType('banquet_hall');
     setFloorNumber(0);
     setDescription('');
     setIsActive(true);

@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth-store';
 import { isSupabaseConfigured } from '@/lib/supabase';
-import { Mail, Lock, Eye, EyeOff, Loader2, Sparkles, Building2, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Loader2, Sparkles, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import venueProLogo from '@/assets/venueProLogo.svg';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -110,12 +111,12 @@ export default function Login() {
       <div className="w-full max-w-[440px] z-10 animate-fade-in">
         {/* Logo / Title */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-brand-500/20 border border-white/10 mb-4 animate-pulse-soft">
-            <Building2 className="w-6 h-6 text-white" />
-          </div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-1.5">
-            VenuePro <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-400 border border-brand-500/30">V2</span>
-          </h1>
+          <img
+            src={venueProLogo}
+            alt="VenuePro Logo"
+            className="h-10 w-auto object-contain mb-3"
+            style={{ filter: 'brightness(0) invert(1)' }}
+          />
           <p className="text-sm text-slate-400 mt-1">Premium Indian Venue Management System</p>
         </div>
 

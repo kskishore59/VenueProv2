@@ -31,14 +31,15 @@ export function AuthGuard() {
 
   // If onboarding is not completed, redirect to /onboarding
   const isOnboardingPage = location.pathname === '/onboarding';
+  const userKey = `venuepro_onboarding_completed_${user.id}`;
   
   if (user.email === 'admin@shreemangalam.com') {
-    if (!localStorage.getItem('venuepro_onboarding_completed')) {
-      localStorage.setItem('venuepro_onboarding_completed', 'true');
+    if (!localStorage.getItem(userKey)) {
+      localStorage.setItem(userKey, 'true');
     }
   }
 
-  const isCompleted = localStorage.getItem('venuepro_onboarding_completed') === 'true';
+  const isCompleted = localStorage.getItem(userKey) === 'true';
   
   if (!isCompleted && !isOnboardingPage) {
     return <Navigate to="/onboarding" replace />;

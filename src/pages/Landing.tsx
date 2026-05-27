@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { cn } from '@/lib/utils';
+import venueProLogo from '@/assets/venueProLogo.svg';
+import { getAppUrl } from '@/lib/urls';
 
 // FAQ data structure matching operational B2B questions in simple terms
 interface FAQItem {
@@ -59,6 +61,15 @@ const FAQS: FAQItem[] = [
 
 export default function Landing() {
   const navigate = useNavigate();
+
+  const handleNavigate = (path: string) => {
+    const target = getAppUrl(path);
+    if (target.startsWith('http')) {
+      window.location.href = target;
+    } else {
+      navigate(target);
+    }
+  };
 
   // Animation variants for scroll transitions
   const staggerContainer = {
@@ -460,13 +471,12 @@ export default function Landing() {
       <header className="fixed top-4 left-4 right-4 z-50 max-w-7xl mx-auto">
         <nav className="glass bg-white/80 border border-slate-100 px-4 sm:px-6 py-3.5 rounded-full flex items-center justify-between shadow-[0_8px_30px_rgb(0,0,0,0.03)]">
           <div className="flex items-center gap-8">
-            <a href="#" className="flex items-center gap-2 group focus:outline-none">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-brand-600 flex items-center justify-center shadow-[0_4px_15px_rgba(79,70,229,0.25)] group-hover:scale-105 transition-transform">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-display font-extrabold text-slate-900 text-lg tracking-tight">
-                Venue<span className="text-brand-600">Pro</span>
-              </span>
+            <a href="#" className="flex items-center group focus:outline-none">
+              <img
+                src={venueProLogo}
+                alt="VenuePro Logo"
+                className="h-14 w-auto object-contain max-w-[130px] group-hover:scale-105 transition-transform"
+              />
             </a>
             {/* Desktop Navigation Links */}
             <div className="hidden md:flex items-center gap-6">
@@ -483,7 +493,7 @@ export default function Landing() {
               <button
                 type="button"
                 id="btn-goto-dashboard"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => handleNavigate('/dashboard')}
                 className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-full text-xs font-bold transition-all hover:scale-[1.03] active:scale-98 shadow-md shadow-brand-200"
               >
                 Go to Dashboard
@@ -493,7 +503,7 @@ export default function Landing() {
                 <button
                   type="button"
                   id="btn-login"
-                  onClick={() => navigate('/login')}
+                  onClick={() => handleNavigate('/login')}
                   className="px-4 py-2.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors hidden sm:block"
                 >
                   Log In
@@ -501,7 +511,7 @@ export default function Landing() {
                 <button
                   type="button"
                   id="btn-signup"
-                  onClick={() => navigate('/signup')}
+                  onClick={() => handleNavigate('/signup')}
                   className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-full text-xs font-bold transition-all hover:scale-[1.03] active:scale-98 shadow-md shadow-brand-200"
                 >
                   Try Free Now
@@ -533,7 +543,7 @@ export default function Landing() {
               <button
                 type="button"
                 id="btn-mobile-login"
-                onClick={() => { setIsMobileMenuOpen(false); navigate('/login'); }}
+                onClick={() => { setIsMobileMenuOpen(false); handleNavigate('/login'); }}
                 className="w-full text-center py-2.5 text-sm font-bold text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50"
               >
                 Log In
@@ -1591,7 +1601,7 @@ export default function Landing() {
               </div>
               <button
                 type="button"
-                onClick={() => navigate('/signup')}
+                onClick={() => handleNavigate('/signup')}
                 className="w-full mt-8 py-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 hover:text-slate-900 transition-all active:scale-98"
               >
                 Sign Up Free
@@ -1638,7 +1648,7 @@ export default function Landing() {
               </div>
               <button
                 type="button"
-                onClick={() => navigate('/signup')}
+                onClick={() => handleNavigate('/signup')}
                 className="w-full mt-8 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-100 transition-all active:scale-98"
               >
                 Upgrade to Growth
@@ -1892,13 +1902,12 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8">
 
           <div className="col-span-2 md:col-span-1 space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-brand-600 flex items-center justify-center">
-                <Sparkles className="w-3.5 h-3.5 text-white" />
-              </div>
-              <span className="font-display font-extrabold text-slate-950 text-base">
-                Venue<span className="text-brand-600">Pro</span>
-              </span>
+            <div className="flex items-center">
+              <img
+                src={venueProLogo}
+                alt="VenuePro Logo"
+                className="h-7 w-auto object-contain max-w-[120px]"
+              />
             </div>
             <p className="text-[11px] leading-relaxed text-slate-500 font-medium">
               The simple B2B system for wedding halls, banquets, and event centers. Made in India, built for everyone.

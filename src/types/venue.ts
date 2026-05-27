@@ -29,15 +29,11 @@ export interface Hall {
 }
 
 export type HallType =
-  | 'main_banquet_hall'
-  | 'party_hall'
+  | 'banquet_hall'
   | 'conference_room'
-  | 'lawn_garden'
+  | 'lawn'
   | 'terrace'
-  | 'rooftop'
-  | 'poolside'
   | 'boardroom'
-  | 'dining_hall'
   | 'other';
 
 export interface HallPricing {
@@ -135,14 +131,10 @@ export interface HallMediaConfig {
 }
 
 export const hallTypeLabels: Record<HallType, string> = {
-  main_banquet_hall: 'Main Banquet Hall',
-  party_hall: 'Party Hall',
+  banquet_hall: 'Banquet Hall',
   conference_room: 'Conference Room',
-  lawn_garden: 'Lawn / Garden',
-  terrace: 'Terrace',
-  rooftop: 'Rooftop',
-  poolside: 'Poolside',
+  lawn: 'Lawn / Garden',
+  terrace: 'Terrace / Rooftop',
   boardroom: 'Board Room',
-  dining_hall: 'Dining Hall',
-  other: 'Other',
+  other: 'Other / Custom Space',
 };

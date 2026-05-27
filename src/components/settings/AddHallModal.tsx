@@ -6,7 +6,7 @@ import { useDataStore } from '@/stores/data-store';
 import { hallTypeLabels } from '@/types/venue';
 import { toast } from 'sonner';
 
-const hallTypes = ['main_banquet_hall', 'conference_room', 'lawn_garden', 'terrace', 'boardroom', 'other'] as const;
+const hallTypes = ['banquet_hall', 'conference_room', 'lawn', 'terrace', 'boardroom', 'other'] as const;
 
 export function AddHallModal() {
   const isOpen = useUIStore((s) => s.isAddHallOpen);
@@ -14,7 +14,7 @@ export function AddHallModal() {
   const createHall = useDataStore((s) => s.createHall);
 
   const [name, setName] = useState('');
-  const [type, setType] = useState<string>('main_banquet_hall');
+  const [type, setType] = useState<string>('banquet_hall');
   const [capMin, setCapMin] = useState('');
   const [capMax, setCapMax] = useState('');
   const [areaSqft, setAreaSqft] = useState('');
@@ -47,7 +47,7 @@ export function AddHallModal() {
 
   const handleClose = () => {
     closeAddHall();
-    setName(''); setType('main_banquet_hall'); setCapMin(''); setCapMax(''); setAreaSqft(''); setBasePrice('');
+    setName(''); setType('banquet_hall'); setCapMin(''); setCapMax(''); setAreaSqft(''); setBasePrice('');
     setIsSubmitting(false);
   };
 
