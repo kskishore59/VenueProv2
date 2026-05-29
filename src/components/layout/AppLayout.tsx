@@ -10,6 +10,7 @@ import { hasPermission } from '@/lib/permissions';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { ErrorFallback } from '@/components/shared/ErrorFallback';
 import { GlobalLoader } from '@/components/shared/GlobalLoader';
+import { SubscriptionModal } from '../shared/SubscriptionModal';
 import { LayoutDashboard, CalendarDays, IndianRupee, Settings, Plus, PhoneIncoming, Users, HelpCircle, Receipt } from 'lucide-react';
 
 const pageTitles: Record<string, string> = {
@@ -65,10 +66,56 @@ export function AppLayout() {
 
   const openQuickAdd = useUIStore((s) => s.openQuickAdd);
   const openAddLead = useUIStore((s) => s.openAddLead);
+  const openSubscriptionModal = useUIStore((s) => s.openSubscriptionModal);
 
   const canCreateBooking = hasPermission(role, 'bookings', 'create', organization?.settings);
   const canCreateLead = hasPermission(role, 'leads', 'create', organization?.settings);
   const showQuickAdd = canCreateBooking || canCreateLead;
+
+  // Subscription & Trial check math
+  const status = organization?.subscription_status || null;
+  const endsAtStr = organization?.trial_ends_at || null;
+  const endsAt = endsAtStr ? new Date(endsAtStr) : null;
+  const now = new Date();
+
+  let trialDaysLeft = 0;
+  let graceDaysLeft = 0;
+  let isTrialActive = false;
+  let isGracePeriod = false;
+  let isBlocked = false;
+
+  if (status === 'trial' && endsAt) {
+    const diffTime = endsAt.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays > 0) {
+      trialDaysLeft = diffDays;
+      isTrialActive = true;
+    } else {
+      // Trial has ended. Let's check grace period (3 days)
+      const diffTimeGrace = now.getTime() - endsAt.getTime();
+      const diffDaysGrace = diffTimeGrace / (1000 * 60 * 60 * 24);
+
+      if (diffDaysGrace <= 3) {
+        graceDaysLeft = Math.ceil(3 - diffDaysGrace);
+        isGracePeriod = true;
+      } else {
+        isBlocked = true;
+      }
+    }
+  } else if ((status === 'expired' || status === 'canceled') && endsAt) {
+    const diffTimeGrace = now.getTime() - endsAt.getTime();
+    const diffDaysGrace = diffTimeGrace / (1000 * 60 * 60 * 24);
+
+    if (diffDaysGrace <= 3) {
+      graceDaysLeft = Math.ceil(3 - diffDaysGrace);
+      isGracePeriod = true;
+    } else {
+      isBlocked = true;
+    }
+  } else if (status === 'expired' || status === 'canceled') {
+    isBlocked = true;
+  }
 
   const [transitionLoading, setTransitionLoading] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
@@ -155,7 +202,7 @@ export function AppLayout() {
   const showSkeleton = dataLoading;
 
   return (
-    <div className="min-h-screen bg-[#e6e6fa]/10">
+    <div className="min-h-screen bg-[#e6e6fa]/25 ">
       <Sidebar />
       <Header />
       <main
@@ -164,7 +211,44 @@ export function AppLayout() {
           collapsed ? 'md:pl-[72px]' : 'md:pl-[260px]',
         )}
       >
-        <div className="p-4 md:p-6 max-w-[1400px] mx-auto">
+        <div className="p-4 md:p-6 max-w-[1400px] mx-auto space-y-4">
+
+          {/* Active Trial Sticky Banner */}
+          {isTrialActive && (
+            <div className="bg-gradient-to-r from-indigo-50 to-indigo-100/50 border border-indigo-150 rounded-2xl p-4 flex items-center justify-between text-xs text-indigo-900 shadow-2xs animate-fade-in">
+              <div className="flex items-center gap-2">
+                <span className="text-base animate-bounce">📅</span>
+                <span>
+                  You are currently on a <strong>Pro Free Trial</strong>. You have <strong>{trialDaysLeft} {trialDaysLeft === 1 ? 'day' : 'days'} remaining</strong> to explore the premium features.
+                </span>
+              </div>
+              <button
+                onClick={openSubscriptionModal}
+                className="px-4.5 py-2 bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-xs active:scale-95"
+              >
+                Upgrade Now
+              </button>
+            </div>
+          )}
+
+          {/* Grace Period Sticky Banner */}
+          {isGracePeriod && (
+            <div className="bg-gradient-to-r from-amber-50 to-amber-100/50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between text-xs text-amber-900 shadow-2xs animate-fade-in">
+              <div className="flex items-center gap-2">
+                <span className="text-base animate-pulse">⚠️</span>
+                <span>
+                  Your {status === 'trial' ? 'trial' : 'subscription'} has ended. You are in <strong>Read-Only Grace Period</strong>. You have <strong>{graceDaysLeft} {graceDaysLeft === 1 ? 'day' : 'days'}</strong> to view your workspace before access is locked.
+                </span>
+              </div>
+              <button
+                onClick={openSubscriptionModal}
+                className="px-4.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold transition-all shadow-xs active:scale-95"
+              >
+                Upgrade Now
+              </button>
+            </div>
+          )}
+
           <ErrorBoundary
             fallback={(error, reset) => (
               <ErrorFallback
@@ -176,10 +260,35 @@ export function AppLayout() {
               />
             )}
           >
-            {showSkeleton ? <SkeletonPage /> : <Outlet />}
+            {isBlocked ? (
+              <div className="bg-white/80 backdrop-blur-xl border border-slate-100 rounded-3xl p-12 text-center shadow-xl max-w-xl mx-auto my-12 space-y-6 flex flex-col items-center animate-scale-up">
+                <div className="w-16 h-16 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center text-2xl shadow-2xs border border-rose-100">
+                  🔒
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-bold text-slate-900 font-display">Subscription Required</h2>
+                  <p className="text-xs text-slate-500 leading-relaxed font-semibold">
+                    Your {status === 'trial' ? '14-day free trial' : 'subscription'} has expired. To resume managing your bookings, payments, and leads, please upgrade to a paid subscription plan.
+                  </p>
+                </div>
+                <button
+                  onClick={openSubscriptionModal}
+                  className="px-6 py-3.5 bg-indigo-650 hover:bg-indigo-700 text-white rounded-full text-xs font-bold transition-all shadow-md active:scale-95"
+                >
+                  Choose Subscription Plan
+                </button>
+              </div>
+            ) : showSkeleton ? (
+              <SkeletonPage />
+            ) : (
+              <Outlet />
+            )}
           </ErrorBoundary>
         </div>
       </main>
+
+      {/* Global Subscription Modal */}
+      <SubscriptionModal />
 
       {/* Centered Route Loader Spinner Overlay */}
       {showLoader && (

@@ -89,8 +89,8 @@ export function Sidebar() {
       <aside
         id="tour-sidebar-nav"
         className={cn(
-          'fixed top-0 left-0 h-screen bg-white border-r border-gray-100 z-[70]',
-          'flex flex-col transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-xs',
+          'fixed top-0 left-1 h-screen bg-white rounded-2xl border-gray-200 z-[70] m-2 ml-4 pt-4',
+          'flex flex-col transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-md',
           // Desktop
           'hidden md:flex',
           collapsed ? 'w-[72px]' : 'w-[260px]',
@@ -106,7 +106,7 @@ export function Sidebar() {
           <div className="flex items-center">
             {/* VenuePro Custom Logo */}
             {collapsed ? (
-              <div className="w-9 h-9 rounded-xl bg-white border border-slate-100 flex items-center justify-center overflow-hidden shadow-2xs">
+              <div className="w-9 h-9 rounded-xl bg-white border border-slate-100 flex items-center justify-center overflow-hidden shadow-sm">
                 <img
                   src={favicon}
                   alt="VenuePro Logo"

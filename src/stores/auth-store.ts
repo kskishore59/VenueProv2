@@ -226,6 +226,37 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         isLoading: false,
       });
 
+      // Initialize the mock organization state with the trial parameters
+      useDataStore.setState({
+        organization: {
+          id: 'mock-org-uuid-new',
+          name: orgName,
+          slug: orgName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          gstin: null,
+          address: null,
+          city: null,
+          state: null,
+          phone: null,
+          email: email,
+          logo_url: null,
+          terms_and_conditions: null,
+          settings: {
+            currency: 'INR',
+            timezone: 'Asia/Kolkata',
+            date_format: 'dd/MM/yyyy',
+            default_advance_percent: 25,
+            gst_enabled: true,
+            whatsapp_enabled: true,
+            sms_enabled: false,
+            email_notifications: true,
+          },
+          plan: 'pro',
+          created_at: new Date().toISOString(),
+          trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          subscription_status: 'trial',
+        }
+      });
+
       await useDataStore.getState().syncData(true);
       return { sessionCreated: true };
     }

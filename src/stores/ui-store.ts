@@ -39,6 +39,9 @@ interface UIState {
   isEditPaymentOpen: boolean;
   selectedEditPaymentId: string | null;
 
+  // Subscription Modal State
+  isSubscriptionModalOpen: boolean;
+
   // Receipt Modal State
   isReceiptModalOpen: boolean;
   receiptMode: 'receipt' | 'invoice' | null;
@@ -86,6 +89,9 @@ interface UIState {
 
   openReceiptModal: (mode: 'receipt' | 'invoice', id: string) => void;
   closeReceiptModal: () => void;
+
+  openSubscriptionModal: () => void;
+  closeSubscriptionModal: () => void;
 
   showConfirm: (opts: { title: string; description: string; variant?: 'danger' | 'warning' | 'info'; onConfirm: () => void }) => void;
   closeConfirm: () => void;
@@ -212,4 +218,9 @@ export const useUIStore = create<UIState>()((set) => ({
   // Search
   globalSearchOpen: false,
   setGlobalSearchOpen: (open) => set({ globalSearchOpen: open }),
+
+  // Subscription Modal
+  isSubscriptionModalOpen: false,
+  openSubscriptionModal: () => set({ isSubscriptionModalOpen: true }),
+  closeSubscriptionModal: () => set({ isSubscriptionModalOpen: false }),
 }));

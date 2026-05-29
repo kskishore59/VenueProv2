@@ -12,6 +12,8 @@ export interface Organization {
   terms_and_conditions: string | null;
   settings: OrgSettings;
   plan: 'free' | 'starter' | 'pro' | 'enterprise';
+  trial_ends_at?: string | null;
+  subscription_status?: 'trial' | 'active' | 'past_due' | 'canceled' | 'expired' | null;
   created_at: string;
 }
 

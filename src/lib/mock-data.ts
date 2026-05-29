@@ -37,6 +37,8 @@ export const mockOrganization: Organization = {
     email_notifications: true,
   },
   plan: 'pro',
+  trial_ends_at: new Date(Date.now() + 9 * 24 * 60 * 60 * 1000).toISOString(), // 9 days from now
+  subscription_status: 'trial',
   created_at: '2024-01-15T00:00:00Z',
 };
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import {
@@ -1082,54 +1082,185 @@ export default function Landing() {
           </div>
         </motion.section>
 
-        {/* 8. TESTIMONIALS */}
-        {/* <motion.section
-          id="testimonials"
+        {/* 8. PRICING PLANS */}
+        <motion.section
+          id="pricing"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-80px" }}
           variants={staggerContainer}
-          className="space-y-12 text-center"
+          className="space-y-12 text-center animate-fade-in"
         >
           <motion.div variants={fadeInUp} className="space-y-3">
-            <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-[10px] font-bold uppercase tracking-wider">
-              Testimonials
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold uppercase tracking-wider">
+              Pricing Plans
             </div>
-            <h2 className="text-3xl font-extrabold text-slate-950 font-display tracking-tight">
-              Trusted by Top Indian Venue Owners
+            <h2 className="text-4xl font-extrabold text-slate-950 font-display tracking-tight">
+              Simple, Transparent Pricing for Venue Owners
             </h2>
             <p className="text-sm text-slate-500 max-w-xl mx-auto font-medium">
-              See how banquet hall and resort managers across the country rely on VenuePro to secure their business.
+              Start with our <strong>14-day free trial</strong> on the Pro plan to explore all features. No credit card required.
             </p>
+
+            {/* Toggle Group */}
+            <div className="pt-4 flex justify-center items-center gap-3">
+              <div className="flex bg-white border border-slate-150 p-1.5 rounded-2xl shadow-3xs">
+                <button
+                  type="button"
+                  onClick={() => setIsYearlyBilling(true)}
+                  className={cn(
+                    "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5",
+                    isYearlyBilling
+                      ? "bg-brand-600 text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-950"
+                  )}
+                >
+                  Yearly Billing
+                  <span className="bg-emerald-100 text-emerald-800 text-[8px] font-black px-1.5 py-0.2 rounded-md">Save 20%</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsYearlyBilling(false)}
+                  className={cn(
+                    "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
+                    !isYearlyBilling
+                      ? "bg-slate-900 text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-950"
+                  )}
+                >
+                  Monthly
+                </button>
+              </div>
+            </div>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {[
-              { quote: "We used to lose at least 3-4 bookings every season due to double booking overlaps in our paper registers. VenuePro eliminated that in 10 minutes.", name: "Sunil Kapoor", role: "Owner, Shree Mangalam Palace, Jaipur" },
-              { quote: "Managing multiple catering quotes and calculating GST was a nightmare for our accounts team. Automated billing is a game-changer.", name: "Amit Reddy", role: "Manager, Grand Convention Lawn, Hyderabad" },
-              { quote: "Our gate staff now updates menus and check-ins without having access to our core business cash earnings. Complete security control.", name: "Devika Sen", role: "MD, Whispering Pines Resort, Dehradun" }
-            ].map((card, idx) => (
-              <motion.div
-                key={idx}
-                variants={fadeInUp}
-                className="bg-white border border-slate-100 rounded-3xl p-6 text-left shadow-[0_8px_30px_rgb(0,0,0,0.01)] hover:shadow-md transition-all flex flex-col justify-between aspect-[4/3] md:aspect-[3/4]"
-              >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
+            {/* Starter Plan */}
+            <motion.div
+              variants={fadeInUp}
+              className="bg-white border border-slate-150 rounded-3xl p-8 text-left shadow-2xs hover:shadow-md transition-all flex flex-col justify-between"
+            >
+              <div className="space-y-4">
                 <div>
-                  <div className="flex gap-1 mb-4">
-                    {[1, 2, 3, 4, 5].map(star => (
-                      <span key={star} className="text-amber-400">★</span>
-                    ))}
-                  </div>
-                  <p className="text-xs text-slate-550 leading-relaxed font-semibold italic">"{card.quote}"</p>
+                  <h3 className="text-lg font-extrabold text-slate-900 font-display">Starter</h3>
+                  <p className="text-xs text-slate-400 font-semibold mt-1">For single halls or local banquet spaces.</p>
                 </div>
-                <div className="pt-4 border-t border-slate-50">
-                  <span className="text-xs font-bold text-slate-900 block">{card.name}</span>
-                  <span className="text-[10px] text-slate-400 font-medium block mt-0.5">{card.role}</span>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-extrabold text-slate-950 font-display">
+                    ₹{isYearlyBilling ? '9,999' : '1,999'}
+                  </span>
+                  <span className="text-xs text-slate-400 font-medium">/{isYearlyBilling ? 'year' : 'month'}</span>
                 </div>
-              </motion.div>
-            ))}
+                <ul className="space-y-3 pt-4 border-t border-slate-50 text-xs text-slate-600 font-medium">
+                  {[
+                    "1 Active Venue/Hall Profile",
+                    "Unlimited Booking Slots",
+                    "Leads & Customer Inquiries CRM",
+                    "Basic Invoicing (Plain PDF)",
+                    "Up to 2 Staff Accounts",
+                    "Local Browser Offline Sync"
+                  ].map((benefit, idx) => (
+                    <li key={idx} className="flex gap-2 items-center">
+                      <Check className="w-4 h-4 text-indigo-600 shrink-0" />
+                      <span>{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleNavigate('/signup')}
+                className="w-full py-3.5 mt-8 bg-brand-600 hover:bg-brand-800 hover:scale-105 text-white rounded-xl text-xs font-bold transition-all"
+              >
+                Start 14-Day Free Trial
+              </button>
+            </motion.div>
+
+            {/* Pro Plan */}
+            <motion.div
+              variants={fadeInUp}
+              className="bg-white border-[2.5px] border-indigo-600  hover:scale-105 rounded-[32px] p-8 text-left shadow-md hover:shadow-lg transition-all flex flex-col justify-between relative bg-gradient-to-b from-indigo-50/10 to-transparent"
+            >
+              <div className="absolute top-0 right-8 -translate-y-1/2 bg-gradient-to-r from-brand-600 to-brand-300 text-white text-[9px] font-black tracking-widest px-3.5 py-1 rounded-full uppercase shadow-xs">
+                Best Value / Popular
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-extrabold text-slate-900 font-display">Pro Enterprise</h3>
+                  <p className="text-xs text-indigo-700 font-semibold mt-1">Complete automated operations for premium banquets & resorts.</p>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-extrabold text-slate-950 font-display">
+                    ₹{isYearlyBilling ? '14,999' : '4,999'}
+                  </span>
+                  <span className="text-xs text-slate-400 font-medium">/{isYearlyBilling ? 'year' : 'month'}</span>
+                </div>
+                <ul className="space-y-3 pt-4 border-t border-indigo-100/50 text-xs text-slate-700 font-semibold">
+                  {[
+                    "Unlimited Halls & Spaces Profiles",
+                    "Unlimited Bookings Calendar",
+                    "WhatsApp Automated Receipts & Reminders",
+                    "Full CFO Expense & Category Analytics",
+                    "Staff Roles & Permissions (RBAC)",
+                    "Discovery Marketplace Premium Listing",
+                    "Bulk Excel/CSV Import Wizard",
+                    "Priority 24/7 Phone & Chat Support"
+                  ].map((benefit, idx) => (
+                    <li key={idx} className="flex gap-2 items-center">
+                      <Check className="w-4 h-4 text-indigo-650 shrink-0" />
+                      <span>{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleNavigate('/signup')}
+                className="w-full py-3.5 mt-8 bg-brand-600 hover:bg-indigo-700 hover:scale-105 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-100"
+              >
+                Start 14-Day Free Trial
+              </button>
+            </motion.div>
+
+            {/* Enterprise Plan */}
+            <motion.div
+              variants={fadeInUp}
+              className="bg-white border border-slate-150 rounded-3xl p-8 text-left shadow-2xs hover:shadow-md transition-all flex flex-col justify-between"
+            >
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-extrabold text-slate-900 font-display">Enterprise</h3>
+                  <p className="text-xs text-slate-400 font-semibold mt-1">Custom operations scale for multi-city venues.</p>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-extrabold text-slate-950 font-display">Custom</span>
+                  <span className="text-xs text-slate-400 font-medium">/bespoke setup</span>
+                </div>
+                <ul className="space-y-3 pt-4 border-t border-slate-50 text-xs text-slate-650 font-medium">
+                  {[
+                    "Multi-Location & Chain Dashboards",
+                    "Bespoke Billing & GST Tax Layouts",
+                    "Dedicated Account Operations Manager",
+                    "Bespoke WhatsApp Notification Packs",
+                    "Advanced API Data Access & Webhooks",
+                    "Custom Staff Coaching & Onboarding"
+                  ].map((benefit, idx) => (
+                    <li key={idx} className="flex gap-2 items-center">
+                      <Check className="w-4 h-4 text-indigo-600 shrink-0" />
+                      <span>{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <a
+                href="mailto:support@venuepro.in?subject=Enterprise Inquiry"
+                className="w-full py-3.5 mt-8 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all text-center block"
+              >
+                Contact Sales Team
+              </a>
+            </motion.div>
           </div>
-        </motion.section> */}
+        </motion.section>
 
         {/* 9. FINAL CTA */}
         <motion.section
@@ -1280,8 +1411,8 @@ export default function Landing() {
           <div className="space-y-3">
             <span className="block text-[10px] font-bold text-slate-900 uppercase tracking-wider font-display">Legal & Trust</span>
             <ul className="space-y-2 text-[11px] font-semibold">
-              <li><a href="#" className="hover:text-slate-900">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-slate-900">Terms of Service</a></li>
+              <li><Link to="/privacy" className="hover:text-slate-900">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-slate-900">Terms of Service</Link></li>
               <li><a href="#" className="hover:text-slate-900">Data Encryption SLA</a></li>
             </ul>
           </div>

@@ -33,6 +33,46 @@ function generateBookingNumber(): string {
   return `VP-${year}-${String(num).padStart(5, '0')}`;
 }
 
+export function isSubscriptionLocked(organization: any): boolean {
+  if (!organization) return false;
+  
+  const status = organization.subscription_status;
+  const endsAtStr = organization.trial_ends_at;
+  
+  // Active plan is never locked
+  if (status === 'active') return false;
+  
+  const now = new Date();
+  
+  if (status === 'trial' && endsAtStr) {
+    const trialEnds = new Date(endsAtStr);
+    return now > trialEnds;
+  }
+  
+  if ((status === 'expired' || status === 'canceled') && endsAtStr) {
+    const ends = new Date(endsAtStr);
+    return now > ends;
+  }
+  
+  if (status === 'expired' || status === 'canceled') {
+    return true;
+  }
+  
+  return false;
+}
+
+export function assertActiveSubscription(organization: any): boolean {
+  if (isSubscriptionLocked(organization)) {
+    const label = organization?.subscription_status === 'trial' ? 'trial' : 'subscription';
+    toast.error(`Action Blocked: Your ${label} has ended. Please upgrade to a paid plan to perform this action. 🔒`, {
+      description: 'You are in read-only mode. Upgrade from settings or header CTA to resume full workspace operations.',
+      duration: 5000,
+    });
+    return false;
+  }
+  return true;
+}
+
 const mockExpenses: Expense[] = [
   { id: 'exp-001', org_id: 'org-demo-001', title: 'Catering for Sharma Wedding', category: 'catering', amount_paise: 12000000, expense_date: format(new Date(), 'yyyy-MM-dd'), payment_mode: 'bank_transfer', reference_number: 'TXN-98213', notes: 'Paid to vendor directly', receipt_url: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
   { id: 'exp-002', org_id: 'org-demo-001', title: 'Electrical repair work', category: 'maintenance', amount_paise: 850000, expense_date: format(subDays(new Date(), 2), 'yyyy-MM-dd'), payment_mode: 'cash', reference_number: null, notes: 'AC compressor gas top-up', receipt_url: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
@@ -223,6 +263,7 @@ interface DataState {
 
   // ─── Organization ────────────────────────────────────────
   updateOrganization: (data: Partial<Organization>) => Promise<void>;
+  upgradeOrganization: (plan: 'starter' | 'pro' | 'enterprise') => Promise<void>;
 
   // ─── Queries ─────────────────────────────────────────────
   getCustomerById: (id: string) => Customer | undefined;
@@ -292,13 +333,14 @@ export const useDataStore = create<DataState>()((set, get) => ({
   syncData: async (silent = false) => {
     if (!isSupabaseConfigured()) {
       console.log('Using Local Mock Mode (no credentials provided). Seeding mock collections.');
+      const currentOrg = get().organization;
       set({
         bookings: [...initialBookings],
         customers: [...initialCustomers],
         payments: [...initialPayments],
         leads: [...initialLeads],
         halls: [...initialHalls],
-        organization: { ...initialOrg },
+        organization: currentOrg && currentOrg.id === 'mock-org-uuid-new' ? currentOrg : { ...initialOrg },
         expenses: [...mockExpenses],
         staffProfiles: [...mockStaffProfiles],
         pendingInvites: [...mockStaffInvites],
@@ -546,6 +588,8 @@ export const useDataStore = create<DataState>()((set, get) => ({
           email_notifications: true,
         },
         plan: 'free',
+        trial_ends_at: null,
+        subscription_status: null,
         created_at: '',
       },
       isOnline: false,
@@ -556,6 +600,9 @@ export const useDataStore = create<DataState>()((set, get) => ({
   // ─── Booking CRUD ────────────────────────────────────────
   createBooking: async (data) => {
     const state = get();
+    if (!assertActiveSubscription(state.organization)) {
+      return { success: false, error: 'Subscription or active trial is required' };
+    }
     
     // Client availability pre-check
     const isAvailable = state.checkAvailability(data.hall_id, data.event_date, data.start_time, data.end_time);
@@ -690,6 +737,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
 
   updateBooking: async (id, data) => {
     const state = get();
+    if (!assertActiveSubscription(state.organization)) return;
     if (state.isOnline) {
       try {
         const { error } = await supabase
@@ -714,6 +762,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
 
   cancelBooking: async (id) => {
     const state = get();
+    if (!assertActiveSubscription(state.organization)) return;
     const booking = state.bookings.find((b) => b.id === id);
     if (state.isOnline) {
       try {
@@ -749,6 +798,9 @@ export const useDataStore = create<DataState>()((set, get) => ({
   // ─── Customer CRUD ───────────────────────────────────────
   createCustomer: async (data) => {
     const state = get();
+    if (!assertActiveSubscription(state.organization)) {
+      throw new Error('Subscription required');
+    }
     
     if (state.isOnline) {
       try {
@@ -829,6 +881,9 @@ export const useDataStore = create<DataState>()((set, get) => ({
   // ─── Payment CRUD ────────────────────────────────────────
   recordPayment: async (data) => {
     const state = get();
+    if (!assertActiveSubscription(state.organization)) {
+      throw new Error('Subscription required');
+    }
     
     if (state.isOnline) {
       try {
@@ -905,6 +960,9 @@ export const useDataStore = create<DataState>()((set, get) => ({
   // ─── Lead CRUD ───────────────────────────────────────────
   createLead: async (data) => {
     const state = get();
+    if (!assertActiveSubscription(state.organization)) {
+      throw new Error('Subscription required');
+    }
     
     if (state.isOnline) {
       try {
@@ -1036,6 +1094,9 @@ export const useDataStore = create<DataState>()((set, get) => ({
 
   convertLeadToBooking: async (leadId, bookingData) => {
     const state = get();
+    if (!assertActiveSubscription(state.organization)) {
+      return { success: false, error: 'Subscription required' };
+    }
     const lead = state.leads.find((l) => l.id === leadId);
     if (!lead) return { success: false, error: 'Lead not found' };
 
@@ -1208,6 +1269,39 @@ export const useDataStore = create<DataState>()((set, get) => ({
     }
 
     set((s) => ({ organization: { ...s.organization, ...data } }));
+  },
+
+  upgradeOrganization: async (plan) => {
+    const state = get();
+    const isMock = !isSupabaseConfigured();
+    if (state.isOnline && !isMock) {
+      try {
+        const { error } = await supabase
+          .from('organizations')
+          .update({
+            plan,
+            subscription_status: 'active',
+            trial_ends_at: null,
+          })
+          .eq('id', state.organization.id);
+        
+        if (error) throw error;
+      } catch (err: any) {
+        console.error('Database upgradeOrganization failed:', err);
+        toast.error(parseDatabaseError(err));
+        return;
+      }
+    }
+
+    set((s) => ({
+      organization: {
+        ...s.organization,
+        plan,
+        subscription_status: 'active',
+        trial_ends_at: null,
+      },
+    }));
+    toast.success(`Successfully upgraded to the ${plan.toUpperCase()} plan! 🎉`);
   },
 
   // ─── Queries ─────────────────────────────────────────────
