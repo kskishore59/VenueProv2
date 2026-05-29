@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { 
-  CalendarCheck, IndianRupee, AlertCircle, Clock, ArrowRight, 
+import {
+  CalendarCheck, IndianRupee, AlertCircle, Clock, ArrowRight,
   PhoneIncoming, Building2
 } from 'lucide-react';
 import { StatCard } from '@/components/shared/StatCard';
@@ -40,7 +40,7 @@ export default function Dashboard() {
   });
 
   const stats = useMemo(() => getDashboardStats(), [getDashboardStats, bookings, payments]);
-  
+
   const activeStats = useMemo(() => {
     if (dateRange.preset === 'all') {
       return {
@@ -118,7 +118,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
-      
+
       {/* Simple Space-Saving Header Welcome Message */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200/60 pb-5">
         <div>

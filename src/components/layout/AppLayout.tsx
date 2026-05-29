@@ -215,7 +215,7 @@ export function AppLayout() {
 
           {/* Active Trial Sticky Banner */}
           {isTrialActive && (
-            <div className="bg-gradient-to-r from-indigo-50 to-indigo-100/50 border border-indigo-150 rounded-2xl p-4 flex items-center justify-between text-xs text-indigo-900 shadow-2xs animate-fade-in">
+            <div className="bg-gradient-to-r from-indigo-50 to-indigo-100/50 border border-brand-300 rounded-2xl p-4 flex items-center justify-between text-xs text-indigo-900 shadow-2xs animate-fade-in">
               <div className="flex items-center gap-2">
                 <span className="text-base animate-bounce">📅</span>
                 <span>
@@ -224,7 +224,7 @@ export function AppLayout() {
               </div>
               <button
                 onClick={openSubscriptionModal}
-                className="px-4.5 py-2 bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-xs active:scale-95"
+                className="px-4.5 py-2 w-28 bg-brand-500 hover:bg-indigo-700 hover:scale-105 text-white rounded-xl font-bold transition-all shadow-xs active:scale-95"
               >
                 Upgrade Now
               </button>

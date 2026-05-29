@@ -113,8 +113,8 @@ export function Header() {
   return (
     <header
       className={cn(
-        'fixed top-0 right-0 h-16 backdrop-blur-md   z-30',
-        'flex items-center justify-between px-4 md:px-6 transition-all duration-300',
+        'fixed top-0 right-0 h-16 backdrop-blur-md z-30',
+        'flex items-end justify-between px-4 md:px-6 transition-all duration-300',
         collapsed ? 'left-0 md:left-[72px]' : 'left-0 md:left-[260px]',
       )}
     >
