@@ -99,6 +99,24 @@ export default function Login() {
     }, 400);
   };
 
+  const handleSuperAdminDemoLogin = async () => {
+    setEmail('superadmin@venuepro.in');
+    setPassword('superadmin1234');
+
+    // Slight timeout so user sees it autofill before submitting
+    setTimeout(async () => {
+      try {
+        await signIn('superadmin@venuepro.in', 'superadmin1234');
+        toast.success('Welcome back, Super Admin! 🛡️', {
+          description: 'Logged in with system-wide administration privileges.',
+        });
+        navigate(from, { replace: true });
+      } catch (err) {
+        toast.error('Super Admin login failed');
+      }
+    }, 400);
+  };
+
   return (
     <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4 relative overflow-hidden font-sans bg-grid-pattern">
       {/* Decorative luxury gradient ambient blobs */}
@@ -113,7 +131,7 @@ export default function Login() {
             alt="VenuePro Logo"
             className="h-20 w-auto object-contain mb-3"
           />
-          <p className="text-sm text-slate-500 mt-1 font-medium">Premium Indian Venue Management System</p>
+          <p className="text-md text-slate-500 mt-1 font-medium">Premium Indian Venue Management System</p>
         </div>
 
         {/* Card */}
@@ -170,16 +188,27 @@ export default function Login() {
                 <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-500 mt-0.5" />
                 <div>
                   <span className="font-semibold block text-amber-900">Local Mock Mode Active</span>
-                  <span className="text-amber-700">Supabase credentials are not configured. You can use any credentials to sign in, or click below.</span>
+                  <span className="text-amber-700">Supabase credentials are not configured. You can select either administrative tier below to preview:</span>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={handleDemoLogin}
-                className="w-full mt-1.5 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200 active:scale-95 font-semibold text-xs transition-all border border-amber-200"
-              >
-                <Sparkles className="w-3.5 h-3.5" /> Login with Demo Account
-              </button>
+              <div className="flex flex-col sm:flex-row gap-2 mt-1.5">
+                <button
+                  type="button"
+                  onClick={handleDemoLogin}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-amber-100 text-amber-900 hover:bg-amber-200 active:scale-[0.98] font-bold text-[11px] transition-all border border-amber-250"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Demo Venue Owner</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSuperAdminDemoLogin}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-indigo-100 text-indigo-900 hover:bg-indigo-200 active:scale-[0.98] font-bold text-[11px] transition-all border border-indigo-200"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Super Admin Panel</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -231,7 +260,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed text-white font-bold text-sm transition-all shadow-md shadow-brand-200 mt-6"
+              className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 hover:scale-103 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed text-white font-bold text-sm transition-all shadow-md shadow-brand-200 mt-6"
             >
               {isLoading ? (
                 <>
@@ -245,7 +274,7 @@ export default function Login() {
           </form>
 
           {/* Footer inside Card */}
-          <div className="mt-6 text-center text-xs text-slate-500 border-t border-slate-50 pt-5">
+          <div className="mt-6 text-center text-sm text-slate-500 border-t border-slate-50 pt-5">
             Don't have an account?{' '}
             <Link to="/signup" className="text-brand-600 hover:text-brand-700 font-semibold hover:underline">
               Create one now

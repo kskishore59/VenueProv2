@@ -66,7 +66,7 @@ export const OnboardingTour: OnboardingTourComponent = () => {
 
     if (user && !isPublicOrSetupPage) {
       const tourKey = `venuepro_tour_completed_${user.id}`;
-      const completed = localStorage.getItem(tourKey);
+      const completed = localStorage.getItem(tourKey) === 'true' || user.user_metadata?.tour_completed === true;
       if (!completed) {
         const timer = setTimeout(() => {
           setActive(true);
@@ -150,6 +150,7 @@ export const OnboardingTour: OnboardingTourComponent = () => {
     setActive(false);
     if (user) {
       localStorage.setItem(`venuepro_tour_completed_${user.id}`, 'true');
+      useAuthStore.getState().updateUserMetadata({ tour_completed: true });
     }
   };
 
@@ -157,6 +158,7 @@ export const OnboardingTour: OnboardingTourComponent = () => {
     setActive(false);
     if (user) {
       localStorage.setItem(`venuepro_tour_completed_${user.id}`, 'true');
+      useAuthStore.getState().updateUserMetadata({ tour_completed: true });
     }
   };
 

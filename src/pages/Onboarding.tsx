@@ -201,22 +201,24 @@ export default function Onboarding() {
     else if (activeStep === 'wizard_staff') setActiveStep('wizard_pricing');
   };
 
-  const handleSkipOnboarding = () => {
+  const handleSkipOnboarding = async () => {
     const userId = profile?.id || useAuthStore.getState().user?.id;
     if (userId) {
       localStorage.setItem(`venuepro_onboarding_completed_${userId}`, 'true');
     }
     localStorage.setItem('venuepro_onboarding_completed', 'true');
+    await useAuthStore.getState().updateUserMetadata({ onboarding_completed: true });
     toast.success('Onboarding skipped. Seeding demo register.');
     navigate('/dashboard');
   };
 
-  const handleFinishOnboarding = () => {
+  const handleFinishOnboarding = async () => {
     const userId = profile?.id || useAuthStore.getState().user?.id;
     if (userId) {
       localStorage.setItem(`venuepro_onboarding_completed_${userId}`, 'true');
     }
     localStorage.setItem('venuepro_onboarding_completed', 'true');
+    await useAuthStore.getState().updateUserMetadata({ onboarding_completed: true });
     toast.success('Onboarding complete! Welcome to VenuePro.');
     navigate('/dashboard');
   };

@@ -171,6 +171,7 @@ interface DataState {
   }) => Promise<Customer>;
   updateCustomer: (id: string, data: Partial<Customer>) => Promise<void>;
   deleteCustomer: (id: string) => Promise<void>;
+  searchCustomersServer: (query: string) => Promise<void>;
 
   // ─── Payment CRUD ────────────────────────────────────────
   recordPayment: (data: {
@@ -407,14 +408,18 @@ export const useDataStore = create<DataState>()((set, get) => ({
       }
 
       // 3. Fetch all organization-scoped collections
+      const dateOneYearAgo = format(subDays(new Date(), 365), 'yyyy-MM-dd');
+      const timestampOneYearAgo = subDays(new Date(), 365).toISOString();
+
+      // 3. Fetch all organization-scoped collections (range limited to last 365 days for performance)
       const [orgRes, hallsRes, customersRes, bookingsRes, paymentsRes, leadsRes, expensesRes, staffRes, invitesRes, notificationsRes] = await Promise.all([
         supabase.from('organizations').select('*').eq('id', orgId).single(),
         supabase.from('halls').select('*').eq('org_id', orgId).order('display_order'),
-        supabase.from('customers').select('*').eq('org_id', orgId),
-        supabase.from('bookings').select('*').eq('org_id', orgId),
-        supabase.from('payments').select('*').eq('org_id', orgId),
-        supabase.from('leads').select('*').eq('org_id', orgId),
-        supabase.from('expenses').select('*').eq('org_id', orgId).order('expense_date', { ascending: false }),
+        supabase.from('customers').select('*').eq('org_id', orgId).order('created_at', { ascending: false }).limit(200),
+        supabase.from('bookings').select('*').eq('org_id', orgId).gte('event_date', dateOneYearAgo),
+        supabase.from('payments').select('*').eq('org_id', orgId).gte('created_at', timestampOneYearAgo),
+        supabase.from('leads').select('*').eq('org_id', orgId).gte('created_at', timestampOneYearAgo),
+        supabase.from('expenses').select('*').eq('org_id', orgId).gte('expense_date', dateOneYearAgo).order('expense_date', { ascending: false }),
         supabase.from('profiles').select('*').eq('org_id', orgId).order('created_at'),
         supabase.from('staff_invites').select('*').eq('org_id', orgId).order('created_at', { ascending: false }),
         supabase.from('notifications').select('*').eq('org_id', orgId).order('created_at', { ascending: false }),
@@ -1455,6 +1460,37 @@ export const useDataStore = create<DataState>()((set, get) => ({
       customers: s.customers.filter((c) => c.id !== id),
     }));
     toast.success('Customer deleted.');
+  },
+
+  searchCustomersServer: async (query) => {
+    if (!query.trim()) return;
+    if (!isSupabaseConfigured()) return;
+    try {
+      const orgId = get().organization?.id;
+      if (!orgId) return;
+
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('org_id', orgId)
+        .or(`name.ilike.%${query}%,phone.like.%${query}%`)
+        .limit(50);
+
+      if (error) throw error;
+
+      if (data) {
+        const current = get().customers;
+        const merged = [...current];
+        data.forEach((newCust: Customer) => {
+          if (!merged.some((c) => c.id === newCust.id)) {
+            merged.push(newCust);
+          }
+        });
+        set({ customers: merged });
+      }
+    } catch (err) {
+      console.error('Failed to search customers on server:', err);
+    }
   },
 
   // ─── Payment delete & update ─────────────────────────────

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Role-Based Access Control Boundaries', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/login');
     
     // Clear state and log in as staff
     await page.evaluate(() => localStorage.clear());

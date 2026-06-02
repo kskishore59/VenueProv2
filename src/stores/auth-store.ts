@@ -4,6 +4,7 @@ import type { User } from '@supabase/supabase-js';
 import type { Profile } from '@/types/auth';
 import { useDataStore } from './data-store';
 import { mockProfile } from '@/lib/mock-data';
+import { isSuperAdminEmail } from '@/lib/permissions';
 
 interface AuthState {
   user: User | null;
@@ -18,6 +19,7 @@ interface AuthState {
   signOut: () => Promise<void>;
   resendVerificationEmail: (email: string) => Promise<void>;
   clearError: () => void;
+  updateUserMetadata: (metadata: Record<string, any>) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()((set, get) => ({
@@ -40,16 +42,29 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       // Simulate slight network delay for modern experience
       await new Promise((resolve) => setTimeout(resolve, 800));
       
+      const sessionEmail = localStorage.getItem('venuepro_session_email') || mockProfile.email;
+      const isSA = isSuperAdminEmail(sessionEmail);
+
       // Seed with mock data
       const mockUser = {
-        id: mockProfile.id,
-        email: mockProfile.email,
-        user_metadata: { full_name: mockProfile.full_name, org_name: 'Alpha Grand Palace' },
+        id: isSA ? 'mock-super-admin-id' : mockProfile.id,
+        email: sessionEmail,
+        user_metadata: { full_name: isSA ? 'Platform Super Admin' : mockProfile.full_name, org_name: isSA ? 'VenuePro HQ' : 'Alpha Grand Palace' },
       } as unknown as User;
 
       set({
         user: mockUser,
-        profile: mockProfile,
+        profile: {
+          id: isSA ? 'mock-super-admin-id' : mockProfile.id,
+          org_id: isSA ? 'mock-system-org-id' : mockProfile.org_id,
+          email: sessionEmail,
+          full_name: isSA ? 'Platform Super Admin' : mockProfile.full_name,
+          role: isSA ? 'super_admin' : mockProfile.role,
+          avatar_url: null,
+          phone: isSA ? '9876543210' : mockProfile.phone,
+          is_active: true,
+          created_at: mockProfile.created_at,
+        },
         sessionChecked: true,
         isLoading: false,
       });
@@ -68,18 +83,23 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       }
 
       // 2. Fetch the corresponding profile in the database
-      const { data: profile, error: profileError } = await supabase
+      const { data: dbProfile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .maybeSingle();
 
-      if (profileError || !profile) {
+      if (profileError || !dbProfile) {
         console.warn('Auth: Session user found but database profile does not exist.');
         // Sign out to clean corrupted auth states
         await supabase.auth.signOut();
         set({ user: null, profile: null, sessionChecked: true, isLoading: false });
         return;
+      }
+
+      let profile = dbProfile;
+      if (profile && isSuperAdminEmail(profile.email || user.email)) {
+        profile = { ...profile, role: 'super_admin' };
       }
 
       // 3. Populate store state
@@ -116,17 +136,28 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         throw new Error('Invalid email or password format.');
       }
 
+      const isSA = isSuperAdminEmail(email);
+      // Persist chosen email to localStorage so checkSession re-reads it
+      localStorage.setItem('venuepro_session_email', email);
+
       const mockUser = {
-        id: mockProfile.id,
+        id: isSA ? 'mock-super-admin-id' : mockProfile.id,
         email: email,
-        user_metadata: { full_name: mockProfile.full_name, org_name: 'Alpha Grand Palace' },
+        user_metadata: { full_name: isSA ? 'Platform Super Admin' : mockProfile.full_name, org_name: isSA ? 'VenuePro HQ' : 'Alpha Grand Palace' },
       } as unknown as User;
 
       set({
         user: mockUser,
         profile: {
-          ...mockProfile,
+          id: isSA ? 'mock-super-admin-id' : mockProfile.id,
+          org_id: isSA ? 'mock-system-org-id' : mockProfile.org_id,
           email: email,
+          full_name: isSA ? 'Platform Super Admin' : mockProfile.full_name,
+          role: isSA ? 'super_admin' : 'owner',
+          avatar_url: null,
+          phone: isSA ? '9876543210' : mockProfile.phone,
+          is_active: true,
+          created_at: new Date().toISOString(),
         },
         isLoading: false,
       });
@@ -180,6 +211,11 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         if (!profile) {
           throw new Error('User profile record could not be found. Please contact support.');
         }
+      }
+
+      // Check if email qualifies as super admin
+      if (profile && isSuperAdminEmail(profile.email || authData.user.email)) {
+        profile = { ...profile, role: 'super_admin' };
       }
 
       // 3. Set store state
@@ -369,6 +405,35 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     } catch (err: any) {
       set({ isLoading: false, error: err.message || 'Failed to resend confirmation email.' });
       throw err;
+    }
+  },
+
+  updateUserMetadata: async (metadata) => {
+    const user = get().user;
+    if (!user) return;
+
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase.auth.updateUser({
+          data: metadata
+        });
+        if (error) throw error;
+        if (data.user) {
+          set({ user: data.user });
+        }
+      } catch (err: any) {
+        console.error('Auth: updateUserMetadata failed', err);
+      }
+    } else {
+      set({
+        user: {
+          ...user,
+          user_metadata: {
+            ...user.user_metadata,
+            ...metadata
+          }
+        }
+      });
     }
   },
 }));

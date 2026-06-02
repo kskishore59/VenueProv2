@@ -34,6 +34,7 @@ const Landing = lazy(() => import('@/pages/Landing'));
 const Onboarding = lazy(() => import('@/pages/Onboarding'));
 const Privacy = lazy(() => import('@/pages/Privacy'));
 const Terms = lazy(() => import('@/pages/Terms'));
+const SuperAdmin = lazy(() => import('@/pages/SuperAdmin'));
 
 import { FeedbackWidget } from '@/components/shared/FeedbackWidget';
 import { ReceiptModal } from '@/components/payments/ReceiptModal';
@@ -42,6 +43,14 @@ import { EditCustomerDrawer } from '@/components/customers/EditCustomerDrawer';
 import { EditPaymentModal } from '@/components/payments/EditPaymentModal';
 import { PermissionGuard } from '@/components/shared/PermissionGuard';
 import { OnboardingTour } from '@/components/shared/OnboardingTour';
+
+function SuperAdminGuard({ children }: { children: React.ReactNode }) {
+  const role = useAuthStore((s) => s.profile?.role);
+  if (role !== 'super_admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <>{children}</>;
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -130,6 +139,7 @@ export default function App() {
                   <Route path="/import" element={<PermissionGuard resource="settings"><Import /></PermissionGuard>} />
                   <Route path="/settings" element={<PermissionGuard resource="settings"><Settings /></PermissionGuard>} />
                   <Route path="/help" element={<Help />} />
+                  <Route path="/super-admin" element={<SuperAdminGuard><SuperAdmin /></SuperAdminGuard>} />
                 </Route>
               </Route>
 

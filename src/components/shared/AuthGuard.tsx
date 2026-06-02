@@ -39,7 +39,16 @@ export function AuthGuard() {
     }
   }
 
-  const isCompleted = localStorage.getItem(userKey) === 'true';
+  const org = useDataStore.getState().organization;
+  const isOrgConfigured = org && (org.address || org.phone || org.city);
+  const isCompleted = 
+    localStorage.getItem(userKey) === 'true' || 
+    user.user_metadata?.onboarding_completed === true ||
+    isOrgConfigured;
+  
+  if (isCompleted && localStorage.getItem(userKey) !== 'true') {
+    localStorage.setItem(userKey, 'true');
+  }
   
   if (!isCompleted && !isOnboardingPage) {
     return <Navigate to="/onboarding" replace />;

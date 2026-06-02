@@ -26,6 +26,7 @@ export default function Signup() {
 
   const [localError, setLocalError] = useState<string | null>(null);
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
   useEffect(() => {
     if (sessionChecked && user) {
@@ -56,6 +57,10 @@ export default function Signup() {
     }
     if (password !== confirmPassword) {
       setLocalError('Passwords do not match.');
+      return;
+    }
+    if (!acceptTerms) {
+      setLocalError('You must agree to the Terms of Service and Privacy Policy to register.');
       return;
     }
 
@@ -255,6 +260,31 @@ export default function Signup() {
                   </button>
                 </div>
               </div>
+            </div>
+
+            <div className="flex items-start gap-2.5 mt-4">
+              <input
+                id="accept-terms-checkbox"
+                type="checkbox"
+                checked={acceptTerms}
+                disabled={isLoading}
+                onChange={(e) => {
+                  setAcceptTerms(e.target.checked);
+                  if (localError) setLocalError(null);
+                }}
+                className="w-4 h-4 rounded text-brand-650 border-slate-200 focus:ring-brand-500/20 mt-0.5 cursor-pointer accent-brand-600 shrink-0"
+              />
+              <label htmlFor="accept-terms-checkbox" className="text-[11px] text-slate-500 font-semibold leading-normal select-none cursor-pointer">
+                I agree to the{' '}
+                <Link to="/terms" target="_blank" className="text-brand-600 font-bold hover:underline">
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link to="/privacy" target="_blank" className="text-brand-600 font-bold hover:underline">
+                  Privacy Policy
+                </Link>
+                .
+              </label>
             </div>
 
             <button

@@ -1,7 +1,8 @@
-import { Building2, Users, Shield, Upload, FileText } from 'lucide-react';
+import { Building2, Users, Shield, Upload, FileText, CreditCard, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDataStore } from '@/stores/data-store';
 import { useAuthStore } from '@/stores/auth-store';
+import { useUIStore } from '@/stores/ui-store';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { compressAndConvertToWebp } from '@/lib/image';
@@ -13,8 +14,9 @@ export default function Settings() {
   const updateOrganization = useDataStore((s) => s.updateOrganization);
   const role = useAuthStore((s) => s.profile?.role);
   const isOwner = role === 'owner';
+  const openSubscriptionModal = useUIStore((s) => s.openSubscriptionModal);
 
-  const [activeTab, setActiveTab] = useState<'organization' | 'staff' | 'access'>('organization');
+  const [activeTab, setActiveTab] = useState<'organization' | 'staff' | 'access' | 'subscription'>('organization');
 
   const [name, setName] = useState(organization.name);
   const [gstin, setGstin] = useState(organization.gstin || '');
@@ -120,6 +122,18 @@ export default function Settings() {
             >
               <Shield className="w-4 h-4" />
               Access Control
+            </button>
+            <button
+              onClick={() => setActiveTab('subscription')}
+              className={cn(
+                'px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5 shrink-0',
+                activeTab === 'subscription'
+                  ? 'border-brand-600 text-brand-600'
+                  : 'border-transparent text-gray-400 hover:text-gray-600'
+              )}
+            >
+              <CreditCard className="w-4 h-4" />
+              Manage Subscription
             </button>
           </>
         )}
@@ -236,8 +250,101 @@ export default function Settings() {
         </div>
       ) : activeTab === 'staff' ? (
         <StaffManagement />
-      ) : (
+      ) : activeTab === 'access' ? (
         <AccessControl />
+      ) : (
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl border border-gray-150 overflow-hidden shadow-2xs">
+            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+              <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-brand-600" />
+                Subscription Overview
+              </h3>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div className="bg-gradient-to-br from-slate-900 to-indigo-950 p-6 rounded-3xl text-white flex flex-col md:flex-row md:items-center justify-between gap-6 border border-slate-800 shadow-md">
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-[10px] font-bold uppercase tracking-wider">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Workspace Tier</span>
+                  </div>
+                  <h4 className="text-2xl font-extrabold font-display uppercase tracking-tight">
+                    VenuePro {organization.plan}
+                  </h4>
+                  <p className="text-xs text-indigo-200/80 font-medium">
+                    Status: <span className="capitalize font-bold text-white bg-indigo-500/30 px-2.5 py-0.5 rounded-full">{organization.subscription_status || 'Active'}</span>
+                  </p>
+                </div>
+
+                <div className="space-y-3 shrink-0">
+                  {organization.trial_ends_at && organization.subscription_status === 'trial' ? (
+                    <div className="text-left md:text-right">
+                      <span className="text-[10px] text-indigo-300 block uppercase tracking-wider font-bold">Free Trial Ends</span>
+                      <span className="text-sm font-extrabold text-white block mt-0.5">
+                        {new Date(organization.trial_ends_at).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
+                      </span>
+                    </div>
+                  ) : null}
+                  
+                  <button
+                    onClick={openSubscriptionModal}
+                    className="w-full md:w-auto px-5 py-2.5 bg-white hover:bg-slate-100 text-indigo-950 rounded-xl text-xs font-black transition-all shadow-sm hover:scale-[1.01] active:scale-99"
+                  >
+                    {organization.subscription_status === 'trial' ? 'Upgrade to Paid Plan' : 'Manage / Change Plan'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Feature Checklist */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Active Plan Features</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-gray-600 font-semibold">
+                  <div className="flex items-center gap-2">
+                    <span className="text-emerald-500 font-bold">✓</span>
+                    <span>Unlimited Booking Slots & Calendar</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-emerald-500 font-bold">✓</span>
+                    <span>Leads CRM & Inquiries Tracker</span>
+                  </div>
+                  {organization.plan === 'pro' || organization.plan === 'enterprise' ? (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <span className="text-emerald-500 font-bold">✓</span>
+                        <span>WhatsApp Automated Receipts</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-emerald-500 font-bold">✓</span>
+                        <span>Staff Roles & Permissions (RBAC)</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-emerald-500 font-bold">✓</span>
+                        <span>CFO Expense & Spends Tracker</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-emerald-500 font-bold">✓</span>
+                        <span>Bulk Excel/CSV Import Wizard</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2 text-gray-400 line-through">
+                        <span>✗</span>
+                        <span>WhatsApp Automated Receipts</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-400 line-through">
+                        <span>✗</span>
+                        <span>Staff Roles & Permissions (RBAC)</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

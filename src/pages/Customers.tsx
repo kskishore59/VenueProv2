@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Plus, Phone, Mail, MapPin, Edit } from 'lucide-react';
 import { cn, formatCurrency, formatPhone, getInitials, exportToCSV } from '@/lib/utils';
 import { useDataStore } from '@/stores/data-store';
@@ -16,6 +16,17 @@ export default function Customers() {
   const customers = useDataStore((s) => s.customers);
   const bookings = useDataStore((s) => s.bookings);
   const payments = useDataStore((s) => s.payments);
+  const searchCustomersServer = useDataStore((s) => s.searchCustomersServer);
+
+  // Debounced search logic to fetch matching customers from Supabase
+  useEffect(() => {
+    if (!search.trim()) return;
+    const delayDebounce = setTimeout(() => {
+      searchCustomersServer(search);
+    }, 300);
+
+    return () => clearTimeout(delayDebounce);
+  }, [search, searchCustomersServer]);
 
   const filtered = customers.filter((c) => {
     if (dateRange.start) {

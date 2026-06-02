@@ -3,6 +3,7 @@ import {
   LayoutDashboard, CalendarDays, Users, PhoneIncoming,
   IndianRupee, Settings, ChevronLeft, ChevronRight, X,
   Building2, Receipt, UploadCloud, HelpCircle, LogOut,
+  ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import venueProLogo from '@/assets/venueProLogo.svg';
@@ -89,8 +90,8 @@ export function Sidebar() {
       <aside
         id="tour-sidebar-nav"
         className={cn(
-          'fixed top-0 left-1 h-screen bg-white rounded-2xl border-gray-200 z-[70] m-2 ml-4 pt-4',
-          'flex flex-col transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-md',
+          'fixed top-0 left-1 h-screen bg-white rounded-2xl border-gray-200 z-[70] lg:m-2 lg:ml-4 lg:pt-4',
+          'flex flex-col transition-all duration-300 ease-in-out-[cubic-bezier(0.16,1,0.3,1)] shadow-md',
           // Desktop
           'hidden md:flex',
           collapsed ? 'w-[72px]' : 'w-[260px]',
@@ -202,6 +203,29 @@ export function Sidebar() {
             </span>
           )}
           <nav className="space-y-0.5">
+            {role === 'super_admin' && (
+              <NavLink
+                to="/super-admin"
+                onClick={() => setSidebarMobileOpen(false)}
+                className={cn(
+                  'group flex items-center rounded-xl transition-all duration-250 ease-out mb-2',
+                  collapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2 hover:translate-x-0.5',
+                  location.pathname === '/super-admin'
+                    ? 'text-indigo-950 font-bold bg-indigo-50 border border-indigo-100/50'
+                    : 'text-gray-500 hover:text-indigo-650 bg-transparent',
+                )}
+              >
+                <ShieldCheck className={cn(
+                  'flex-shrink-0 transition-colors duration-250',
+                  collapsed ? 'w-6 h-6' : 'w-5 h-5',
+                  location.pathname === '/super-admin' ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600',
+                )} />
+                {!collapsed && (
+                  <span className="text-[13.5px] font-semibold tracking-[-0.01em]">Super Admin Panel</span>
+                )}
+              </NavLink>
+            )}
+
             {showSettings && (
               <NavLink
                 to="/settings"

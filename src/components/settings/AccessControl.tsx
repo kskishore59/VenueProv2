@@ -25,7 +25,7 @@ export function AccessControl() {
   const organization = useDataStore((s) => s.organization);
   const updateOrganization = useDataStore((s) => s.updateOrganization);
 
-  const [activeRole, setActiveRole] = useState<Exclude<UserRole, 'owner'>>('manager');
+  const [activeRole, setActiveRole] = useState<'manager' | 'finance' | 'staff'>('manager');
   const [isSaving, setIsSaving] = useState(false);
 
   // Initialize permissions state from org settings or fall back to defaults
@@ -102,7 +102,7 @@ export function AccessControl() {
 
         {/* Role Tabs Selector */}
         <div className="flex gap-2 border-b border-gray-100 pb-3 mb-5">
-          {(['manager', 'finance', 'staff'] as Exclude<UserRole, 'owner'>[]).map((role) => (
+          {(['manager', 'finance', 'staff'] as const).map((role) => (
             <button
               key={role}
               onClick={() => setActiveRole(role)}

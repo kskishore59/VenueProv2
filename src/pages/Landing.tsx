@@ -403,12 +403,12 @@ export default function Landing() {
               >
                 Start Free Trial
               </button>
-              <a
+              {/* <a
                 href="#workflow"
                 className="px-6 py-3.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 rounded-full text-xs font-bold transition-all flex items-center gap-2"
               >
                 Watch Live Demo <ArrowRight className="w-4 h-4 text-slate-400" />
-              </a>
+              </a> */}
             </div>
           </motion.div>
 

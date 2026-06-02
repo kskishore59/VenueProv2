@@ -10,13 +10,14 @@ export interface Profile {
   created_at: string;
 }
 
-export type UserRole = 'owner' | 'manager' | 'staff' | 'finance';
+export type UserRole = 'owner' | 'manager' | 'staff' | 'finance' | 'super_admin';
 
 export const userRoleLabels: Record<UserRole, string> = {
   owner: 'Owner',
   manager: 'Manager',
   staff: 'Staff',
   finance: 'Finance',
+  super_admin: 'Super Admin',
 };
 
 export const userRolePermissions: Record<UserRole, string[]> = {
@@ -24,4 +25,5 @@ export const userRolePermissions: Record<UserRole, string[]> = {
   manager: ['bookings', 'customers', 'leads', 'payments.view', 'settings.venue'],
   staff: ['bookings', 'customers', 'leads'],
   finance: ['payments', 'bookings.view', 'customers.view'],
+  super_admin: ['all'],
 };

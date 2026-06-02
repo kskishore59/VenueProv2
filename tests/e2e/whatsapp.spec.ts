@@ -2,8 +2,12 @@ import { test, expect } from '@playwright/test';
 
 test.describe('WhatsApp Templated Communications', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/login');
     
+    // Clear localStorage to start clean and force login
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+
     const emailInput = page.locator('input[type="email"]');
     if (await emailInput.isVisible()) {
       await page.fill('input[type="email"]', 'owner@venuepro.com');

@@ -1,6 +1,6 @@
 import type { Organization } from '@/types/organization';
 
-export type UserRole = 'owner' | 'manager' | 'finance' | 'staff';
+export type UserRole = 'owner' | 'manager' | 'finance' | 'staff' | 'super_admin';
 export type PermissionResource = 'bookings' | 'payments' | 'leads' | 'customers' | 'expenses' | 'settings';
 export type PermissionAction = 'create' | 'read' | 'update' | 'delete';
 
@@ -13,7 +13,7 @@ export interface RolePermissions {
 
 export type PermissionsMap = Record<PermissionResource, RolePermissions>;
 
-export const defaultRolePermissions: Record<Exclude<UserRole, 'owner'>, PermissionsMap> = {
+export const defaultRolePermissions: Record<Exclude<UserRole, 'owner' | 'super_admin'>, PermissionsMap> = {
   manager: {
     bookings: { create: true, read: true, update: true, delete: false },
     payments: { create: false, read: true, update: false, delete: false },
@@ -40,6 +40,17 @@ export const defaultRolePermissions: Record<Exclude<UserRole, 'owner'>, Permissi
   },
 };
 
+export function isSuperAdminEmail(email?: string | null): boolean {
+  if (!email) return false;
+  const envEmails = import.meta.env.VITE_SUPER_ADMIN_EMAILS;
+  if (!envEmails) {
+    // Fallback default super admin email
+    return email.toLowerCase() === 'superadmin@venuepro.in';
+  }
+  const emailsList = envEmails.split(',').map((e: string) => e.trim().toLowerCase());
+  return emailsList.includes(email.toLowerCase());
+}
+
 export function hasPermission(
   role: UserRole | undefined | null,
   resource: PermissionResource,
@@ -47,17 +58,18 @@ export function hasPermission(
   orgSettings?: Organization['settings']
 ): boolean {
   if (!role) return false;
+  if (role === 'super_admin') return true; // Super admin has full access
   if (role === 'owner') return true; // Owner always has full access
 
   // Check if owner custom configured permissions in org settings
-  const customPermissions = orgSettings?.permissions?.[role];
+  const customPermissions = orgSettings?.permissions?.[role as Exclude<UserRole, 'owner' | 'super_admin'>];
   if (customPermissions && customPermissions[resource]) {
     const res = customPermissions[resource];
     return !!res[action];
   }
 
   // Fallback to defaults
-  const defaults = defaultRolePermissions[role as Exclude<UserRole, 'owner'>];
+  const defaults = defaultRolePermissions[role as Exclude<UserRole, 'owner' | 'super_admin'>];
   if (defaults && defaults[resource]) {
     const res = defaults[resource];
     return !!res[action];
