@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth-store';
-import { Mail, Lock, Eye, EyeOff, Loader2, User, Building2, ShieldCheck, AlertTriangle, Inbox } from 'lucide-react';
+import { Mail, Lock, Building2, User, Eye, EyeOff, Loader2, Inbox, Gift, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import venueProLogo from '@/assets/venueProLogo.svg';
 
@@ -18,6 +18,7 @@ export default function Signup() {
   const emailParam = searchParams.get('email') || '';
 
   const [fullName, setFullName] = useState('');
+  const [promoCode, setPromoCode] = useState('');
   const [email, setEmail] = useState(emailParam);
   const [orgName, setOrgName] = useState(emailParam ? 'Accepting Invite' : '');
   const [password, setPassword] = useState('');
@@ -65,7 +66,7 @@ export default function Signup() {
     }
 
     try {
-      const res = await signUp(email, password, fullName, orgName);
+      const res = await signUp(email, password, fullName, orgName, promoCode.trim());
 
       if (res.sessionCreated) {
         toast.success('Organization registered successfully! 🎉', {
@@ -261,6 +262,26 @@ export default function Signup() {
                 </div>
               </div>
             </div>
+
+            {!emailParam && (
+              <div className="mt-4">
+                <label className="block text-xs font-bold text-slate-505 mb-1.5 uppercase tracking-wider">Promo / Coupon Code (Optional)</label>
+                <div className="relative">
+                  <Gift className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="e.g. VIP50, WELCOME"
+                    value={promoCode}
+                    disabled={isLoading}
+                    onChange={(e) => {
+                      setPromoCode(e.target.value);
+                      if (localError) setLocalError(null);
+                    }}
+                    className="w-full bg-slate-50 border border-slate-100 text-slate-800 pl-11 pr-4 py-2.5 rounded-xl text-sm placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all disabled:opacity-50 uppercase font-semibold"
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="flex items-start gap-2.5 mt-4">
               <input

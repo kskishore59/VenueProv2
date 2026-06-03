@@ -12,11 +12,29 @@ import { AccessControl } from '@/components/settings/AccessControl';
 export default function Settings() {
   const organization = useDataStore((s) => s.organization);
   const updateOrganization = useDataStore((s) => s.updateOrganization);
+  const applyPromoCodeStore = useDataStore((s) => s.applyPromoCode);
   const role = useAuthStore((s) => s.profile?.role);
   const isOwner = role === 'owner';
   const openSubscriptionModal = useUIStore((s) => s.openSubscriptionModal);
 
   const [activeTab, setActiveTab] = useState<'organization' | 'staff' | 'access' | 'subscription'>('organization');
+  
+  // Promo code redemption state
+  const [settingsPromoCode, setSettingsPromoCode] = useState('');
+  const [isApplyingSettingsPromo, setIsApplyingSettingsPromo] = useState(false);
+
+  const handleApplySettingsPromo = async () => {
+    if (!settingsPromoCode.trim()) return;
+    setIsApplyingSettingsPromo(true);
+    try {
+      await applyPromoCodeStore(settingsPromoCode);
+      setSettingsPromoCode('');
+    } catch (err) {
+      // Toast message shown by store
+    } finally {
+      setIsApplyingSettingsPromo(false);
+    }
+  };
 
   const [name, setName] = useState(organization.name);
   const [gstin, setGstin] = useState(organization.gstin || '');
@@ -97,7 +115,7 @@ export default function Settings() {
           <Building2 className="w-4 h-4" />
           Organization Profile
         </button>
-        {isOwner && (
+        {(isOwner || role === 'super_admin') && (
           <>
             <button
               onClick={() => setActiveTab('staff')}
@@ -123,19 +141,21 @@ export default function Settings() {
               <Shield className="w-4 h-4" />
               Access Control
             </button>
-            <button
-              onClick={() => setActiveTab('subscription')}
-              className={cn(
-                'px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5 shrink-0',
-                activeTab === 'subscription'
-                  ? 'border-brand-600 text-brand-600'
-                  : 'border-transparent text-gray-400 hover:text-gray-600'
-              )}
-            >
-              <CreditCard className="w-4 h-4" />
-              Manage Subscription
-            </button>
           </>
+        )}
+        {(isOwner || role === 'manager' || role === 'super_admin') && (
+          <button
+            onClick={() => setActiveTab('subscription')}
+            className={cn(
+              'px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5 shrink-0',
+              activeTab === 'subscription'
+                ? 'border-brand-600 text-brand-600'
+                : 'border-transparent text-gray-400 hover:text-gray-600'
+            )}
+          >
+            <CreditCard className="w-4 h-4" />
+            Subscription & Plan
+          </button>
         )}
       </div>
 
@@ -292,6 +312,32 @@ export default function Settings() {
                     className="w-full md:w-auto px-5 py-2.5 bg-white hover:bg-slate-100 text-indigo-950 rounded-xl text-xs font-black transition-all shadow-sm hover:scale-[1.01] active:scale-99"
                   >
                     {organization.subscription_status === 'trial' ? 'Upgrade to Paid Plan' : 'Manage / Change Plan'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Promo Code Redemption Card */}
+              <div className="bg-slate-50 border border-slate-150 p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Redeem Trial Promo Code</h4>
+                  <p className="text-[10px] text-slate-400 font-semibold">Redeem a promo code to extend your free trial period.</p>
+                </div>
+                
+                <div className="flex gap-2 w-full sm:w-auto shrink-0">
+                  <input
+                    type="text"
+                    placeholder="Enter Coupon Code"
+                    value={settingsPromoCode}
+                    onChange={(e) => setSettingsPromoCode(e.target.value)}
+                    className="flex-1 sm:w-44 px-3 py-2 rounded-xl border border-slate-200 text-xs uppercase outline-none focus:ring-1 focus:ring-brand-500 font-bold bg-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplySettingsPromo}
+                    disabled={isApplyingSettingsPromo || !settingsPromoCode.trim()}
+                    className="px-4 py-2 bg-slate-900 hover:bg-slate-850 text-white text-xs font-black rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Redeem
                   </button>
                 </div>
               </div>

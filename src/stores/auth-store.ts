@@ -15,7 +15,7 @@ interface AuthState {
 
   checkSession: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, fullName: string, orgName: string) => Promise<{ sessionCreated: boolean }>;
+  signUp: (email: string, password: string, fullName: string, orgName: string, promoCode?: string) => Promise<{ sessionCreated: boolean }>;
   signOut: () => Promise<void>;
   resendVerificationEmail: (email: string) => Promise<void>;
   clearError: () => void;
@@ -228,12 +228,16 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       // 4. Sync workspace data
       await useDataStore.getState().syncData(true);
     } catch (err: any) {
-      set({ isLoading: false, error: err.message || 'Login failed.' });
+      let msg = err.message || 'Login failed.';
+      if (err.message === 'Failed to fetch' || !navigator.onLine) {
+        msg = 'Network connection failed. Please check your internet connection or try offline Demo Mode.';
+      }
+      set({ isLoading: false, error: msg });
       throw err;
     }
   },
 
-  signUp: async (email, password, fullName, orgName) => {
+  signUp: async (email, password, fullName, orgName, promoCode) => {
     set({ isLoading: true, error: null });
 
     // Handle Local Mock Mode
@@ -262,6 +266,38 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         isLoading: false,
       });
 
+      // Calculate trial ends date
+      let baseTrialDays = 14;
+      let appliedCodes: string[] = [];
+      let monthsToAdd = 0;
+      if (promoCode) {
+        const cleanCode = promoCode.trim().toUpperCase();
+        
+        // Import dynamically to avoid top-level cyclic import
+        const { useAdminStore } = await import('./admin-store');
+        const mockPromoCodes = useAdminStore.getState().allPromoCodes;
+        const foundMock = mockPromoCodes.find(p => p.code === cleanCode && p.is_active && (!p.expires_at || new Date(p.expires_at) > new Date()));
+        
+        if (foundMock) {
+          monthsToAdd = foundMock.months_to_add;
+          appliedCodes.push(cleanCode);
+        } else {
+          if (cleanCode === 'TRIAL1M') monthsToAdd = 1;
+          else if (cleanCode === 'TRIAL2M') monthsToAdd = 2;
+          else if (cleanCode === 'TRIAL3M') monthsToAdd = 3;
+          
+          if (monthsToAdd > 0) {
+            appliedCodes.push(cleanCode);
+          }
+        }
+      }
+
+      const trialEndsDate = new Date();
+      trialEndsDate.setDate(trialEndsDate.getDate() + baseTrialDays);
+      const finalTrialEndsDate = monthsToAdd > 0 
+        ? new Date(trialEndsDate.setMonth(trialEndsDate.getMonth() + monthsToAdd)).toISOString() 
+        : trialEndsDate.toISOString();
+
       // Initialize the mock organization state with the trial parameters
       useDataStore.setState({
         organization: {
@@ -288,8 +324,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           },
           plan: 'pro',
           created_at: new Date().toISOString(),
-          trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          trial_ends_at: finalTrialEndsDate,
           subscription_status: 'trial',
+          promo_codes_applied: appliedCodes,
         }
       });
 
@@ -307,6 +344,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             full_name: fullName,
             org_name: orgName,
             role: 'owner',
+            promo_code: promoCode || null,
           },
         },
       });

@@ -76,8 +76,7 @@ export default function Login() {
       });
       navigate(from, { replace: true });
     } catch (err: any) {
-      console.error(err);
-      // Errors are also captured in useAuthStore.error
+      // Raw error stack traces are suppressed; the error is captured in auth-store and rendered as a user-friendly alert box in the UI.
     }
   };
 

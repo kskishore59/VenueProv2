@@ -3,7 +3,8 @@ import { useAdminStore } from '@/stores/admin-store';
 import {
   ShieldCheck, Building2, Users, IndianRupee, Search, Filter,
   Edit2, Plus, Ban, CheckCircle, AlertTriangle, X, Calendar,
-  Loader2, Sparkles, Check, ArrowRight, Activity, TrendingUp, Info
+  Loader2, Sparkles, Check, ArrowRight, Activity, TrendingUp, Info,
+  Gift, Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
@@ -14,14 +15,18 @@ export default function SuperAdmin() {
     allOrganizations,
     allProfiles,
     allPayments,
+    allPromoCodes = [],
     isLoading,
     syncAdminData,
     updateOrganizationDetails,
     updateUserProfile,
-    createOrganizationAdmin
+    createOrganizationAdmin,
+    createPromoCode,
+    togglePromoCodeActive,
+    deletePromoCode
   } = useAdminStore();
 
-  const [activeTab, setActiveTab] = useState<'analytics' | 'organizations' | 'users' | 'payments'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'organizations' | 'users' | 'payments' | 'promo_codes'>('analytics');
   const [orgSearch, setOrgSearch] = useState('');
   const [orgPlanFilter, setOrgPlanFilter] = useState<string>('all');
   const [orgStatusFilter, setOrgStatusFilter] = useState<string>('all');
@@ -33,12 +38,22 @@ export default function SuperAdmin() {
   const [paymentSearch, setPaymentSearch] = useState('');
   const [paymentModeFilter, setPaymentModeFilter] = useState<string>('all');
 
+  // Promo Codes state
+  const [promoSearch, setPromoSearch] = useState('');
+  const [promoStatusFilter, setPromoStatusFilter] = useState<string>('all');
+
   // Modals state
   const [isCreateOrgOpen, setIsCreateOrgOpen] = useState(false);
   const [newOrgName, setNewOrgName] = useState('');
   const [newOwnerName, setNewOwnerName] = useState('');
   const [newOwnerEmail, setNewOwnerEmail] = useState('');
   const [newOrgPlan, setNewOrgPlan] = useState<'free' | 'starter' | 'pro' | 'enterprise'>('pro');
+
+  const [isCreatePromoOpen, setIsCreatePromoOpen] = useState(false);
+  const [newPromoCode, setNewPromoCode] = useState('');
+  const [newPromoMonths, setNewPromoMonths] = useState<number>(1);
+  const [newPromoExpires, setNewPromoExpires] = useState('');
+  const [newPromoActive, setNewPromoActive] = useState(true);
 
   const [isManageOrgOpen, setIsManageOrgOpen] = useState(false);
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
@@ -59,6 +74,26 @@ export default function SuperAdmin() {
       setNewOrgName('');
       setNewOwnerName('');
       setNewOwnerEmail('');
+    } catch (err) {
+      // toast is triggered inside store
+    }
+  };
+
+  const handleCreatePromoCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPromoCode.trim()) return;
+    try {
+      await createPromoCode({
+        code: newPromoCode.trim().toUpperCase(),
+        months_to_add: newPromoMonths,
+        expires_at: newPromoExpires ? new Date(newPromoExpires).toISOString() : null,
+        is_active: newPromoActive
+      });
+      setIsCreatePromoOpen(false);
+      setNewPromoCode('');
+      setNewPromoMonths(1);
+      setNewPromoExpires('');
+      setNewPromoActive(true);
     } catch (err) {
       // toast is triggered inside store
     }
@@ -145,6 +180,13 @@ export default function SuperAdmin() {
     return matchesSearch && matchesMode;
   });
 
+  const filteredPromoCodes = allPromoCodes.filter(promo => {
+    const matchesSearch = promo.code.toLowerCase().includes(promoSearch.toLowerCase());
+    const matchesStatus = promoStatusFilter === 'all' || 
+                          (promoStatusFilter === 'active' ? promo.is_active : !promo.is_active);
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="space-y-6 animate-fade-in font-sans pb-12">
       {/* Header */}
@@ -167,6 +209,16 @@ export default function SuperAdmin() {
           >
             <Plus className="w-4 h-4" />
             Provision Venue
+          </button>
+        )}
+
+        {activeTab === 'promo_codes' && (
+          <button
+            onClick={() => setIsCreatePromoOpen(true)}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-650 text-white font-bold hover:bg-indigo-700 text-xs active:scale-[0.98] transition-all shadow-sm shadow-indigo-150"
+          >
+            <Plus className="w-4 h-4" />
+            Create Promo Code
           </button>
         )}
       </div>
@@ -220,6 +272,18 @@ export default function SuperAdmin() {
         >
           <IndianRupee className="w-4 h-4" />
           Payment Audit Ledger
+        </button>
+        <button
+          onClick={() => setActiveTab('promo_codes')}
+          className={cn(
+            'px-4 py-2.5 text-xs font-black border-b-2 -mb-px transition-all flex items-center gap-2',
+            activeTab === 'promo_codes'
+              ? 'border-indigo-600 text-indigo-650'
+              : 'border-transparent text-gray-400 hover:text-gray-600'
+          )}
+        >
+          <Gift className="w-4 h-4" />
+          Promo Codes ({allPromoCodes.length})
         </button>
       </div>
 
@@ -855,6 +919,207 @@ export default function SuperAdmin() {
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Promo Codes */}
+      {!isLoading && activeTab === 'promo_codes' && (
+        <div className="space-y-4">
+          {/* Filter Bar */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-4 rounded-2xl border border-gray-150 shadow-2xs">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={promoSearch}
+                onChange={e => setPromoSearch(e.target.value)}
+                placeholder="Search promo codes..."
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all"
+              />
+            </div>
+
+            <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-150 px-3 py-2 rounded-xl text-xs w-full sm:w-auto">
+              <Filter className="w-3.5 h-3.5 text-gray-400" />
+              <select 
+                value={promoStatusFilter} 
+                onChange={e => setPromoStatusFilter(e.target.value)}
+                className="bg-transparent text-gray-700 outline-none font-bold text-xs w-full"
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active Only</option>
+                <option value="inactive">Inactive Only</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Promo Codes Table */}
+          <div className="bg-white rounded-3xl border border-gray-150 shadow-2xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left text-xs">
+                <thead>
+                  <tr className="bg-gray-50/50 border-b border-gray-100 text-gray-400 uppercase tracking-widest font-black text-[10px]">
+                    <th className="py-4 px-6">Promo Code</th>
+                    <th className="py-4 px-6">Trial Duration</th>
+                    <th className="py-4 px-6">Expiration Date</th>
+                    <th className="py-4 px-6">Status</th>
+                    <th className="py-4 px-6">Created Date</th>
+                    <th className="py-4 px-6 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-gray-600 font-semibold">
+                  {filteredPromoCodes.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-gray-400 font-medium">
+                        No promo codes found.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredPromoCodes.map(promo => {
+                      const isExpired = promo.expires_at && new Date(promo.expires_at) < new Date();
+                      return (
+                        <tr key={promo.code} className="hover:bg-gray-50/30 transition-colors">
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-700">
+                                <Gift className="w-4 h-4" />
+                              </div>
+                              <span className="font-black text-gray-900 text-sm tracking-wide">{promo.code}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-6">
+                            <span className="text-gray-700 font-bold">{promo.months_to_add} {promo.months_to_add === 1 ? 'Month' : 'Months'}</span>
+                          </td>
+                          <td className="py-4 px-6">
+                            {promo.expires_at ? (
+                              <span className={cn(
+                                "text-xs",
+                                isExpired ? "text-rose-605 font-bold" : "text-gray-600"
+                              )}>
+                                {format(new Date(promo.expires_at), 'dd MMM yyyy')} {isExpired && '(Expired)'}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 italic">No Expiration</span>
+                            )}
+                          </td>
+                          <td className="py-4 px-6">
+                            <button
+                              onClick={() => togglePromoCodeActive(promo.code, !promo.is_active)}
+                              className={cn(
+                                "px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition-all border",
+                                promo.is_active 
+                                  ? "bg-emerald-50 text-emerald-800 border-emerald-100 hover:bg-emerald-100" 
+                                  : "bg-rose-50 text-rose-800 border-rose-100 hover:bg-rose-100"
+                              )}
+                            >
+                              {promo.is_active ? 'Active' : 'Inactive'}
+                            </button>
+                          </td>
+                          <td className="py-4 px-6 text-gray-400 text-[11px]">
+                            {promo.created_at ? format(new Date(promo.created_at), 'dd/MM/yyyy') : 'N/A'}
+                          </td>
+                          <td className="py-4 px-6 text-right">
+                            <button
+                              onClick={() => {
+                                if (confirm(`Are you sure you want to delete promo code ${promo.code}?`)) {
+                                  deletePromoCode(promo.code);
+                                }
+                              }}
+                              className="p-2 rounded-xl text-rose-600 bg-rose-50 border border-rose-100 hover:bg-rose-100 transition-all inline-flex items-center gap-1 text-xs"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Delete</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Create Promo Code */}
+      {isCreatePromoOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-[100] animate-fade-in">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl max-w-md w-full overflow-hidden p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-base font-black text-gray-900 flex items-center gap-1.5">
+                <Gift className="w-5 h-5 text-indigo-650" />
+                Create Promo Code
+              </h3>
+              <button 
+                onClick={() => setIsCreatePromoOpen(false)}
+                className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreatePromoCode} className="space-y-4 text-xs font-semibold text-gray-600">
+              <div>
+                <label className="block text-gray-500 mb-1">Promo Code Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. VIP50"
+                  value={newPromoCode}
+                  onChange={e => setNewPromoCode(e.target.value.toUpperCase().replace(/\s+/g, ''))}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-sans uppercase font-bold text-slate-800"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-gray-500 mb-1">Free Trial Duration (Months)</label>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    max={12}
+                    value={newPromoMonths}
+                    onChange={e => setNewPromoMonths(parseInt(e.target.value) || 1)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-sans text-slate-800 font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-500 mb-1 flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                    Expiration Date (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={newPromoExpires}
+                    onChange={e => setNewPromoExpires(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-indigo-100 transition-all font-sans text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 py-1">
+                <input
+                  id="promo-active-checkbox"
+                  type="checkbox"
+                  checked={newPromoActive}
+                  onChange={e => setNewPromoActive(e.target.checked)}
+                  className="w-4 h-4 rounded text-indigo-650 border-slate-200 focus:ring-indigo-500/20 cursor-pointer accent-indigo-650 shrink-0"
+                />
+                <label htmlFor="promo-active-checkbox" className="text-xs text-slate-700 font-bold select-none cursor-pointer">
+                  Activate promo code immediately
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 bg-indigo-650 hover:bg-indigo-700 text-white font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 text-xs shadow-md shadow-indigo-100 mt-6"
+              >
+                <Check className="w-4 h-4" />
+                Create Coupon Code
+              </button>
+            </form>
           </div>
         </div>
       )}

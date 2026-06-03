@@ -10,6 +10,10 @@ import { useAuthStore } from '@/stores/auth-store';
 import { hasPermission } from '@/lib/permissions';
 import { DateRangeFilter } from '@/components/shared/DateRangeFilter';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { 
+  format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, 
+  addMonths 
+} from 'date-fns';
 
 const statusFilters: { value: BookingStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -24,8 +28,44 @@ export default function Bookings() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<BookingStatus | 'all'>('all');
   const [dateRange, setDateRange] = useState<{ start: string | null; end: string | null }>({ start: null, end: null });
+  const [datePreset, setDatePreset] = useState<string>('all');
   const openBookingDrawer = useUIStore((s) => s.openBookingDrawer);
   const openQuickAdd = useUIStore((s) => s.openQuickAdd);
+
+  const calculatePresetRange = (preset: string): { start: string | null; end: string | null } => {
+    const now = new Date();
+    switch (preset) {
+      case 'today': {
+        const d = format(now, 'yyyy-MM-dd');
+        return { start: d, end: d };
+      }
+      case 'week': {
+        const start = format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+        const end = format(endOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+        return { start, end };
+      }
+      case 'month': {
+        const start = format(startOfMonth(now), 'yyyy-MM-dd');
+        const end = format(endOfMonth(now), 'yyyy-MM-dd');
+        return { start, end };
+      }
+      case 'next_month': {
+        const nextMonth = addMonths(now, 1);
+        const start = format(startOfMonth(nextMonth), 'yyyy-MM-dd');
+        const end = format(endOfMonth(nextMonth), 'yyyy-MM-dd');
+        return { start, end };
+      }
+      case 'all':
+      default:
+        return { start: null, end: null };
+    }
+  };
+
+  const handlePresetChange = (preset: string) => {
+    setDatePreset(preset);
+    const range = calculatePresetRange(preset);
+    setDateRange(range);
+  };
 
   const bookings = useDataStore((s) => s.bookings);
   const getCustomerById = useDataStore((s) => s.getCustomerById);
@@ -105,22 +145,57 @@ export default function Bookings() {
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
-        <div className="relative flex-1">
+      <div className="space-y-3">
+        {/* Search */}
+        <div className="relative w-full">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input type="text" placeholder="Search by name, phone, or booking number..." value={search} onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none bg-white shadow-sm" />
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <DateRangeFilter
-            align="left"
-            onChange={(start, end) => setDateRange({ start, end })}
-          />
+
+        {/* Filters */}
+        <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
+          {/* Quick Date Presets + Custom Date Range Picker */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+              {[
+                { value: 'all', label: 'All Dates' },
+                { value: 'today', label: 'Today' },
+                { value: 'week', label: 'This Week' },
+                { value: 'month', label: 'This Month' },
+                { value: 'next_month', label: 'Next Month' },
+              ].map((p) => (
+                <button
+                  key={p.value}
+                  type="button"
+                  onClick={() => handlePresetChange(p.value)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border',
+                    datePreset === p.value
+                      ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
+                      : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                  )}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <DateRangeFilter
+              align="left"
+              initialPreset="all"
+              onChange={(start, end, preset) => {
+                setDateRange({ start, end });
+                setDatePreset(preset === 'custom' ? 'custom' : preset);
+              }}
+            />
+          </div>
+
+          {/* Status Filters */}
           <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
             {statusFilters.map((f) => (
               <button key={f.value} onClick={() => setStatusFilter(f.value)}
-                className={cn('px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all',
-                  statusFilter === f.value ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50')}>
+                className={cn('px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border',
+                  statusFilter === f.value ? 'bg-brand-600 text-white border-brand-600 shadow-sm' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50')}>
                 {f.label}
               </button>
             ))}

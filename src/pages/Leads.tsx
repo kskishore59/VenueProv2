@@ -4,6 +4,7 @@ import { cn, formatCurrency, formatDateReadable, getRelativeTime, formatPhone } 
 import { useDataStore } from '@/stores/data-store';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { WhatsAppButton } from '@/components/shared/WhatsAppButton';
+import { CallButton } from '@/components/shared/CallButton';
 import { useUIStore } from '@/stores/ui-store';
 import { type LeadStatus, leadSourceLabels } from '@/types/lead';
 import { eventTypeLabels, type EventType } from '@/types/booking';
@@ -11,6 +12,10 @@ import { useAuthStore } from '@/stores/auth-store';
 import { hasPermission } from '@/lib/permissions';
 import { DateRangeFilter } from '@/components/shared/DateRangeFilter';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { 
+  format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, 
+  addMonths 
+} from 'date-fns';
 
 const statusFilters: { value: LeadStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -26,8 +31,44 @@ export default function Leads() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<LeadStatus | 'all'>('all');
   const [dateRange, setDateRange] = useState<{ start: string | null; end: string | null }>({ start: null, end: null });
+  const [datePreset, setDatePreset] = useState<string>('all');
   const openLeadDrawer = useUIStore((s) => s.openLeadDrawer);
   const openAddLead = useUIStore((s) => s.openAddLead);
+
+  const calculatePresetRange = (preset: string): { start: string | null; end: string | null } => {
+    const now = new Date();
+    switch (preset) {
+      case 'today': {
+        const d = format(now, 'yyyy-MM-dd');
+        return { start: d, end: d };
+      }
+      case 'week': {
+        const start = format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+        const end = format(endOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+        return { start, end };
+      }
+      case 'month': {
+        const start = format(startOfMonth(now), 'yyyy-MM-dd');
+        const end = format(endOfMonth(now), 'yyyy-MM-dd');
+        return { start, end };
+      }
+      case 'next_month': {
+        const nextMonth = addMonths(now, 1);
+        const start = format(startOfMonth(nextMonth), 'yyyy-MM-dd');
+        const end = format(endOfMonth(nextMonth), 'yyyy-MM-dd');
+        return { start, end };
+      }
+      case 'all':
+      default:
+        return { start: null, end: null };
+    }
+  };
+
+  const handlePresetChange = (preset: string) => {
+    setDatePreset(preset);
+    const range = calculatePresetRange(preset);
+    setDateRange(range);
+  };
 
   const leads = useDataStore((s) => s.leads);
 
@@ -69,22 +110,57 @@ export default function Leads() {
         )}
       </div>
 
-      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
-        <div className="relative flex-1">
+      <div className="space-y-3">
+        {/* Search */}
+        <div className="relative w-full">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input type="text" placeholder="Search by name or phone..." value={search} onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none bg-white shadow-sm" />
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <DateRangeFilter
-            align="left"
-            onChange={(start, end) => setDateRange({ start, end })}
-          />
+
+        {/* Filters */}
+        <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
+          {/* Quick Date Presets + Custom Date Range Picker */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+              {[
+                { value: 'all', label: 'All Dates' },
+                { value: 'today', label: 'Today' },
+                { value: 'week', label: 'This Week' },
+                { value: 'month', label: 'This Month' },
+                { value: 'next_month', label: 'Next Month' },
+              ].map((p) => (
+                <button
+                  key={p.value}
+                  type="button"
+                  onClick={() => handlePresetChange(p.value)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border',
+                    datePreset === p.value
+                      ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
+                      : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
+                  )}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <DateRangeFilter
+              align="left"
+              initialPreset="all"
+              onChange={(start, end, preset) => {
+                setDateRange({ start, end });
+                setDatePreset(preset === 'custom' ? 'custom' : preset);
+              }}
+            />
+          </div>
+
+          {/* Status Filters */}
           <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
             {statusFilters.map((f) => (
               <button key={f.value} onClick={() => setStatusFilter(f.value)}
-                className={cn('px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all',
-                  statusFilter === f.value ? 'bg-brand-600 text-white shadow-sm' : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50')}>
+                className={cn('px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border',
+                  statusFilter === f.value ? 'bg-brand-600 text-white border-brand-600 shadow-sm' : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50')}>
                 {f.label}
               </button>
             ))}
@@ -130,8 +206,9 @@ export default function Leads() {
                     )}
                     {lead.notes && <p className="mt-2 text-xs text-gray-400 line-clamp-1">{lead.notes}</p>}
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                     <span className="text-[12px] font-medium text-gray-500 hidden sm:block">{leadSourceLabels[lead.source]}</span>
+                    <CallButton phone={lead.phone} leadName={lead.name} size="sm" />
                     <WhatsAppButton phone={lead.phone} size="sm" leadId={lead.id} />
                   </div>
                 </div>

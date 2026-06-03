@@ -9,4 +9,5 @@ export * from './expense';
 export * from './staff';
 export * from './notification';
 export * from './feedback';
+export * from './menu';
 

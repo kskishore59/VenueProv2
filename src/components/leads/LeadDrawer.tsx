@@ -5,6 +5,7 @@ import { useUIStore } from '@/stores/ui-store';
 import { useDataStore } from '@/stores/data-store';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { WhatsAppButton } from '@/components/shared/WhatsAppButton';
+import { CallButton } from '@/components/shared/CallButton';
 import { leadStatusConfig, leadSourceLabels, type LeadStatus } from '@/types/lead';
 import { eventTypeLabels, type EventType } from '@/types/booking';
 import { toast } from 'sonner';
@@ -122,10 +123,10 @@ export function LeadDrawer() {
             <StatusBadge type="lead" status={lead.status} pulse={lead.status === 'new'} />
           </div>
           <h2 className="text-xl font-bold text-gray-900 pr-10">{lead.name}</h2>
-          <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-2">
-            <Phone className="w-3.5 h-3.5" />
-            {formatPhone(lead.phone)}
-          </p>
+          <div className="text-sm text-gray-500 mt-0.5 flex items-center gap-2">
+            <CallButton phone={lead.phone} leadName={lead.name} variant="icon" size="sm" />
+            <span className="font-semibold">{formatPhone(lead.phone)}</span>
+          </div>
         </div>
 
         {/* Content */}
@@ -334,7 +335,7 @@ export function LeadDrawer() {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-100 px-6 py-4 flex gap-2.5">
+        <div className="border-t border-gray-100 px-6 py-4 flex gap-2">
           <WhatsAppButton
             phone={lead.phone}
             variant="button"
@@ -343,6 +344,14 @@ export function LeadDrawer() {
             message={`Hi ${lead.name.split(' ')[0]}, this is from ${useDataStore.getState().organization.name}. `}
             className="flex-1"
             leadId={lead.id}
+          />
+          <CallButton
+            phone={lead.phone}
+            leadName={lead.name}
+            variant="button"
+            size="md"
+            label="Call Lead"
+            className="flex-1"
           />
           {lead.email && (
             <a

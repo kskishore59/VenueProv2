@@ -55,7 +55,7 @@ export function AddCustomerDrawer() {
             <p className="text-xs text-gray-400 mt-0.5">Create a new customer record</p>
           </div>
           <button onClick={handleClose} className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-400">
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 bg-white-400 rounded-xl" />
           </button>
         </div>
 

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   CalendarCheck, IndianRupee, AlertCircle, Clock, ArrowRight,
-  PhoneIncoming, Building2
+  PhoneIncoming, Building2, Percent, Award
 } from 'lucide-react';
 import { StatCard } from '@/components/shared/StatCard';
 import { BookingCalendar } from '@/components/booking/BookingCalendar';
@@ -43,6 +43,11 @@ export default function Dashboard() {
 
   const activeStats = useMemo(() => {
     if (dateRange.preset === 'all') {
+      const totalLeads = leads.length;
+      const wonLeads = leads.filter((l) => l.status === 'won').length;
+      const conversionRate = totalLeads > 0 ? Math.round((wonLeads / totalLeads) * 100) : 0;
+      const activeBookings = bookings.filter((b) => b.status !== 'cancelled').length;
+
       return {
         eventsLabel: "Today's Events",
         eventsValue: String(stats.todaysEvents),
@@ -53,6 +58,15 @@ export default function Dashboard() {
         pendingLabel: "Pending Collections",
         pendingValue: stats.pendingAmount,
         pendingSub: `${stats.pendingCustomers} customer${stats.pendingCustomers !== 1 ? 's' : ''} owe money`,
+        inquiriesLabel: "Total Inquiries",
+        inquiriesValue: String(totalLeads),
+        inquiriesSub: `${leads.filter((l) => l.status === 'new').length} new in pipeline`,
+        conversionLabel: "Lead Conversion Rate",
+        conversionValue: `${conversionRate}%`,
+        conversionSub: `${wonLeads} deals won`,
+        bookingsLabel: "Total Bookings",
+        bookingsValue: String(activeBookings),
+        bookingsSub: `${bookings.filter((b) => b.status === 'confirmed').length} active bookings`,
       };
     }
 
@@ -100,6 +114,26 @@ export default function Dashboard() {
         .map((b) => b.customer_id)
     ).size;
 
+    const rangeLeadsList = leads.filter((l) => {
+      const createdDate = l.created_at.slice(0, 10);
+      if (dateRange.start && createdDate < dateRange.start) return false;
+      if (dateRange.end && createdDate > dateRange.end) return false;
+      return true;
+    });
+
+    const rangeWonLeadsCount = rangeLeadsList.filter((l) => l.status === 'won').length;
+    const rangeNewLeadsCount = rangeLeadsList.filter((l) => l.status === 'new').length;
+    const rangeConversionVal = rangeLeadsList.length > 0
+      ? Math.round((rangeWonLeadsCount / rangeLeadsList.length) * 100)
+      : 0;
+
+    const rangeTotalBookingsCount = bookings.filter((b) => {
+      if (b.status === 'cancelled') return false;
+      if (dateRange.start && b.event_date < dateRange.start) return false;
+      if (dateRange.end && b.event_date > dateRange.end) return false;
+      return true;
+    }).length;
+
     return {
       eventsLabel: "Events in Selected Period",
       eventsValue: String(rangeEventsList.length),
@@ -110,8 +144,17 @@ export default function Dashboard() {
       pendingLabel: "Outstanding Collections",
       pendingValue: rangePending,
       pendingSub: `${rangePendingCustomers} customer${rangePendingCustomers !== 1 ? 's' : ''} with balance`,
+      inquiriesLabel: "Inquiries in Period",
+      inquiriesValue: String(rangeLeadsList.length),
+      inquiriesSub: `${rangeNewLeadsCount} new in period`,
+      conversionLabel: "Period Conversion Rate",
+      conversionValue: `${rangeConversionVal}%`,
+      conversionSub: `${rangeWonLeadsCount} deals won`,
+      bookingsLabel: "Bookings in Period",
+      bookingsValue: String(rangeTotalBookingsCount),
+      bookingsSub: `${bookings.filter((b) => b.status === 'confirmed' && (!dateRange.start || b.event_date >= dateRange.start) && (!dateRange.end || b.event_date <= dateRange.end)).length} active bookings`,
     };
-  }, [dateRange, bookings, payments, stats]);
+  }, [dateRange, bookings, payments, leads, stats]);
 
   const upcoming = useMemo(() => getUpcomingBookings(7), [getUpcomingBookings, bookings]);
   const followUps = useMemo(() => getFollowUpsDue(), [getFollowUpsDue, leads]);
@@ -159,7 +202,7 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Stats Row */}
+      {/* Stats Row 1 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
         <StatCard
           icon={CalendarCheck}
@@ -184,6 +227,34 @@ export default function Dashboard() {
           sublabel={activeStats.pendingSub}
           color="amber"
           delay={150}
+        />
+      </div>
+
+      {/* Stats Row 2 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
+        <StatCard
+          icon={PhoneIncoming}
+          label={activeStats.inquiriesLabel}
+          value={activeStats.inquiriesValue}
+          sublabel={activeStats.inquiriesSub}
+          color="blue"
+          delay={200}
+        />
+        <StatCard
+          icon={Percent}
+          label={activeStats.conversionLabel}
+          value={activeStats.conversionValue}
+          sublabel={activeStats.conversionSub}
+          color="green"
+          delay={250}
+        />
+        <StatCard
+          icon={Award}
+          label={activeStats.bookingsLabel}
+          value={activeStats.bookingsValue}
+          sublabel={activeStats.bookingsSub}
+          color="rose"
+          delay={300}
         />
       </div>
 

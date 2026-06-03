@@ -5,6 +5,8 @@ import type { Booking } from '@/types/booking';
 import type { Payment } from '@/types/payment';
 import type { Lead } from '@/types/lead';
 import type { Profile } from '@/types/auth';
+import type { Menu } from '@/types/menu';
+
 import {
   addDays, subDays, format, startOfMonth, addMonths, subMonths,
 } from 'date-fns';
@@ -344,3 +346,68 @@ export function getFollowUpsDue(): Lead[] {
     .filter((l) => l.follow_up_date && l.follow_up_date <= todayISO && l.status !== 'won' && l.status !== 'lost')
     .sort((a, b) => (a.follow_up_date || '').localeCompare(b.follow_up_date || ''));
 }
+
+export const mockMenus: Menu[] = [
+  {
+    id: 'menu-001',
+    org_id: ORG_ID,
+    name: 'Royal Vegetarian Feast',
+    price_paise: 80000,
+    food_type: 'veg',
+    category: 'Buffet',
+    tags: ['Welcome Drink', 'Jain Options Available', 'Live Chaat Counter', 'Unlimited Desserts'],
+    items: [
+      { name: 'Paneer Butter Masala', category: 'Main Course', type: 'veg', spiciness: 'medium', description: 'Cottage cheese cubes in rich tomato cashew gravy' },
+      { name: 'Veg Diwani Handi', category: 'Main Course', type: 'veg', spiciness: 'medium', description: 'Assorted seasonal vegetables cooked in spinach gravy' },
+      { name: 'Dal Makhani', category: 'Main Course', type: 'veg', spiciness: 'mild', description: 'Slow cooked black lentils with cream and butter' },
+      { name: 'Jeera Rice', category: 'Main Course', type: 'veg', spiciness: 'mild', description: 'Basmati rice tempered with cumin seeds' },
+      { name: 'Butter Naan', category: 'Breads', type: 'veg', spiciness: 'mild' },
+      { name: 'Tandoori Roti', category: 'Breads', type: 'veg', spiciness: 'mild' },
+      { name: 'Gulab Jamun with Ice Cream', category: 'Desserts', type: 'veg', spiciness: 'mild', description: 'Hot gulab jamun served with vanilla ice cream' }
+    ],
+    hall_ids: ['hall-001', 'hall-002'],
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'menu-002',
+    org_id: ORG_ID,
+    name: 'Premium Non-Veg Buffet',
+    price_paise: 120000,
+    food_type: 'both',
+    category: 'Dinner',
+    tags: ['Mutton Biryani', 'Live BBQ Counter', 'Mocktails Included', 'Assorted Kebabs'],
+    items: [
+      { name: 'Mutton Biryani', category: 'Main Course', type: 'non_veg', spiciness: 'spicy', description: 'Traditional Hyderabadi mutton biryani with raita', extra_charge_paise: 10000 },
+      { name: 'Butter Chicken', category: 'Main Course', type: 'non_veg', spiciness: 'medium', description: 'Boneless tandoori chicken in rich tomato butter gravy' },
+      { name: 'Kadai Paneer', category: 'Main Course', type: 'veg', spiciness: 'spicy', description: 'Cottage cheese cooked with bell peppers in kadai masala' },
+      { name: 'Dal Tadka', category: 'Main Course', type: 'veg', spiciness: 'medium', description: 'Yellow lentils tempered with garlic and cumin' },
+      { name: 'Assorted Tandoori Kebabs', category: 'Starters', type: 'non_veg', spiciness: 'spicy', description: 'Platter of Chicken Tikka, Fish Tikka, and Paneer Tikka' },
+      { name: 'Garlic Naan', category: 'Breads', type: 'veg', spiciness: 'mild' },
+      { name: 'Rumali Roti', category: 'Breads', type: 'veg', spiciness: 'mild' },
+      { name: 'Shahi Tukda', category: 'Desserts', type: 'veg', spiciness: 'mild', description: 'Rich bread pudding with rabri and dry fruits' }
+    ],
+    hall_ids: ['hall-001'],
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'menu-003',
+    org_id: ORG_ID,
+    name: 'Grand High Tea',
+    price_paise: 35000,
+    food_type: 'veg',
+    category: 'Hi-Tea',
+    tags: ['4 Snacks', 'Assorted Cookies', 'Filter Coffee & Tea'],
+    items: [
+      { name: 'Paneer Tikka Sandwich', category: 'Snacks', type: 'veg', spiciness: 'medium', description: 'Grilled sandwich stuffed with paneer tikka filling' },
+      { name: 'Veg Cutlet', category: 'Snacks', type: 'veg', spiciness: 'medium', description: 'Crispy deep fried mixed vegetable patties' },
+      { name: 'Samosa', category: 'Snacks', type: 'veg', spiciness: 'medium', description: 'Traditional potato-filled pastry' },
+      { name: 'Dhokla', category: 'Snacks', type: 'jain', spiciness: 'mild', description: 'Steamed chickpea flour snack, Jain friendly' },
+      { name: 'Chocolate Chip Cookies', category: 'Desserts', type: 'veg', spiciness: 'mild' },
+      { name: 'Premium Masala Chai', category: 'Beverages', type: 'veg', spiciness: 'mild', description: 'Brewed Masala Chai with aromatic spices' },
+      { name: 'Filter Coffee', category: 'Beverages', type: 'veg', spiciness: 'mild' }
+    ],
+    hall_ids: ['hall-002'],
+    created_at: new Date().toISOString(),
+  }
+];
+

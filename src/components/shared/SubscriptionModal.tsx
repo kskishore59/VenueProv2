@@ -9,10 +9,32 @@ export function SubscriptionModal() {
   const isOpen = useUIStore((s) => s.isSubscriptionModalOpen);
   const close = useUIStore((s) => s.closeSubscriptionModal);
   const upgradeOrg = useDataStore((s) => s.upgradeOrganization);
+  const applyPromoCodeStore = useDataStore((s) => s.applyPromoCode);
 
   const [billingCycle, setBillingCycle] = useState<'yearly' | 'monthly'>('yearly');
   const [activeTab, setActiveTab] = useState<'plans' | 'roi'>('plans');
   const [selectedPlan, setSelectedPlan] = useState<'starter' | 'pro' | 'enterprise' | null>(null);
+  
+  // Coupon state
+  const [promoCode, setPromoCode] = useState('');
+  const [isPromoApplied, setIsPromoApplied] = useState(false);
+
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) return;
+    try {
+      await applyPromoCodeStore(promoCode);
+      setIsPromoApplied(true);
+      setPromoCode('');
+      // Celebrate
+      confetti({
+        particleCount: 50,
+        spread: 40,
+        origin: { y: 0.8 }
+      });
+    } catch (err: any) {
+      // errors are handled by store toast
+    }
+  };
   
   // Checkout flow state
   const [isCheckout, setIsCheckout] = useState(false);
@@ -204,6 +226,34 @@ export function SubscriptionModal() {
                   <p className="text-[10px] text-slate-400 font-medium leading-normal pt-1.5 text-center">
                     Mock Transaction. You won't be charged. Pay ₹0.00 today to activate your paid subscription profile.
                   </p>
+                </div>
+
+                {/* Promo Code Input */}
+                <div className="border-t border-slate-200/60 pt-4 space-y-2">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Redeem Trial Promo Code</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Enter Coupon Code"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value)}
+                      disabled={isProcessing || isPromoApplied}
+                      className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs uppercase outline-none focus:ring-1 focus:ring-indigo-500 font-bold bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyPromo}
+                      disabled={isProcessing || isPromoApplied || !promoCode.trim()}
+                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                  {isPromoApplied && (
+                    <span className="text-[10px] text-emerald-650 font-extrabold flex items-center gap-1">
+                      ✓ Promo Applied successfully!
+                    </span>
+                  )}
                 </div>
                 
                 <button

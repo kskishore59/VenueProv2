@@ -14,6 +14,7 @@ export interface Organization {
   plan: 'free' | 'starter' | 'pro' | 'enterprise';
   trial_ends_at?: string | null;
   subscription_status?: 'trial' | 'active' | 'past_due' | 'canceled' | 'expired' | null;
+  promo_codes_applied?: string[] | null;
   created_at: string;
 }
 

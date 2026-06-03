@@ -128,20 +128,26 @@ drop policy if exists "Users can view their own feedback" on public.feedbacks;
 -- ─── 3. Re-create Granular Backend RBAC Policies ───────────────────────────
 
 -- Organizations
+drop policy if exists "Organizations SELECT RLS" on public.organizations;
 create policy "Organizations SELECT RLS" on public.organizations
   for select using (id = public.get_user_org_id());
+drop policy if exists "Organizations UPDATE RLS" on public.organizations;
 create policy "Organizations UPDATE RLS" on public.organizations
   for update using (id = public.get_user_org_id() and public.get_user_role() = 'owner');
 
 -- Profiles
+drop policy if exists "Profiles SELECT RLS" on public.profiles;
 create policy "Profiles SELECT RLS" on public.profiles
   for select using (org_id = public.get_user_org_id());
+drop policy if exists "Profiles UPDATE RLS" on public.profiles;
 create policy "Profiles UPDATE RLS" on public.profiles
   for update using (id = auth.uid());
 
 -- Halls
+drop policy if exists "Halls SELECT RLS" on public.halls;
 create policy "Halls SELECT RLS" on public.halls
   for select using (org_id = public.get_user_org_id());
+drop policy if exists "Halls INSERT/UPDATE/DELETE RLS" on public.halls;
 create policy "Halls INSERT/UPDATE/DELETE RLS" on public.halls
   for all using (
     org_id = public.get_user_org_id() 
@@ -149,71 +155,98 @@ create policy "Halls INSERT/UPDATE/DELETE RLS" on public.halls
   );
 
 -- Customers
+drop policy if exists "Customers SELECT RLS" on public.customers;
 create policy "Customers SELECT RLS" on public.customers
   for select using (org_id = public.get_user_org_id() and public.check_user_permission('customers', 'read'));
+drop policy if exists "Customers INSERT RLS" on public.customers;
 create policy "Customers INSERT RLS" on public.customers
   for insert with check (org_id = public.get_user_org_id() and public.check_user_permission('customers', 'create'));
+drop policy if exists "Customers UPDATE RLS" on public.customers;
 create policy "Customers UPDATE RLS" on public.customers
   for update using (org_id = public.get_user_org_id() and public.check_user_permission('customers', 'update'));
+drop policy if exists "Customers DELETE RLS" on public.customers;
 create policy "Customers DELETE RLS" on public.customers
   for delete using (org_id = public.get_user_org_id() and public.check_user_permission('customers', 'delete'));
 
 -- Bookings
+drop policy if exists "Bookings SELECT RLS" on public.bookings;
 create policy "Bookings SELECT RLS" on public.bookings
   for select using (org_id = public.get_user_org_id() and public.check_user_permission('bookings', 'read'));
+drop policy if exists "Bookings INSERT RLS" on public.bookings;
 create policy "Bookings INSERT RLS" on public.bookings
   for insert with check (org_id = public.get_user_org_id() and public.check_user_permission('bookings', 'create'));
+drop policy if exists "Bookings UPDATE RLS" on public.bookings;
 create policy "Bookings UPDATE RLS" on public.bookings
   for update using (org_id = public.get_user_org_id() and public.check_user_permission('bookings', 'update'));
+drop policy if exists "Bookings DELETE RLS" on public.bookings;
 create policy "Bookings DELETE RLS" on public.bookings
   for delete using (org_id = public.get_user_org_id() and public.check_user_permission('bookings', 'delete'));
 
 -- Payments
+drop policy if exists "Payments SELECT RLS" on public.payments;
 create policy "Payments SELECT RLS" on public.payments
   for select using (org_id = public.get_user_org_id() and public.check_user_permission('payments', 'read'));
+drop policy if exists "Payments INSERT RLS" on public.payments;
 create policy "Payments INSERT RLS" on public.payments
   for insert with check (org_id = public.get_user_org_id() and public.check_user_permission('payments', 'create'));
+drop policy if exists "Payments UPDATE RLS" on public.payments;
 create policy "Payments UPDATE RLS" on public.payments
   for update using (org_id = public.get_user_org_id() and public.check_user_permission('payments', 'update'));
+drop policy if exists "Payments DELETE RLS" on public.payments;
 create policy "Payments DELETE RLS" on public.payments
   for delete using (org_id = public.get_user_org_id() and public.check_user_permission('payments', 'delete'));
 
 -- Leads
+drop policy if exists "Leads SELECT RLS" on public.leads;
 create policy "Leads SELECT RLS" on public.leads
   for select using (org_id = public.get_user_org_id() and public.check_user_permission('leads', 'read'));
+drop policy if exists "Leads INSERT RLS" on public.leads;
 create policy "Leads INSERT RLS" on public.leads
   for insert with check (org_id = public.get_user_org_id() and public.check_user_permission('leads', 'create'));
+drop policy if exists "Leads UPDATE RLS" on public.leads;
 create policy "Leads UPDATE RLS" on public.leads
   for update using (org_id = public.get_user_org_id() and public.check_user_permission('leads', 'update'));
+drop policy if exists "Leads DELETE RLS" on public.leads;
 create policy "Leads DELETE RLS" on public.leads
   for delete using (org_id = public.get_user_org_id() and public.check_user_permission('leads', 'delete'));
 
 -- Expenses
+drop policy if exists "Expenses SELECT RLS" on public.expenses;
 create policy "Expenses SELECT RLS" on public.expenses
   for select using (org_id = public.get_user_org_id() and public.check_user_permission('expenses', 'read'));
+drop policy if exists "Expenses INSERT RLS" on public.expenses;
 create policy "Expenses INSERT RLS" on public.expenses
   for insert with check (org_id = public.get_user_org_id() and public.check_user_permission('expenses', 'create'));
+drop policy if exists "Expenses UPDATE RLS" on public.expenses;
 create policy "Expenses UPDATE RLS" on public.expenses
   for update using (org_id = public.get_user_org_id() and public.check_user_permission('expenses', 'update'));
+drop policy if exists "Expenses DELETE RLS" on public.expenses;
 create policy "Expenses DELETE RLS" on public.expenses
   for delete using (org_id = public.get_user_org_id() and public.check_user_permission('expenses', 'delete'));
 
 -- Staff Invites
+drop policy if exists "Invites SELECT RLS" on public.staff_invites;
 create policy "Invites SELECT RLS" on public.staff_invites
   for select using (org_id = public.get_user_org_id());
+drop policy if exists "Invites ALL RLS" on public.staff_invites;
 create policy "Invites ALL RLS" on public.staff_invites
   for all using (org_id = public.get_user_org_id() and public.get_user_role() in ('owner', 'manager'));
 
 -- Notifications
+drop policy if exists "Notifications SELECT RLS" on public.notifications;
 create policy "Notifications SELECT RLS" on public.notifications
   for select using (org_id = public.get_user_org_id());
+drop policy if exists "Notifications UPDATE RLS" on public.notifications;
 create policy "Notifications UPDATE RLS" on public.notifications
   for update using (org_id = public.get_user_org_id());
+drop policy if exists "Notifications DELETE RLS" on public.notifications;
 create policy "Notifications DELETE RLS" on public.notifications
   for delete using (org_id = public.get_user_org_id());
 
 -- Feedbacks
+drop policy if exists "Feedbacks INSERT RLS" on public.feedbacks;
 create policy "Feedbacks INSERT RLS" on public.feedbacks
   for insert with check (auth.uid() = user_id);
+drop policy if exists "Feedbacks SELECT RLS" on public.feedbacks;
 create policy "Feedbacks SELECT RLS" on public.feedbacks
   for select using (auth.uid() = user_id);

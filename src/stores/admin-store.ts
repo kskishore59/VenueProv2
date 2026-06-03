@@ -13,10 +13,19 @@ export interface AdminPayment extends Payment {
   };
 }
 
+export interface PromoCode {
+  code: string;
+  months_to_add: number;
+  expires_at: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
 interface AdminState {
   allOrganizations: Organization[];
   allProfiles: Profile[];
   allPayments: AdminPayment[];
+  allPromoCodes: PromoCode[];
   isLoading: boolean;
   error: string | null;
 
@@ -24,6 +33,9 @@ interface AdminState {
   updateOrganizationDetails: (orgId: string, data: Partial<Organization>) => Promise<void>;
   updateUserProfile: (profileId: string, data: Partial<Profile>) => Promise<void>;
   createOrganizationAdmin: (orgName: string, ownerName: string, ownerEmail: string, plan: string) => Promise<void>;
+  createPromoCode: (promo: Omit<PromoCode, 'created_at'>) => Promise<void>;
+  togglePromoCodeActive: (code: string, isActive: boolean) => Promise<void>;
+  deletePromoCode: (code: string) => Promise<void>;
 }
 
 const defaultMockSettings = {
@@ -36,6 +48,12 @@ const defaultMockSettings = {
   sms_enabled: false,
   email_notifications: true
 };
+
+const seedMockPromoCodes = (): PromoCode[] => [
+  { code: 'TRIAL1M', months_to_add: 1, expires_at: null, is_active: true, created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() },
+  { code: 'TRIAL2M', months_to_add: 2, expires_at: null, is_active: true, created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() },
+  { code: 'TRIAL3M', months_to_add: 3, expires_at: null, is_active: true, created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() }
+];
 
 // Generate rich mock data for local testing
 const seedMockOrganizations = (): Organization[] => [
@@ -172,6 +190,7 @@ export const useAdminStore = create<AdminState>()((set, get) => ({
   allOrganizations: [],
   allProfiles: [],
   allPayments: [],
+  allPromoCodes: [],
   isLoading: false,
   error: null,
 
@@ -185,6 +204,7 @@ export const useAdminStore = create<AdminState>()((set, get) => ({
       const orgs = get().allOrganizations.length > 0 ? get().allOrganizations : seedMockOrganizations();
       const profiles = get().allProfiles.length > 0 ? get().allProfiles : seedMockProfiles();
       const payments = get().allPayments.length > 0 ? get().allPayments : seedMockPayments();
+      const promoCodes = get().allPromoCodes.length > 0 ? get().allPromoCodes : seedMockPromoCodes();
 
       // Map organization names directly onto payments for display
       const joinedPayments = payments.map(p => ({
@@ -198,6 +218,7 @@ export const useAdminStore = create<AdminState>()((set, get) => ({
         allOrganizations: orgs,
         allProfiles: profiles,
         allPayments: joinedPayments,
+        allPromoCodes: promoCodes,
         isLoading: false
       });
       return;
@@ -205,20 +226,23 @@ export const useAdminStore = create<AdminState>()((set, get) => ({
 
     try {
       // Query all tables. The RLS policy will permit selection if role = 'super_admin'
-      const [orgsRes, profilesRes, paymentsRes] = await Promise.all([
+      const [orgsRes, profilesRes, paymentsRes, promoCodesRes] = await Promise.all([
         supabase.from('organizations').select('*').order('created_at', { ascending: false }),
         supabase.from('profiles').select('*').order('created_at', { ascending: false }),
-        supabase.from('payments').select('*, organizations(name)').order('paid_at', { ascending: false })
+        supabase.from('payments').select('*, organizations(name)').order('paid_at', { ascending: false }),
+        supabase.from('promo_codes').select('*').order('created_at', { ascending: false })
       ]);
 
       if (orgsRes.error) throw orgsRes.error;
       if (profilesRes.error) throw profilesRes.error;
       if (paymentsRes.error) throw paymentsRes.error;
+      if (promoCodesRes.error) throw promoCodesRes.error;
 
       set({
         allOrganizations: orgsRes.data || [],
         allProfiles: profilesRes.data || [],
         allPayments: (paymentsRes.data as any[]) || [],
+        allPromoCodes: promoCodesRes.data || [],
         isLoading: false
       });
     } catch (err: any) {
@@ -364,6 +388,107 @@ export const useAdminStore = create<AdminState>()((set, get) => ({
       set({ isLoading: false });
       console.error(err);
       toast.error(err.message || 'Failed to provision organization and owner.');
+      throw err;
+    }
+  },
+
+  createPromoCode: async (promo) => {
+    set({ isLoading: true });
+
+    if (!isSupabaseConfigured()) {
+      await new Promise((resolve) => setTimeout(resolve, 350));
+      const promoCodes = get().allPromoCodes.length > 0 ? get().allPromoCodes : seedMockPromoCodes();
+      if (promoCodes.some(p => p.code.toUpperCase() === promo.code.toUpperCase())) {
+        set({ isLoading: false });
+        toast.error('Promo code already exists.');
+        throw new Error('Promo code already exists.');
+      }
+      const newPromo: PromoCode = {
+        ...promo,
+        code: promo.code.toUpperCase(),
+        created_at: new Date().toISOString()
+      };
+      set({
+        allPromoCodes: [newPromo, ...promoCodes],
+        isLoading: false
+      });
+      toast.success('Promo code created locally! 🏷️');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('promo_codes')
+        .insert([{
+          code: promo.code.toUpperCase(),
+          months_to_add: promo.months_to_add,
+          expires_at: promo.expires_at,
+          is_active: promo.is_active
+        }]);
+
+      if (error) throw error;
+
+      toast.success('Promo code created successfully! 🏷️');
+      await get().syncAdminData();
+    } catch (err: any) {
+      set({ isLoading: false });
+      toast.error(err.message || 'Failed to create promo code.');
+      throw err;
+    }
+  },
+
+  togglePromoCodeActive: async (code, isActive) => {
+    set({ isLoading: true });
+
+    if (!isSupabaseConfigured()) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      const promoCodes = get().allPromoCodes.map(p => p.code === code ? { ...p, is_active: isActive } : p);
+      set({ allPromoCodes: promoCodes, isLoading: false });
+      toast.success(`Promo code ${isActive ? 'activated' : 'deactivated'} locally! 🏷️`);
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('promo_codes')
+        .update({ is_active: isActive })
+        .eq('code', code);
+
+      if (error) throw error;
+
+      toast.success(`Promo code updated successfully! 🏷️`);
+      await get().syncAdminData();
+    } catch (err: any) {
+      set({ isLoading: false });
+      toast.error(err.message || 'Failed to update promo code active status.');
+      throw err;
+    }
+  },
+
+  deletePromoCode: async (code) => {
+    set({ isLoading: true });
+
+    if (!isSupabaseConfigured()) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      const promoCodes = get().allPromoCodes.filter(p => p.code !== code);
+      set({ allPromoCodes: promoCodes, isLoading: false });
+      toast.success('Promo code deleted locally! 🏷️');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('promo_codes')
+        .delete()
+        .eq('code', code);
+
+      if (error) throw error;
+
+      toast.success('Promo code deleted successfully! 🏷️');
+      await get().syncAdminData();
+    } catch (err: any) {
+      set({ isLoading: false });
+      toast.error(err.message || 'Failed to delete promo code.');
       throw err;
     }
   }

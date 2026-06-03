@@ -19,6 +19,7 @@ create policy "Organizations UPDATE RLS" on public.organizations
     or public.get_user_role() = 'super_admin'
   );
 
+drop policy if exists "Organizations INSERT RLS" on public.organizations;
 create policy "Organizations INSERT RLS" on public.organizations
   for insert with check (public.get_user_role() = 'super_admin');
 
@@ -31,6 +32,7 @@ drop policy if exists "Profiles UPDATE RLS" on public.profiles;
 create policy "Profiles UPDATE RLS" on public.profiles 
   for update using (id = auth.uid() or public.get_user_role() = 'super_admin');
 
+drop policy if exists "Profiles INSERT RLS" on public.profiles;
 create policy "Profiles INSERT RLS" on public.profiles
   for insert with check (public.get_user_role() = 'super_admin');
 

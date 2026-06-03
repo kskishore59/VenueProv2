@@ -9,6 +9,7 @@ import type { Expense, ExpenseCategory, ExpensePaymentMode } from '@/types/expen
 import type { StaffInvite, StaffRole } from '@/types/staff';
 import type { Profile } from '@/types/auth';
 import type { Notification, NotificationType, Feedback } from '@/types';
+import type { Menu, MenuItem } from '@/types/menu';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { formatDateReadable, formatCurrency, parseDatabaseError } from '@/lib/utils';
 import {
@@ -18,6 +19,7 @@ import {
   mockLeads as initialLeads,
   mockHalls as initialHalls,
   mockOrganization as initialOrg,
+  mockMenus as initialMenus,
 } from '@/lib/mock-data';
 import { format, addDays, startOfMonth, addMonths, subDays } from 'date-fns';
 import { toast } from 'sonner';
@@ -129,6 +131,7 @@ interface DataState {
   payments: Payment[];
   leads: Lead[];
   halls: Hall[];
+  menus: Menu[];
   organization: Organization;
   expenses: Expense[];
   staffProfiles: Profile[];
@@ -311,6 +314,22 @@ interface DataState {
     message: string;
   }) => Promise<void>;
 
+  // ─── Menu CRUD ───────────────────────────────────────────
+  createMenu: (data: {
+    name: string;
+    price_paise: number;
+    food_type: 'veg' | 'non_veg' | 'both' | 'jain';
+    category: string;
+    tags: string[];
+    items: MenuItem[];
+    hall_ids: string[];
+  }) => Promise<void>;
+  updateMenu: (id: string, data: Partial<Menu>) => Promise<void>;
+  deleteMenu: (id: string) => Promise<void>;
+
+  // ─── Coupon extension ────────────────────────────────────
+  applyPromoCode: (code: string) => Promise<void>;
+
   // ─── Background Checks ───────────────────────────────────
   runBackgroundChecks: () => void;
 }
@@ -321,6 +340,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
   payments: [...initialPayments],
   leads: [...initialLeads],
   halls: [...initialHalls],
+  menus: [...initialMenus],
   organization: { ...initialOrg },
   expenses: [...mockExpenses],
   staffProfiles: [...mockStaffProfiles],
@@ -341,6 +361,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
         payments: [...initialPayments],
         leads: [...initialLeads],
         halls: [...initialHalls],
+        menus: [...initialMenus],
         organization: currentOrg && currentOrg.id === 'mock-org-uuid-new' ? currentOrg : { ...initialOrg },
         expenses: [...mockExpenses],
         staffProfiles: [...mockStaffProfiles],
@@ -412,7 +433,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
       const timestampOneYearAgo = subDays(new Date(), 365).toISOString();
 
       // 3. Fetch all organization-scoped collections (range limited to last 365 days for performance)
-      const [orgRes, hallsRes, customersRes, bookingsRes, paymentsRes, leadsRes, expensesRes, staffRes, invitesRes, notificationsRes] = await Promise.all([
+      const [orgRes, hallsRes, customersRes, bookingsRes, paymentsRes, leadsRes, expensesRes, staffRes, invitesRes, notificationsRes, menusRes] = await Promise.all([
         supabase.from('organizations').select('*').eq('id', orgId).single(),
         supabase.from('halls').select('*').eq('org_id', orgId).order('display_order'),
         supabase.from('customers').select('*').eq('org_id', orgId).order('created_at', { ascending: false }).limit(200),
@@ -423,6 +444,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
         supabase.from('profiles').select('*').eq('org_id', orgId).order('created_at'),
         supabase.from('staff_invites').select('*').eq('org_id', orgId).order('created_at', { ascending: false }),
         supabase.from('notifications').select('*').eq('org_id', orgId).order('created_at', { ascending: false }),
+        supabase.from('menus').select('*').eq('org_id', orgId).order('created_at', { ascending: false }),
       ]);
 
       if (orgRes.error) throw orgRes.error;
@@ -431,6 +453,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
       if (bookingsRes.error) throw bookingsRes.error;
       if (paymentsRes.error) throw paymentsRes.error;
       if (leadsRes.error) throw leadsRes.error;
+      if (menusRes && menusRes.error) throw menusRes.error;
 
       // Seed default halls if organization has none
       let hallsData = hallsRes.data || [];
@@ -477,6 +500,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
         payments: paymentsRes.data || [],
         leads: leadsRes.data || [],
         expenses: expensesRes.data || [],
+        menus: menusRes?.data || [],
         staffProfiles: staffRes.data || [],
         pendingInvites: invitesRes.data || [],
         notifications: notificationsRes.data || [],
@@ -566,6 +590,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
       payments: [],
       leads: [],
       halls: [],
+      menus: [],
       expenses: [],
       staffProfiles: [],
       pendingInvites: [],
@@ -1307,6 +1332,198 @@ export const useDataStore = create<DataState>()((set, get) => ({
       },
     }));
     toast.success(`Successfully upgraded to the ${plan.toUpperCase()} plan! 🎉`);
+  },
+
+  // ─── Menu CRUD ───────────────────────────────────────────
+  createMenu: async (data) => {
+    const state = get();
+    const newMenuData = {
+      ...data,
+      org_id: state.organization.id,
+    };
+    if (state.isOnline) {
+      try {
+        const { data: dbMenu, error } = await supabase
+          .from('menus')
+          .insert(newMenuData)
+          .select()
+          .single();
+        if (error) throw error;
+        set((s) => ({ menus: [dbMenu, ...s.menus] }));
+        return;
+      } catch (err: any) {
+        console.error('Database createMenu failed:', err);
+        toast.error(parseDatabaseError(err));
+        throw err;
+      }
+    }
+    const localMenu: Menu = {
+      id: uuid(),
+      org_id: state.organization.id,
+      name: data.name,
+      price_paise: data.price_paise,
+      food_type: data.food_type as any,
+      category: data.category,
+      tags: data.tags,
+      items: data.items,
+      hall_ids: data.hall_ids,
+      created_at: new Date().toISOString(),
+    };
+    set((s) => ({ menus: [localMenu, ...s.menus] }));
+  },
+
+  updateMenu: async (id, data) => {
+    const state = get();
+    if (state.isOnline) {
+      try {
+        const { error } = await supabase
+          .from('menus')
+          .update(data)
+          .eq('id', id);
+        if (error) throw error;
+      } catch (err: any) {
+        console.error('Database updateMenu failed:', err);
+        toast.error(parseDatabaseError(err));
+        return;
+      }
+    }
+    set((s) => ({
+      menus: s.menus.map((m) => (m.id === id ? { ...m, ...data } : m)),
+    }));
+  },
+
+  deleteMenu: async (id) => {
+    const state = get();
+    if (state.isOnline) {
+      try {
+        const { error } = await supabase
+          .from('menus')
+          .delete()
+          .eq('id', id);
+        if (error) throw error;
+      } catch (err: any) {
+        console.error('Database deleteMenu failed:', err);
+        toast.error(parseDatabaseError(err));
+        return;
+      }
+    }
+    set((s) => ({
+      menus: s.menus.filter((m) => m.id !== id),
+    }));
+  },
+
+  // ─── Coupon extension ────────────────────────────────────
+  applyPromoCode: async (code) => {
+    const state = get();
+    const cleanCode = code.trim().toUpperCase();
+    
+    // Validate promo code
+    let monthsToAdd = 0;
+    
+    if (state.isOnline) {
+      try {
+        const { data, error } = await supabase
+          .from('promo_codes')
+          .select('*')
+          .eq('code', cleanCode)
+          .eq('is_active', true)
+          .single();
+        
+        if (error || !data) {
+          toast.error('Invalid or expired promo code. Please check and try again.');
+          throw new Error('Invalid promo code');
+        }
+        
+        if (data.expires_at && new Date(data.expires_at) < new Date()) {
+          toast.error('Promo code has expired.');
+          throw new Error('Promo code expired');
+        }
+        
+        monthsToAdd = data.months_to_add;
+      } catch (err: any) {
+        if (err.message === 'Invalid promo code' || err.message === 'Promo code expired') {
+          throw err;
+        }
+        console.error('Failed to validate promo code:', err);
+        // Fallback to local hardcoded checks in case table query fails
+        if (cleanCode === 'TRIAL1M') {
+          monthsToAdd = 1;
+        } else if (cleanCode === 'TRIAL2M') {
+          monthsToAdd = 2;
+        } else if (cleanCode === 'TRIAL3M') {
+          monthsToAdd = 3;
+        } else {
+          toast.error('Invalid promo code. Please check and try again.');
+          throw new Error('Invalid promo code');
+        }
+      }
+    } else {
+      // Local/offline checking
+      const { useAdminStore } = await import('./admin-store');
+      const mockPromoCodes = useAdminStore.getState().allPromoCodes;
+      const foundMock = mockPromoCodes.find(p => p.code === cleanCode && p.is_active && (!p.expires_at || new Date(p.expires_at) > new Date()));
+      
+      if (foundMock) {
+        monthsToAdd = foundMock.months_to_add;
+      } else if (cleanCode === 'TRIAL1M') {
+        monthsToAdd = 1;
+      } else if (cleanCode === 'TRIAL2M') {
+        monthsToAdd = 2;
+      } else if (cleanCode === 'TRIAL3M') {
+        monthsToAdd = 3;
+      } else {
+        toast.error('Invalid promo code. Please check and try again.');
+        throw new Error('Invalid promo code');
+      }
+    }
+
+    // Check if already applied
+    const applied = state.organization.promo_codes_applied || [];
+    if (applied.includes(cleanCode)) {
+      toast.error(`Promo code "${cleanCode}" has already been redeemed for this organization.`);
+      throw new Error('Promo code already applied');
+    }
+
+    // Calculate trial ends date
+    const currentEndsAt = state.organization.trial_ends_at;
+    const baseDate = (currentEndsAt && new Date(currentEndsAt) > new Date()) 
+      ? new Date(currentEndsAt) 
+      : new Date();
+    
+    const newEndsAt = addMonths(baseDate, monthsToAdd).toISOString();
+    const updatedApplied = [...applied, cleanCode];
+
+    if (state.isOnline) {
+      try {
+        const { error } = await supabase
+          .from('organizations')
+          .update({
+            trial_ends_at: newEndsAt,
+            subscription_status: 'trial',
+            plan: state.organization.plan === 'free' ? 'pro' : state.organization.plan,
+            promo_codes_applied: updatedApplied,
+          })
+          .eq('id', state.organization.id);
+        
+        if (error) throw error;
+      } catch (err: any) {
+        console.error('Database applyPromoCode failed:', err);
+        toast.error(parseDatabaseError(err));
+        throw err;
+      }
+    }
+
+    set((s) => ({
+      organization: {
+        ...s.organization,
+        trial_ends_at: newEndsAt,
+        subscription_status: 'trial',
+        plan: s.organization.plan === 'free' ? 'pro' : s.organization.plan,
+        promo_codes_applied: updatedApplied,
+      },
+    }));
+
+    toast.success(`Promo applied! 🎁 Free trial extended by ${monthsToAdd} month(s).`);
   },
 
   // ─── Queries ─────────────────────────────────────────────

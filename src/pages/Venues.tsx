@@ -21,7 +21,10 @@ import {
   ToggleLeft,
   ToggleRight,
   Maximize2,
-  Copy
+  Copy,
+  ChefHat,
+  Download,
+  FileText
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useDataStore } from '@/stores/data-store';
@@ -33,6 +36,8 @@ import { WhatsappShareModal, getHallSpecsMessage } from '@/components/venues/Wha
 import { useAuthStore } from '@/stores/auth-store';
 import { hasPermission } from '@/lib/permissions';
 import { EmptyState } from '@/components/shared/EmptyState';
+import type { Menu, MenuItem, DishType, SpicinessLevel } from '@/types/menu';
+import { dishTypeLabels, spicinessLabels, menuCategories } from '@/types/menu';
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg
@@ -45,6 +50,293 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+export const downloadMenuPDF = (menu: Menu, orgName: string) => {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    toast.error('Popup blocker is active. Please enable popups to print/download PDF.');
+    return;
+  }
+  
+  const vegNonvegLabel = menu.food_type === 'both' ? 'Veg & Non-Veg' : menu.food_type === 'veg' ? 'Pure Vegetarian' : menu.food_type === 'non_veg' ? 'Non-Vegetarian' : 'Jain Friendly';
+  const foodColor = menu.food_type === 'veg' ? '#10b981' : menu.food_type === 'non_veg' ? '#ef4444' : '#6366f1';
+  
+  // Group items by category
+  const categoriesMap: Record<string, MenuItem[]> = {};
+  menu.items.forEach(item => {
+    if (!categoriesMap[item.category]) {
+      categoriesMap[item.category] = [];
+    }
+    categoriesMap[item.category].push(item);
+  });
+  
+  const categoriesHtml = Object.entries(categoriesMap).map(([category, items]) => `
+    <div class="category-section">
+      <h3 class="category-header">${category}</h3>
+      <div class="dishes-grid">
+        ${items.map(item => `
+          <div class="dish-card">
+            <div class="dish-header">
+              <span class="dish-name">${item.name}</span>
+              <div class="dish-badges">
+                <span class="dish-badge badge-${item.type}">${item.type.replace('_', ' ').toUpperCase()}</span>
+                ${item.spiciness ? `<span class="dish-badge badge-spiciness">${item.spiciness.replace('_', ' ').toUpperCase()}</span>` : ''}
+                ${item.extra_charge_paise ? `<span class="dish-badge badge-premium">+₹${item.extra_charge_paise / 100}</span>` : ''}
+              </div>
+            </div>
+            ${item.description ? `<p class="dish-desc">${item.description}</p>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  const tagsHtml = menu.tags && menu.tags.length > 0 ? `
+    <div class="tags-container">
+      ${menu.tags.map(t => `<span class="tag">✦ ${t}</span>`).join('')}
+    </div>
+  ` : '';
+
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>${menu.name} - Catering Menu</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+          body {
+            font-family: 'Outfit', sans-serif;
+            color: #1e293b;
+            margin: 0;
+            padding: 40px;
+            background-color: #ffffff;
+            -webkit-print-color-adjust: exact;
+          }
+          .header {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+          }
+          .org-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #4f46e5;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0 0 5px 0;
+          }
+          .menu-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0;
+            letter-spacing: -0.5px;
+          }
+          .price-block {
+            text-align: right;
+          }
+          .price-val {
+            font-size: 24px;
+            font-weight: 800;
+            color: #4f46e5;
+          }
+          .price-unit {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 600;
+          }
+          .meta-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            font-size: 13px;
+            font-weight: 600;
+          }
+          .meta-badge {
+            background-color: #f1f5f9;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            color: #334155;
+          }
+          .meta-badge.food-type {
+            border-left: 4px solid ${foodColor};
+          }
+          .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 30px;
+          }
+          .tag {
+            font-size: 11px;
+            font-weight: 600;
+            background-color: #faf5ff;
+            color: #7c3aed;
+            border: 1px solid #f3e8ff;
+            padding: 4px 10px;
+            border-radius: 6px;
+          }
+          .category-section {
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+          }
+          .category-header {
+            font-size: 16px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #4f46e5;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 8px;
+            margin: 0 0 15px 0;
+            letter-spacing: 1px;
+          }
+          .dishes-grid {
+            display: grid;
+            grid-template-cols: 1fr 1fr;
+            gap: 15px;
+          }
+          @media (max-width: 600px) {
+            .dishes-grid {
+              grid-template-cols: 1fr;
+            }
+          }
+          .dish-card {
+            border: 1px solid #f1f5f9;
+            background-color: #f8fafc;
+            padding: 12px 16px;
+            border-radius: 12px;
+          }
+          .dish-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+          }
+          .dish-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #0f172a;
+          }
+          .dish-badges {
+            display: flex;
+            gap: 4px;
+          }
+          .dish-badge {
+            font-size: 8px;
+            font-weight: 800;
+            padding: 2px 5px;
+            border-radius: 4px;
+          }
+          .badge-veg { background-color: #dcfce7; color: #15803d; }
+          .badge-non_veg { background-color: #fee2e2; color: #b91c1c; }
+          .badge-vegan { background-color: #ecfdf5; color: #047857; }
+          .badge-jain { background-color: #fef3c7; color: #d97706; }
+          .badge-spiciness { background-color: #ffedd5; color: #c2410c; }
+          .badge-premium { background-color: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+          .dish-desc {
+            font-size: 11px;
+            color: #64748b;
+            margin: 0;
+            line-height: 1.4;
+          }
+          .footer-note {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 11px;
+            color: #94a3b8;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 15px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="org-title">${orgName}</div>
+            <h1 class="menu-title">${menu.name}</h1>
+          </div>
+          <div class="price-block">
+            <div class="price-val">₹${menu.price_paise / 100}</div>
+            <div class="price-unit">per plate</div>
+          </div>
+        </div>
+        
+        <div class="meta-row">
+          <div class="meta-badge food-type">${vegNonvegLabel}</div>
+          <div class="meta-badge">${menu.category}</div>
+        </div>
+        
+        ${tagsHtml}
+        
+        ${categoriesHtml}
+        
+        <div class="footer-note">
+          Generated via VenuePro V2 Governance Console. Surcharges on premium items apply as noted.
+        </div>
+        <script>
+          window.onload = function() {
+            window.print();
+          }
+        </script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+};
+
+export const copyMenuToClipboard = (menu: Menu) => {
+  const vegNonvegLabel = menu.food_type === 'both' ? 'Veg & Non-Veg' : menu.food_type === 'veg' ? 'Pure Vegetarian' : menu.food_type === 'non_veg' ? 'Non-Vegetarian' : 'Jain Friendly';
+  
+  // Group items by category
+  const categoriesMap: Record<string, MenuItem[]> = {};
+  menu.items.forEach(item => {
+    if (!categoriesMap[item.category]) {
+      categoriesMap[item.category] = [];
+    }
+    categoriesMap[item.category].push(item);
+  });
+  
+  let text = `=======================================\n`;
+  text += `${menu.name.toUpperCase()}\n`;
+  text += `=======================================\n`;
+  text += `Price: ₹${menu.price_paise / 100} / plate\n`;
+  text += `Type: ${vegNonvegLabel}\n`;
+  text += `Category: ${menu.category}\n`;
+  if (menu.tags && menu.tags.length > 0) {
+    text += `Highlights: ${menu.tags.join(' • ')}\n`;
+  }
+  text += `\n`;
+  
+  Object.entries(categoriesMap).forEach(([category, items]) => {
+    text += `--- ${category.toUpperCase()} ---\n`;
+    items.forEach(item => {
+      let dishDetails = `- ${item.name}`;
+      const badges: string[] = [];
+      badges.push(item.type.toUpperCase());
+      if (item.spiciness) {
+        badges.push(item.spiciness.replace('_', ' ').toUpperCase());
+      }
+      if (item.extra_charge_paise) {
+        badges.push(`+₹${item.extra_charge_paise / 100}`);
+      }
+      dishDetails += ` (${badges.join(', ')})`;
+      if (item.description) {
+        dishDetails += ` - ${item.description}`;
+      }
+      text += `${dishDetails}\n`;
+    });
+    text += `\n`;
+  });
+  
+  text += `Generated via VenuePro.`;
+  
+  navigator.clipboard.writeText(text);
+  toast.success('Catering menu copied to clipboard! 📋');
+};
+
 type TabType = 'basic' | 'dimensions' | 'amenities' | 'facilities' | 'pricing' | 'media';
 
 export default function Venues() {
@@ -52,6 +344,164 @@ export default function Venues() {
   const createHall = useDataStore((s) => s.createHall);
   const updateHall = useDataStore((s) => s.updateHall);
   const uploadMedia = useDataStore((s) => s.uploadMedia);
+
+  // Catering Menu Store & Local States
+  const menus = useDataStore((s) => s.menus);
+  const createMenu = useDataStore((s) => s.createMenu);
+  const updateMenu = useDataStore((s) => s.updateMenu);
+  const deleteMenu = useDataStore((s) => s.deleteMenu);
+
+  const [currentTab, setCurrentTab] = useState<'halls' | 'menus'>('halls');
+  const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false);
+  const [editingMenuId, setEditingMenuId] = useState<string | null>(null);
+
+  // Menu Form fields
+  const [menuName, setMenuName] = useState('');
+  const [menuPrice, setMenuPrice] = useState('');
+  const [menuFoodType, setMenuFoodType] = useState<'veg' | 'non_veg' | 'both' | 'jain'>('veg');
+  const [menuCategory, setMenuCategory] = useState('Buffet');
+  const [menuTags, setMenuTags] = useState<string[]>([]);
+  const [newMenuTag, setNewMenuTag] = useState('');
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [newDishName, setNewDishName] = useState('');
+  const [newDishCategory, setNewDishCategory] = useState<string>('Starters');
+  const [newDishType, setNewDishType] = useState<DishType>('veg');
+  const [newDishDescription, setNewDishDescription] = useState('');
+  const [newDishExtraCharge, setNewDishExtraCharge] = useState('');
+  const [newDishSpiciness, setNewDishSpiciness] = useState<SpicinessLevel>('medium');
+  const [menuSelectedHallIds, setMenuSelectedHallIds] = useState<string[]>([]);
+  const [isSavingMenu, setIsSavingMenu] = useState(false);
+
+  const handleOpenAddMenu = () => {
+    setEditingMenuId(null);
+    setMenuName('');
+    setMenuPrice('');
+    setMenuFoodType('veg');
+    setMenuCategory('Buffet');
+    setMenuTags([]);
+    setMenuItems([]);
+    setNewDishName('');
+    setNewDishCategory('Starters');
+    setNewDishType('veg');
+    setNewDishDescription('');
+    setNewDishExtraCharge('');
+    setNewDishSpiciness('medium');
+    setMenuSelectedHallIds([]);
+    setIsMenuDrawerOpen(true);
+  };
+
+  const handleOpenEditMenu = (menu: any) => {
+    setEditingMenuId(menu.id);
+    setMenuName(menu.name);
+    setMenuPrice(String(menu.price_paise / 100));
+    setMenuFoodType(menu.food_type);
+    setMenuCategory(menu.category);
+    setMenuTags(menu.tags || []);
+    setMenuItems(menu.items || []);
+    setNewDishName('');
+    setNewDishCategory('Starters');
+    setNewDishType('veg');
+    setNewDishDescription('');
+    setNewDishExtraCharge('');
+    setNewDishSpiciness('medium');
+    setMenuSelectedHallIds(menu.hall_ids || []);
+    setIsMenuDrawerOpen(true);
+  };
+
+  const handleAddMenuTag = () => {
+    if (newMenuTag.trim() && !menuTags.includes(newMenuTag.trim())) {
+      setMenuTags([...menuTags, newMenuTag.trim()]);
+      setNewMenuTag('');
+    }
+  };
+
+  const handleRemoveMenuTag = (tag: string) => {
+    setMenuTags(menuTags.filter(t => t !== tag));
+  };
+
+  const handleAddMenuItem = () => {
+    if (!newDishName.trim()) {
+      toast.error('Dish name is required');
+      return;
+    }
+    const cleanName = newDishName.trim();
+    if (menuItems.some(i => i.name.toLowerCase() === cleanName.toLowerCase())) {
+      toast.error('A dish with this name is already in the package.');
+      return;
+    }
+    const extraVal = Number(newDishExtraCharge);
+    const extraChargePaise = (isNaN(extraVal) || extraVal <= 0) ? 0 : extraVal * 100;
+    
+    const newDish: MenuItem = {
+      name: cleanName,
+      category: newDishCategory,
+      type: newDishType,
+      description: newDishDescription.trim() || undefined,
+      extra_charge_paise: extraChargePaise || undefined,
+      spiciness: newDishSpiciness
+    };
+
+    setMenuItems([...menuItems, newDish]);
+    
+    // Reset dish inputs
+    setNewDishName('');
+    setNewDishDescription('');
+    setNewDishExtraCharge('');
+    setNewDishSpiciness('medium');
+  };
+
+  const handleRemoveMenuItem = (itemToRemove: MenuItem) => {
+    setMenuItems(menuItems.filter(i => i.name !== itemToRemove.name));
+  };
+
+  const handleSaveMenu = async () => {
+    if (!menuName.trim()) {
+      toast.error('Menu name is required');
+      return;
+    }
+    const priceVal = Number(menuPrice);
+    if (isNaN(priceVal) || priceVal <= 0) {
+      toast.error('Valid plate price is required');
+      return;
+    }
+
+    setIsSavingMenu(true);
+    try {
+      const data = {
+        name: menuName.trim(),
+        price_paise: priceVal * 100,
+        food_type: menuFoodType,
+        category: menuCategory.trim(),
+        tags: menuTags,
+        items: menuItems,
+        hall_ids: menuSelectedHallIds,
+      };
+
+      if (editingMenuId) {
+        await updateMenu(editingMenuId, data);
+        toast.success('Menu package updated! 🍽️');
+      } else {
+        await createMenu(data);
+        toast.success('New menu package created! 🎉');
+      }
+      setIsMenuDrawerOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save menu package');
+    } finally {
+      setIsSavingMenu(false);
+    }
+  };
+
+  const handleDeleteMenu = async (id: string) => {
+    if (confirm('Are you sure you want to delete this menu package?')) {
+      try {
+        await deleteMenu(id);
+        toast.success('Menu package deleted.');
+      } catch (err: any) {
+        toast.error('Failed to delete menu package');
+      }
+    }
+  };
 
   const role = useAuthStore((s) => s.profile?.role);
   const organization = useDataStore((s) => s.organization);
@@ -526,21 +976,55 @@ export default function Venues() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Venues & Spaces</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Configure halls, dimensions, pricing premiums, and facilities</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {currentTab === 'halls' ? 'Venues & Spaces' : 'Catering Menus'}
+          </h1>
+          <p className="text-sm text-gray-400 mt-0.5">
+            {currentTab === 'halls'
+              ? 'Configure halls, dimensions, pricing premiums, and facilities'
+              : 'Configure catering menu packages, pricing, and associate them with halls'}
+          </p>
         </div>
         {canManageVenues && (
           <button
-            onClick={handleOpenAdd}
+            onClick={currentTab === 'halls' ? handleOpenAdd : handleOpenAddMenu}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 active:scale-95 transition-all shadow-sm"
           >
-            <Plus className="w-4 h-4" /> Add Space
+            <Plus className="w-4 h-4" /> {currentTab === 'halls' ? 'Add Space' : 'Add Menu Package'}
           </button>
         )}
       </div>
 
+      {/* Tab Switcher */}
+      <div className="flex gap-2 border-b border-gray-150 pb-px">
+        <button
+          onClick={() => setCurrentTab('halls')}
+          className={cn(
+            'px-4 py-2 text-xs font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5',
+            currentTab === 'halls'
+              ? 'border-brand-600 text-brand-600'
+              : 'border-transparent text-gray-400 hover:text-gray-655'
+          )}
+        >
+          <Building2 className="w-3.5 h-3.5" />
+          Spaces & Halls ({halls.length})
+        </button>
+        <button
+          onClick={() => setCurrentTab('menus')}
+          className={cn(
+            'px-4 py-2 text-xs font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5',
+            currentTab === 'menus'
+              ? 'border-brand-600 text-brand-600'
+              : 'border-transparent text-gray-400 hover:text-gray-655'
+          )}
+        >
+          <ChefHat className="w-3.5 h-3.5" />
+          Catering Menus ({menus.length})
+        </button>
+      </div>
+
       {/* Venues Grid */}
-      {halls.length === 0 ? (
+      {currentTab === 'halls' ? (halls.length === 0 ? (
         <EmptyState
           icon={Building2}
           title="No spaces configured"
@@ -630,6 +1114,22 @@ export default function Venues() {
                     </div>
                   </div>
 
+                  {/* Associated Menu Packages */}
+                  <div className="space-y-1 bg-slate-50 p-2.5 rounded-xl border border-slate-100/50">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Catering Packages</span>
+                    <div className="flex flex-wrap gap-1">
+                      {menus.filter((m) => m.hall_ids?.includes(hall.id)).length === 0 ? (
+                        <span className="text-[10px] text-gray-400 italic">No packages linked</span>
+                      ) : (
+                        menus.filter((m) => m.hall_ids?.includes(hall.id)).map((m) => (
+                          <span key={m.id} className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold bg-white text-slate-700 border border-slate-200/50 shadow-3xs">
+                            {m.name} (₹{m.price_paise / 100})
+                          </span>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
                   <div className="flex items-center justify-between pt-1">
                     <div className="flex gap-1.5">
                       <button
@@ -681,6 +1181,154 @@ export default function Venues() {
             );
           })}
         </div>
+      )) : (
+        menus.length === 0 ? (
+          <EmptyState
+            icon={ChefHat}
+            title="No menu packages configured"
+            description="Create your catering menu packages, price per plate, and associate them with your halls."
+            action={canManageVenues ? { label: "Add Menu Package", onClick: handleOpenAddMenu } : undefined}
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
+            {menus.map((menu) => {
+              const linkedHalls = halls.filter((h) => menu.hall_ids?.includes(h.id));
+              
+              return (
+                <div key={menu.id} className="bg-white rounded-2xl border border-gray-150 overflow-hidden shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col p-5 space-y-4">
+                  {/* Header info */}
+                  <div className="flex justify-between items-start">
+                    <span className={cn(
+                      "px-2.5 py-0.5 rounded-full text-[10px] font-bold border capitalize tracking-wider",
+                      menu.food_type === 'veg' && "bg-success-50 text-success-700 border-success-205",
+                      menu.food_type === 'non_veg' && "bg-rose-50 text-rose-700 border-rose-205",
+                      menu.food_type === 'both' && "bg-violet-50 text-violet-700 border-violet-205",
+                      menu.food_type === 'jain' && "bg-amber-50 text-amber-700 border-amber-205"
+                    )}>
+                      {menu.food_type === 'both' ? 'Veg & Non-Veg' : menu.food_type.replace('_', ' ')}
+                    </span>
+                    <span className="text-xs font-semibold text-gray-450 uppercase tracking-widest bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
+                      {menu.category}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-black text-gray-900 leading-tight">{menu.name}</h3>
+                    <div className="flex items-baseline gap-1 text-brand-650">
+                      <span className="text-xl font-extrabold font-display">₹{menu.price_paise / 100}</span>
+                      <span className="text-xs font-semibold text-gray-450">/ plate</span>
+                    </div>
+                  </div>
+
+                  {/* Special Tags */}
+                  {menu.tags && menu.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {menu.tags.map((tag, idx) => (
+                        <span key={idx} className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-gray-100/70 text-gray-600 border border-gray-150/50">
+                          ✦ {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Included Items Grouped by Category */}
+                  {menu.items && menu.items.length > 0 && (
+                    <div className="space-y-2 pt-1 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100/50">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Dishes / Items ({menu.items.length})</span>
+                      <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
+                        {Object.entries(
+                          menu.items.reduce((acc, item) => {
+                            const cat = item.category || 'Main Course';
+                            if (!acc[cat]) acc[cat] = [];
+                            acc[cat].push(item);
+                            return acc;
+                          }, {} as Record<string, MenuItem[]>)
+                        ).map(([category, items]) => (
+                          <div key={category} className="space-y-0.5">
+                            <span className="text-[9px] font-black text-brand-600 uppercase tracking-wider block">{category}</span>
+                            <div className="space-y-0.5">
+                              {items.map((item, idx) => (
+                                <div key={idx} className="flex justify-between items-center text-[11px] text-gray-600 pl-1.5">
+                                  <div className="flex items-center gap-1 min-w-0">
+                                    <span className={cn(
+                                      "w-1.5 h-1.5 rounded-full flex-shrink-0",
+                                      item.type === 'veg' && "bg-success-500",
+                                      item.type === 'non_veg' && "bg-rose-500",
+                                      item.type === 'vegan' && "bg-emerald-500",
+                                      item.type === 'jain' && "bg-amber-500",
+                                    )} title={item.type} />
+                                    <span className="truncate font-semibold">{item.name}</span>
+                                  </div>
+                                  {item.extra_charge_paise ? (
+                                    <span className="text-[9px] font-bold text-purple-600 shrink-0">+₹{item.extra_charge_paise / 100}</span>
+                                  ) : null}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Linked Halls list */}
+                  <div className="border-t border-gray-100 pt-3 flex-1 flex flex-col justify-end">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">Linked Spaces</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {linkedHalls.length === 0 ? (
+                        <span className="text-xs text-gray-450 italic">Not linked to any space</span>
+                      ) : (
+                        linkedHalls.map((h) => (
+                          <span key={h.id} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-brand-50 text-brand-700 border border-brand-100/30">
+                            {h.name}
+                          </span>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Export and Management Actions */}
+                  <div className="flex items-center gap-2 pt-3 border-t border-gray-100/70">
+                    <button
+                      onClick={() => {
+                        const orgName = useDataStore.getState().organization.name;
+                        downloadMenuPDF(menu, orgName);
+                      }}
+                      className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all border border-gray-150 flex items-center justify-center"
+                      title="Download Menu PDF"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => copyMenuToClipboard(menu)}
+                      className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all border border-gray-150 flex items-center justify-center"
+                      title="Copy Menu to Clipboard"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                    {canManageVenues && (
+                      <>
+                        <button
+                          onClick={() => handleOpenEditMenu(menu)}
+                          className="flex-1 py-2 text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-xl transition-all text-center"
+                        >
+                          Edit Package
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMenu(menu.id)}
+                          className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all border border-transparent hover:border-rose-100"
+                          title="Delete Menu Package"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
       )}
 
       {/* 6-Tab Edit/Add Drawer */}
@@ -1678,6 +2326,312 @@ export default function Venues() {
           }}
           hall={selectedHallForShare}
         />
+      )}
+
+      {/* Menu Edit/Add Drawer Modal */}
+      {isMenuDrawerOpen && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40 drawer-overlay animate-fade-in" onClick={() => setIsMenuDrawerOpen(false)} />
+          <div className="fixed inset-y-0 right-0 max-w-md w-full z-50 bg-white shadow-2xl flex flex-col animate-slide-in">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-150 bg-gray-50/50 bg-white">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">{editingMenuId ? 'Edit Menu Package' : 'Add Catering Menu'}</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Define price, tags, and select linked spaces</p>
+              </div>
+              <button onClick={() => setIsMenuDrawerOpen(false)} className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-400">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider font-semibold">Package Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Royal Wedding Buffet"
+                  value={menuName}
+                  onChange={(e) => setMenuName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all font-semibold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider font-semibold">Price / Plate (₹) *</label>
+                  <input
+                    type="number"
+                    placeholder="800"
+                    value={menuPrice}
+                    onChange={(e) => setMenuPrice(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider font-semibold">Category</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Buffet, Hi-Tea"
+                    value={menuCategory}
+                    onChange={(e) => setMenuCategory(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all font-semibold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider font-semibold">Food Type</label>
+                <select
+                  value={menuFoodType}
+                  onChange={(e) => setMenuFoodType(e.target.value as any)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none bg-white font-semibold text-gray-700"
+                >
+                  <option value="veg">Pure Vegetarian</option>
+                  <option value="non_veg">Non-Vegetarian</option>
+                  <option value="both">Veg & Non-Veg</option>
+                  <option value="jain">Jain Friendly</option>
+                </select>
+              </div>
+
+              {/* Special Tags interactive adder */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider font-semibold">Special Menu Tags</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="e.g. Welcome Drink"
+                    value={newMenuTag}
+                    onChange={(e) => setNewMenuTag(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddMenuTag();
+                      }
+                    }}
+                    className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none transition-all font-semibold"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddMenuTag}
+                    className="px-4 py-2 bg-brand-50 text-brand-600 rounded-xl text-xs font-bold hover:bg-brand-100 transition-colors"
+                  >
+                    Add
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {menuTags.length === 0 ? (
+                    <span className="text-xs text-gray-400 italic">No tags added yet</span>
+                  ) : (
+                    menuTags.map((tag, idx) => (
+                      <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200">
+                        {tag}
+                        <button type="button" onClick={() => handleRemoveMenuTag(tag)} className="text-slate-400 hover:text-slate-600 font-black pl-1">×</button>
+                      </span>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Menu Items / Dishes interactive list */}
+              <div className="space-y-4 border-t border-gray-100 pt-4">
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Menu Items / Dishes</label>
+                
+                {/* Advanced Dish Inputs */}
+                <div className="bg-slate-50 border border-slate-150 p-4 rounded-2xl space-y-3.5">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-2 sm:col-span-1">
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Dish Name *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Kadai Paneer"
+                        value={newDishName}
+                        onChange={(e) => setNewDishName(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:ring-1 focus:ring-brand-500 outline-none bg-white font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Category *</label>
+                      <select
+                        value={newDishCategory}
+                        onChange={(e) => setNewDishCategory(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:ring-1 focus:ring-brand-500 outline-none bg-white font-bold text-gray-700"
+                      >
+                        {menuCategories.map((cat) => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Type</label>
+                      <select
+                        value={newDishType}
+                        onChange={(e) => setNewDishType(e.target.value as DishType)}
+                        className="w-full px-2 py-2 rounded-xl border border-gray-200 text-[11px] focus:ring-1 focus:ring-brand-500 outline-none bg-white font-bold text-gray-700"
+                      >
+                        <option value="veg">Veg</option>
+                        <option value="non_veg">Non-Veg</option>
+                        <option value="vegan">Vegan</option>
+                        <option value="jain">Jain</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Spiciness</label>
+                      <select
+                        value={newDishSpiciness}
+                        onChange={(e) => setNewDishSpiciness(e.target.value as SpicinessLevel)}
+                        className="w-full px-2 py-2 rounded-xl border border-gray-200 text-[11px] focus:ring-1 focus:ring-brand-500 outline-none bg-white font-bold text-gray-700"
+                      >
+                        <option value="mild">Mild</option>
+                        <option value="medium">Medium</option>
+                        <option value="spicy">Spicy</option>
+                        <option value="extra_spicy">Extra Spicy</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Extra Fee (₹)</label>
+                      <input
+                        type="number"
+                        placeholder="e.g. 50"
+                        value={newDishExtraCharge}
+                        onChange={(e) => setNewDishExtraCharge(e.target.value)}
+                        className="w-full px-2.5 py-2 rounded-xl border border-gray-200 text-xs focus:ring-1 focus:ring-brand-500 outline-none bg-white font-bold text-gray-700"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Description (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Creamy paneer with onions & bell peppers"
+                      value={newDishDescription}
+                      onChange={(e) => setNewDishDescription(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:ring-1 focus:ring-brand-500 outline-none bg-white font-semibold"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAddMenuItem}
+                    className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 active:scale-99 shadow-xs"
+                  >
+                    <Plus className="w-4 h-4" /> Add Dish to Package
+                  </button>
+                </div>
+
+                {/* List of Added Dishes, Grouped by Category */}
+                <div className="space-y-3.5 max-h-[280px] overflow-y-auto pr-1">
+                  {menuItems.length === 0 ? (
+                    <span className="text-xs text-gray-400 italic block text-center py-4 bg-gray-50 border border-dashed border-gray-200 rounded-2xl">No items or dishes added yet. Configure above to add.</span>
+                  ) : (
+                    Object.entries(
+                      menuItems.reduce((acc, item) => {
+                        if (!acc[item.category]) acc[item.category] = [];
+                        acc[item.category].push(item);
+                        return acc;
+                      }, {} as Record<string, MenuItem[]>)
+                    ).map(([category, items]) => (
+                      <div key={category} className="space-y-2">
+                        <span className="text-[10px] font-black text-indigo-500 uppercase tracking-wider block border-b border-gray-100 pb-1">{category}</span>
+                        <div className="space-y-1.5">
+                          {items.map((item) => (
+                            <div key={item.name} className="flex justify-between items-start bg-gray-50 border border-gray-150 rounded-xl p-3 text-xs gap-3">
+                              <div className="space-y-0.5 min-w-0">
+                                <div className="flex items-center flex-wrap gap-1.5">
+                                  <span className="font-extrabold text-gray-800 truncate">{item.name}</span>
+                                  <span className={cn(
+                                    "px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider",
+                                    item.type === 'veg' && "bg-success-100 text-success-800",
+                                    item.type === 'non_veg' && "bg-rose-100 text-rose-800",
+                                    item.type === 'vegan' && "bg-emerald-100 text-emerald-800",
+                                    item.type === 'jain' && "bg-amber-100 text-amber-800",
+                                  )}>
+                                    {item.type.replace('_', ' ')}
+                                  </span>
+                                  {item.spiciness && (
+                                    <span className="px-1.5 py-0.5 rounded bg-orange-100 text-orange-800 text-[8px] font-black uppercase tracking-wider">
+                                      {item.spiciness.replace('_', ' ')}
+                                    </span>
+                                  )}
+                                  {item.extra_charge_paise ? (
+                                    <span className="px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 text-[8px] font-black tracking-wider">
+                                      +₹{item.extra_charge_paise / 100}
+                                    </span>
+                                  ) : null}
+                                </div>
+                                {item.description && (
+                                  <p className="text-[10px] text-gray-400 line-clamp-1 leading-normal">{item.description}</p>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveMenuItem(item)}
+                                className="text-rose-500 hover:bg-rose-100/50 p-1.5 rounded-lg transition-colors shrink-0 self-center"
+                                title="Remove item"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Multi-select active halls mapping */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider font-semibold">Link to Spaces & Halls</label>
+                <div className="border border-gray-150 rounded-2xl p-4 space-y-3 bg-gray-50/50">
+                  {halls.length === 0 ? (
+                    <p className="text-xs text-gray-400 italic">No halls configured to link</p>
+                  ) : (
+                    halls.map((hall) => (
+                      <label key={hall.id} className="flex items-center gap-2.5 text-xs font-bold text-gray-700 cursor-pointer hover:text-gray-900 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={menuSelectedHallIds.includes(hall.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setMenuSelectedHallIds([...menuSelectedHallIds, hall.id]);
+                            } else {
+                              setMenuSelectedHallIds(menuSelectedHallIds.filter((id) => id !== hall.id));
+                            }
+                          }}
+                          className="rounded border-gray-300 text-brand-600 focus:ring-brand-500 w-4 h-4 cursor-pointer"
+                        />
+                        <span>{hall.name} ({hallTypeLabels[hall.type] || hall.type})</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-gray-100 p-6 bg-gray-50/50 flex gap-3 shrink-0 bg-white">
+              <button
+                onClick={handleSaveMenu}
+                disabled={isSavingMenu}
+                className="flex-1 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-bold shadow-sm transition-all hover:scale-[1.01] active:scale-99 flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isSavingMenu && <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />}
+                <span>{editingMenuId ? 'Save Changes' : 'Create Package'}</span>
+              </button>
+              <button
+                onClick={() => setIsMenuDrawerOpen(false)}
+                className="px-5 py-3 border border-gray-250 hover:bg-gray-100 rounded-xl text-sm font-semibold text-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
