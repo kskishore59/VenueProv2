@@ -7,6 +7,7 @@ import { StatCard } from '@/components/shared/StatCard';
 import { BookingCalendar } from '@/components/booking/BookingCalendar';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { WhatsAppButton } from '@/components/shared/WhatsAppButton';
+import { CallButton } from '@/components/shared/CallButton';
 import { cn, formatCurrency, formatDateReadable, formatTime, getRelativeTime } from '@/lib/utils';
 import { useDataStore } from '@/stores/data-store';
 import { useUIStore } from '@/stores/ui-store';
@@ -347,7 +348,10 @@ export default function Dashboard() {
                       )}
                     </div>
                   </div>
-                  <WhatsAppButton phone={lead.phone} size="sm" leadId={lead.id} />
+                  <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <CallButton phone={lead.phone} leadName={lead.name} size="sm" />
+                    <WhatsAppButton phone={lead.phone} size="sm" leadId={lead.id} />
+                  </div>
                 </div>
               ))
             )}

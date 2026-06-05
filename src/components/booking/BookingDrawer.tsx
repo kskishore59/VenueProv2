@@ -1,4 +1,4 @@
-import { X, CalendarDays, Clock, Users, MapPin, IndianRupee, Edit, Ban, CreditCard, FileText, Printer } from 'lucide-react';
+import { X, CalendarDays, Clock, Users, MapPin, IndianRupee, Edit, Ban, CreditCard, FileText, Printer, Boxes } from 'lucide-react';
 import { cn, formatCurrency, formatDateReadable, formatTime, formatPhone, getInitials } from '@/lib/utils';
 import { useUIStore } from '@/stores/ui-store';
 import { useDataStore } from '@/stores/data-store';
@@ -9,6 +9,7 @@ import { paymentModeLabels } from '@/types/payment';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/auth-store';
 import { hasPermission } from '@/lib/permissions';
+import { inventoryCategoryLabels } from '@/types/inventory';
 
 export function BookingDrawer() {
   const isOpen = useUIStore((s) => s.isBookingDrawerOpen);
@@ -25,6 +26,9 @@ export function BookingDrawer() {
   const getPaymentsForBooking = useDataStore((s) => s.getPaymentsForBooking);
   const cancelBooking = useDataStore((s) => s.cancelBooking);
   const updateBooking = useDataStore((s) => s.updateBooking);
+  const inventoryItems = useDataStore((s) => s.inventoryItems);
+  const allAllocations = useDataStore((s) => s.inventoryAllocations);
+  const allocations = allAllocations.filter((a) => a.booking_id === (bookingId || ''));
 
   const role = useAuthStore((s) => s.profile?.role);
   const organization = useDataStore((s) => s.organization);
@@ -193,6 +197,35 @@ export function BookingDrawer() {
               )}
             </div>
           )}
+
+          {/* Inventory Allocations */}
+          <div className="px-6 py-5 border-b border-gray-100">
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <Boxes className="w-4 h-4 text-brand-600" />
+              <span>Resource & Inventory Allocations</span>
+            </h4>
+            {allocations.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-4">No inventory items allocated to this event</p>
+            ) : (
+              <div className="space-y-2.5">
+                {allocations.map((a) => {
+                  const item = inventoryItems.find((i) => i.id === a.inventory_item_id);
+                  if (!item) return null;
+                  return (
+                    <div key={a.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50/70 border border-gray-100">
+                      <div>
+                        <p className="text-xs font-bold text-gray-900">{item.name}</p>
+                        <p className="text-[10px] text-gray-400 capitalize mt-0.5">{inventoryCategoryLabels[item.category]}</p>
+                      </div>
+                      <span className="text-xs font-extrabold text-gray-950 bg-white border border-gray-200 px-3 py-1 rounded-lg">
+                        Qty: {a.quantity}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           {/* Notes */}
           {booking.notes && (

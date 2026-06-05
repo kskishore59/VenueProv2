@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Phone, Copy, Check, X, ExternalLink } from 'lucide-react';
 import { cn, formatPhone } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -109,7 +110,7 @@ export function CallButton({
     <>
       {renderButton()}
 
-      {isModalOpen && (
+      {isModalOpen && typeof document !== 'undefined' && createPortal(
         <div 
           className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[100] flex items-center justify-center p-4 transition-opacity animate-fade-in"
           onClick={(e) => {
@@ -172,7 +173,8 @@ export function CallButton({
               </a>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

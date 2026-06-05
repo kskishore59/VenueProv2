@@ -4,6 +4,7 @@ import { cn, formatCurrency, formatDateReadable, formatTime, exportToCSV } from 
 import { useDataStore } from '@/stores/data-store';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { WhatsAppButton } from '@/components/shared/WhatsAppButton';
+import { CallButton } from '@/components/shared/CallButton';
 import { useUIStore } from '@/stores/ui-store';
 import { eventTypeLabels, type BookingStatus } from '@/types/booking';
 import { useAuthStore } from '@/stores/auth-store';
@@ -212,7 +213,7 @@ export default function Bookings() {
         />
       ) : (
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-          <div className="hidden md:grid grid-cols-[1fr_120px_140px_100px_120px_120px_50px] gap-4 px-5 py-3 bg-gray-50 border-b border-gray-100 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+          <div className="hidden md:grid grid-cols-[1fr_120px_140px_100px_120px_120px_90px] gap-4 px-5 py-3 bg-gray-50 border-b border-gray-100 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
             <span>Customer / Event</span><span>Date</span><span>Hall</span><span>Guests</span><span>Amount</span><span>Status</span><span></span>
           </div>
           <div className="divide-y divide-gray-50">
@@ -221,52 +222,87 @@ export default function Bookings() {
               const hall = getHallById(booking.hall_id);
               return (
                 <div key={booking.id} onClick={() => openBookingDrawer(booking.id)}
-                  className="grid grid-cols-2 md:grid-cols-[1fr_120px_140px_100px_120px_120px_50px] gap-x-4 gap-y-3.5 md:gap-4 px-5 py-4 cursor-pointer hover:bg-gray-50/70 transition-all group">
-                  <div className="flex items-center gap-3 col-span-2 md:col-span-1">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-100 to-brand-50 flex items-center justify-center flex-shrink-0">
-                      <span className="text-sm font-bold text-brand-700">{customer?.name[0] || '?'}</span>
+                  className="cursor-pointer hover:bg-gray-50/70 transition-all group px-5 py-4">
+                  
+                  {/* Mobile View (Card Layout) */}
+                  <div className="flex md:hidden flex-col gap-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-100 to-brand-50 flex items-center justify-center flex-shrink-0">
+                          <span className="text-sm font-bold text-brand-700">{customer?.name[0] || '?'}</span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{customer?.name}</p>
+                          <p className="text-xs text-gray-400">{eventTypeLabels[booking.event_type]} • {booking.booking_number}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                        {customer && <CallButton phone={customer.phone} leadName={customer.name} size="sm" />}
+                        {customer && <WhatsAppButton phone={customer.phone} size="sm" bookingId={booking.id} />}
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{customer?.name}</p>
-                      <p className="text-xs text-gray-400">{eventTypeLabels[booking.event_type]} • {booking.booking_number}</p>
+
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-3 bg-slate-50/50 rounded-xl p-3 border border-slate-100/50">
+                      <div>
+                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">Date & Time</span>
+                        <p className="text-xs font-semibold text-gray-700">{formatDateReadable(booking.event_date)}</p>
+                        <p className="text-[10px] text-gray-405">{formatTime(booking.start_time)} – {formatTime(booking.end_time)}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">Venue</span>
+                        <p className="text-xs font-semibold text-gray-700 truncate">{hall?.name}</p>
+                      </div>
+                      <div>
+                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">Guests</span>
+                        <p className="text-xs font-semibold text-gray-700">{booking.guest_count || '—'}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">Amount</span>
+                        <p className="text-xs font-bold text-gray-950">{formatCurrency(booking.total_amount_paise)}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] text-gray-400 font-semibold">Status:</span>
+                        <StatusBadge type="booking" status={booking.status} />
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center col-span-1">
+
+                  {/* Desktop View (Tabular Row) */}
+                  <div className="hidden md:grid grid-cols-[1fr_120px_140px_100px_120px_120px_90px] gap-4 items-center">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-100 to-brand-50 flex items-center justify-center flex-shrink-0">
+                        <span className="text-sm font-bold text-brand-700">{customer?.name[0] || '?'}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{customer?.name}</p>
+                        <p className="text-xs text-gray-400">{eventTypeLabels[booking.event_type]} • {booking.booking_number}</p>
+                      </div>
+                    </div>
                     <div>
                       <p className="text-sm font-medium text-gray-700">{formatDateReadable(booking.event_date)}</p>
                       <p className="text-[11px] text-gray-400">{formatTime(booking.start_time)} – {formatTime(booking.end_time)}</p>
                     </div>
-                  </div>
-                  <div className="flex items-center col-span-1 md:col-span-1 justify-end md:justify-start text-right md:text-left">
-                    <span className="text-sm text-gray-600 truncate">
-                      <span className="md:hidden font-semibold text-gray-450 block text-[9px] uppercase tracking-wider mb-0.5">Venue</span>
+                    <div className="truncate text-sm text-gray-600">
                       {hall?.name}
-                    </span>
-                  </div>
-                  <div className="flex items-center col-span-1">
-                    <span className="text-sm text-gray-600">
-                      <span className="md:hidden font-semibold text-gray-450 block text-[9px] uppercase tracking-wider mb-0.5">Guests</span>
+                    </div>
+                    <div className="text-sm text-gray-600">
                       {booking.guest_count || '—'}
-                    </span>
-                  </div>
-                  <div className="flex items-center col-span-1 md:col-span-1 justify-end md:justify-start text-right md:text-left">
-                    <span className="text-sm font-bold text-gray-900">
-                      <span className="md:hidden font-semibold text-gray-450 block text-[9px] uppercase tracking-wider mb-0.5">Amount</span>
+                    </div>
+                    <div className="text-sm font-bold text-gray-900">
                       {formatCurrency(booking.total_amount_paise)}
-                    </span>
-                  </div>
-                  <div className="flex items-center col-span-1">
+                    </div>
                     <div>
-                      <span className="md:hidden font-semibold text-gray-450 block text-[9px] uppercase tracking-wider mb-0.5">Status</span>
                       <StatusBadge type="booking" status={booking.status} />
                     </div>
-                  </div>
-                  <div className="flex items-center justify-end col-span-1">
-                    <div>
-                      <span className="md:hidden font-semibold text-gray-450 block text-[9px] uppercase tracking-wider mb-0.5 text-right opacity-0">Share</span>
+                    <div className="flex items-center gap-1.5 justify-end" onClick={(e) => e.stopPropagation()}>
+                      {customer && <CallButton phone={customer.phone} leadName={customer.name} size="sm" />}
                       {customer && <WhatsAppButton phone={customer.phone} size="sm" bookingId={booking.id} />}
                     </div>
                   </div>
+
                 </div>
               );
             })}

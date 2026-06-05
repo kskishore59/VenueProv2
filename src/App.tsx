@@ -35,6 +35,8 @@ const Onboarding = lazy(() => import('@/pages/Onboarding'));
 const Privacy = lazy(() => import('@/pages/Privacy'));
 const Terms = lazy(() => import('@/pages/Terms'));
 const SuperAdmin = lazy(() => import('@/pages/SuperAdmin'));
+const PublicInquiry = lazy(() => import('@/pages/PublicInquiry'));
+
 
 import { FeedbackWidget } from '@/components/shared/FeedbackWidget';
 import { ReceiptModal } from '@/components/payments/ReceiptModal';
@@ -124,6 +126,8 @@ export default function App() {
               <Route path="/terms" element={<Terms />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/inquiry" element={<PublicInquiry />} />
+
 
               {/* Protected Workspace Routes */}
               <Route element={<AuthGuard />}>

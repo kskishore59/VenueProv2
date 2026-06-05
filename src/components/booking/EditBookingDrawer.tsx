@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Check, CalendarDays, MapPin, Clock, Users, IndianRupee } from 'lucide-react';
+import { X, Check, CalendarDays, MapPin, Clock, Users, IndianRupee, Boxes, Trash2, Plus, AlertTriangle } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { useUIStore } from '@/stores/ui-store';
 import { useDataStore } from '@/stores/data-store';
@@ -7,6 +7,7 @@ import { eventTypes, eventTypeLabels, type EventType, type BookingStatus } from 
 import { toast } from 'sonner';
 import { DatePicker } from '@/components/shared/DatePicker';
 import { TimePicker } from '@/components/shared/TimePicker';
+import { inventoryCategoryLabels } from '@/types/inventory';
 
 const statusOptions: { value: BookingStatus; label: string }[] = [
   { value: 'inquiry', label: 'Inquiry' },
@@ -36,6 +37,24 @@ export function EditBookingDrawer() {
   const [notes, setNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
+  // Inventory logic
+  const fetchAllocationsForBooking = useDataStore((s) => s.fetchAllocationsForBooking);
+  const allocateInventory = useDataStore((s) => s.allocateInventory);
+  const checkInventoryAvailability = useDataStore((s) => s.checkInventoryAvailability);
+  const inventoryItems = useDataStore((s) => s.inventoryItems);
+
+  const [localAllocs, setLocalAllocs] = useState<{ inventory_item_id: string; quantity: number }[]>([]);
+
+  useEffect(() => {
+    async function loadAllocs() {
+      if (bookingId) {
+        const data = await fetchAllocationsForBooking(bookingId);
+        setLocalAllocs((data || []).map(d => ({ inventory_item_id: d.inventory_item_id, quantity: d.quantity })));
+      }
+    }
+    loadAllocs();
+  }, [bookingId, fetchAllocationsForBooking]);
+
   // Sync form when booking loads
   useEffect(() => {
     if (booking) {
@@ -53,14 +72,34 @@ export function EditBookingDrawer() {
 
   if (!isOpen || !bookingId || !booking) return null;
 
+  console.log('DEBUG: Availability Check Params in EditBookingDrawer:', {
+    hallId,
+    eventDate,
+    startTime,
+    endTime,
+    bookingId
+  });
+
   const isAvailable = hallId && eventDate && startTime && endTime
     ? checkAvailability(hallId, eventDate, startTime, endTime, bookingId)
     : true;
+
+  console.log('DEBUG: isAvailable result:', isAvailable);
 
   const handleSave = async () => {
     if (!isAvailable) {
       toast.error('Hall is not available at the selected date/time');
       return;
+    }
+
+    // Validate inventory stock limit before saving
+    for (const alloc of localAllocs) {
+      const avail = checkInventoryAvailability(bookingId, eventDate, startTime, endTime, alloc.inventory_item_id, alloc.quantity);
+      if (!avail.success) {
+        const item = inventoryItems.find(i => i.id === alloc.inventory_item_id);
+        toast.error(`Stock limit exceeded for "${item?.name || 'Item'}". Only ${avail.available} available.`);
+        return;
+      }
     }
 
     setIsSaving(true);
@@ -76,6 +115,9 @@ export function EditBookingDrawer() {
         status,
         notes: notes || null,
       });
+
+      // Update allocations
+      await allocateInventory(bookingId, localAllocs);
 
       toast.success('Booking updated! ✏️', { description: booking.booking_number });
       closeEditBooking();
@@ -180,6 +222,93 @@ export function EditBookingDrawer() {
               <input id="input-eb-total-amount" type="number" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)}
                 className="w-full pl-10 pr-3 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 outline-none transition-all" />
             </div>
+          </div>
+
+          {/* Resource & Inventory Allocations */}
+          <div className="border-t border-gray-100 pt-4 space-y-3">
+            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+              <Boxes className="w-4 h-4 text-brand-600" />
+              <span>Resource & Inventory Allocations</span>
+            </h4>
+            
+            {/* List current local allocations */}
+            {localAllocs.length > 0 && (
+              <div className="space-y-2">
+                {localAllocs.map((alloc, idx) => {
+                  const item = inventoryItems.find(i => i.id === alloc.inventory_item_id);
+                  if (!item) return null;
+                  const avail = checkInventoryAvailability(bookingId, eventDate, startTime, endTime, alloc.inventory_item_id, alloc.quantity);
+                  
+                  return (
+                    <div key={alloc.inventory_item_id} className="p-3 rounded-xl bg-gray-50/50 border border-gray-150 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-bold text-gray-800">{item.name}</p>
+                          <p className="text-[10px] text-gray-400 capitalize mt-0.5">{inventoryCategoryLabels[item.category]}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLocalAllocs(localAllocs.filter(la => la.inventory_item_id !== alloc.inventory_item_id));
+                          }}
+                          className="text-gray-400 hover:text-rose-600 transition-colors p-1"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider shrink-0">Quantity:</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max={item.total_quantity}
+                          value={alloc.quantity}
+                          onChange={(e) => {
+                            const newQty = parseInt(e.target.value, 10) || 1;
+                            setLocalAllocs(localAllocs.map((la, i) => i === idx ? { ...la, quantity: newQty } : la));
+                          }}
+                          className="w-20 px-2 py-1 rounded-lg border border-gray-250 text-xs bg-white focus:ring-1 focus:ring-brand-500 outline-none text-right font-semibold"
+                        />
+                        <span className="text-[10px] text-gray-400 font-semibold">(Max Stock: {item.total_quantity})</span>
+                      </div>
+
+                      {!avail.success && (
+                        <div className="flex items-center gap-1.5 text-[10px] text-rose-600 font-semibold">
+                          <AlertTriangle className="w-3.5 h-3.5" />
+                          <span>Stock conflict! Only {avail.available} available for this slot.</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Dropdown to add item allocation */}
+            {inventoryItems.filter(item => !localAllocs.some(la => la.inventory_item_id === item.id)).length > 0 ? (
+              <div className="flex gap-2 items-center bg-gray-50/50 p-2.5 border border-gray-150 rounded-xl">
+                <select
+                  value=""
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val) {
+                      setLocalAllocs([...localAllocs, { inventory_item_id: val, quantity: 1 }]);
+                    }
+                  }}
+                  className="flex-1 px-3 py-2 rounded-xl border border-gray-250 text-xs bg-white focus:ring-1 focus:ring-brand-500 outline-none"
+                >
+                  <option value="">+ Add item allocation...</option>
+                  {inventoryItems
+                    .filter(item => !localAllocs.some(la => la.inventory_item_id === item.id))
+                    .map(item => (
+                      <option key={item.id} value={item.id}>{item.name} ({inventoryCategoryLabels[item.category]})</option>
+                    ))}
+                </select>
+              </div>
+            ) : inventoryItems.length === 0 ? (
+              <p className="text-[11px] text-gray-400 font-semibold italic">Configure inventory stock catalog items in Settings first.</p>
+            ) : null}
           </div>
 
           {/* Notes */}

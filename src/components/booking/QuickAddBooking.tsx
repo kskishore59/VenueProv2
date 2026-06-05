@@ -4,6 +4,7 @@ import { cn, formatDate, validateIndianPhone } from '@/lib/utils';
 import { useUIStore } from '@/stores/ui-store';
 import { useDataStore } from '@/stores/data-store';
 import { eventTypes, eventTypeLabels, type EventType } from '@/types/booking';
+import { paymentModeLabels, type PaymentMode } from '@/types/payment';
 import { toast } from 'sonner';
 import { DatePicker } from '@/components/shared/DatePicker';
 import { TimePicker } from '@/components/shared/TimePicker';
@@ -33,6 +34,8 @@ export function QuickAddBooking() {
   const [guestCount, setGuestCount] = useState('');
   const [totalAmount, setTotalAmount] = useState('');
   const [advanceAmount, setAdvanceAmount] = useState('');
+  const [advancePaymentMode, setAdvancePaymentMode] = useState<PaymentMode>('cash');
+  const [advanceTransactionRef, setAdvanceTransactionRef] = useState('');
   const [startTime, setStartTime] = useState('10:00');
   const [endTime, setEndTime] = useState('22:00');
   const [notes, setNotes] = useState('');
@@ -78,6 +81,8 @@ export function QuickAddBooking() {
         guest_count: guestCount ? Number(guestCount) : undefined,
         total_amount_paise: totalAmount ? Number(totalAmount) * 100 : undefined,
         advance_amount_paise: advanceAmount ? Number(advanceAmount) * 100 : undefined,
+        advance_payment_mode: advanceAmount ? advancePaymentMode : undefined,
+        advance_transaction_ref: (advanceAmount && advanceTransactionRef.trim()) ? advanceTransactionRef.trim() : undefined,
         notes: notes || undefined,
       });
 
@@ -101,8 +106,9 @@ export function QuickAddBooking() {
     setCustomerSearch(''); setSelectedCustomerId(null); setNewCustomerName('');
     setNewCustomerPhone(''); setIsNewCustomer(false); setEventDate('');
     setHallId(''); setEventType('wedding'); setGuestCount('');
-    setTotalAmount(''); setAdvanceAmount(''); setStartTime('10:00');
-    setEndTime('22:00'); setNotes(''); setIsSubmitting(false);
+    setTotalAmount(''); setAdvanceAmount('');
+    setAdvancePaymentMode('cash'); setAdvanceTransactionRef('');
+    setStartTime('10:00'); setEndTime('22:00'); setNotes(''); setIsSubmitting(false);
   };
 
   if (!isOpen) return null;
@@ -253,6 +259,26 @@ export function QuickAddBooking() {
                 className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none" />
             </div>
           </div>
+
+          {/* Advance Payment Details */}
+          {Number(advanceAmount) > 0 && (
+            <div className="grid grid-cols-2 gap-3 animate-fade-in">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Advance Mode</label>
+                <select id="select-qa-advance-mode" value={advancePaymentMode} onChange={(e) => setAdvancePaymentMode(e.target.value as PaymentMode)}
+                  className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none appearance-none bg-white">
+                  {Object.entries(paymentModeLabels).map(([val, label]) => (
+                    <option key={val} value={val}>{label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Ref No.</label>
+                <input id="input-qa-advance-ref" type="text" placeholder="TXN123456" value={advanceTransactionRef} onChange={(e) => setAdvanceTransactionRef(e.target.value)}
+                  className="w-full px-3.5 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand-200 outline-none" />
+              </div>
+            </div>
+          )}
 
           {/* Notes */}
           <div>

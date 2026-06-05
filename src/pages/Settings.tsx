@@ -1,4 +1,4 @@
-import { Building2, Users, Shield, Upload, FileText, CreditCard, Sparkles } from 'lucide-react';
+import { Building2, Users, Shield, Upload, FileText, CreditCard, Sparkles, Code, Boxes, Copy, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDataStore } from '@/stores/data-store';
 import { useAuthStore } from '@/stores/auth-store';
@@ -8,6 +8,8 @@ import { useState } from 'react';
 import { compressAndConvertToWebp } from '@/lib/image';
 import { StaffManagement } from '@/components/settings/StaffManagement';
 import { AccessControl } from '@/components/settings/AccessControl';
+import { InventorySettings } from '@/components/settings/InventorySettings';
+
 
 export default function Settings() {
   const organization = useDataStore((s) => s.organization);
@@ -17,7 +19,7 @@ export default function Settings() {
   const isOwner = role === 'owner';
   const openSubscriptionModal = useUIStore((s) => s.openSubscriptionModal);
 
-  const [activeTab, setActiveTab] = useState<'organization' | 'staff' | 'access' | 'subscription'>('organization');
+  const [activeTab, setActiveTab] = useState<'organization' | 'lead-widget' | 'inventory' | 'staff' | 'access' | 'subscription'>('organization');
   
   // Promo code redemption state
   const [settingsPromoCode, setSettingsPromoCode] = useState('');
@@ -46,6 +48,48 @@ export default function Settings() {
 
   const [shouldCrash, setShouldCrash] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  const [pushPermission, setPushPermission] = useState<NotificationPermission>(
+    typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default'
+  );
+
+  const handleRequestPushPermission = async () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      toast.error('Web Notifications are not supported in this browser.');
+      return;
+    }
+    try {
+      const permission = await Notification.requestPermission();
+      setPushPermission(permission);
+      if (permission === 'granted') {
+        toast.success('Push notifications enabled! 🔔');
+        new Notification('Notifications Enabled! 🎉', {
+          body: 'You will now receive real-time alerts from VenuePro.',
+          icon: '/favicon.svg'
+        });
+      } else if (permission === 'denied') {
+        toast.warning('Notifications permission denied. You can enable them in browser settings.');
+      }
+    } catch (e) {
+      console.error('Failed to request push notification permission:', e);
+    }
+  };
+
+  const handleSendTestNotification = () => {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification('Test Notification 🧪', {
+          body: 'This is a test desktop push alert from VenuePro settings.',
+          icon: '/favicon.svg'
+        });
+        toast.success('Test notification sent! 🔔');
+      } catch (e) {
+        console.error('Failed to send test browser notification:', e);
+      }
+    } else {
+      toast.error('Push notifications are not granted. Please enable them first.');
+    }
+  };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -94,72 +138,76 @@ export default function Settings() {
     throw new Error('This is a simulated Page-Level crash from Settings diagnostic tools.');
   }
 
+  const tabs = [
+    { id: 'organization', label: 'Organization Profile', icon: Building2, show: true },
+    { id: 'lead-widget', label: 'Inquiry Widget', icon: Code, show: isOwner || role === 'manager' || role === 'super_admin' },
+    { id: 'inventory', label: 'Inventory Catalog', icon: Boxes, show: isOwner || role === 'manager' || role === 'super_admin' },
+    { id: 'staff', label: 'Staff Management', icon: Users, show: isOwner || role === 'manager' || role === 'super_admin' },
+    { id: 'access', label: 'Access Control', icon: Shield, show: isOwner || role === 'manager' || role === 'super_admin' },
+    { id: 'subscription', label: 'Subscription & Plan', icon: CreditCard, show: isOwner || role === 'manager' || role === 'super_admin' },
+  ] as const;
+
   return (
-    <div className="space-y-6 animate-fade-in max-w-3xl">
+    <div className="space-y-6 animate-fade-in max-w-5xl">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
         <p className="text-sm text-gray-400 mt-0.5">Manage your organization profile, team members, and permissions</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-4 border-b border-gray-150 pb-px overflow-x-auto whitespace-nowrap flex-nowrap scrollbar-none">
-        <button
-          onClick={() => setActiveTab('organization')}
-          className={cn(
-            'px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5 shrink-0',
-            activeTab === 'organization'
-              ? 'border-brand-600 text-brand-600'
-              : 'border-transparent text-gray-400 hover:text-gray-600'
-          )}
-        >
-          <Building2 className="w-4 h-4" />
-          Organization Profile
-        </button>
-        {(isOwner || role === 'super_admin') && (
-          <>
-            <button
-              onClick={() => setActiveTab('staff')}
-              className={cn(
-                'px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5 shrink-0',
-                activeTab === 'staff'
-                  ? 'border-brand-600 text-brand-600'
-                  : 'border-transparent text-gray-400 hover:text-gray-600'
-              )}
-            >
-              <Users className="w-4 h-4" />
-              Staff Management
-            </button>
-            <button
-              onClick={() => setActiveTab('access')}
-              className={cn(
-                'px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5 shrink-0',
-                activeTab === 'access'
-                  ? 'border-brand-600 text-brand-600'
-                  : 'border-transparent text-gray-400 hover:text-gray-600'
-              )}
-            >
-              <Shield className="w-4 h-4" />
-              Access Control
-            </button>
-          </>
-        )}
-        {(isOwner || role === 'manager' || role === 'super_admin') && (
-          <button
-            onClick={() => setActiveTab('subscription')}
-            className={cn(
-              'px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-all flex items-center gap-1.5 shrink-0',
-              activeTab === 'subscription'
-                ? 'border-brand-600 text-brand-600'
-                : 'border-transparent text-gray-400 hover:text-gray-600'
-            )}
-          >
-            <CreditCard className="w-4 h-4" />
-            Subscription & Plan
-          </button>
-        )}
-      </div>
+      <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6 items-start">
+        {/* Navigation Sidebar / Horizontal Pills */}
+        <div className="space-y-1 md:bg-white md:border md:border-gray-150 md:p-3 md:rounded-2xl md:shadow-2xs md:sticky md:top-20">
+          
+          {/* Mobile view horizontal scrolling list */}
+          <div className="flex gap-2 pb-2 overflow-x-auto whitespace-nowrap scrollbar-none md:hidden border-b border-gray-150 mb-2">
+            {tabs.filter(t => t.show).map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0",
+                    isActive
+                      ? "bg-brand-600 border-brand-600 text-white shadow-sm"
+                      : "bg-white border-gray-200 text-gray-500 hover:text-gray-750"
+                  )}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
 
-      {activeTab === 'organization' ? (
+          {/* Desktop view vertical list */}
+          <div className="hidden md:flex flex-col gap-1">
+            {tabs.filter(t => t.show).map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={cn(
+                    "w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all text-left",
+                    isActive
+                      ? "bg-brand-50 text-brand-700 font-extrabold"
+                      : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                  )}
+                >
+                  <Icon className={cn("w-4 h-4 shrink-0", isActive ? "text-brand-600" : "text-gray-400")} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Content area */}
+        <div className="space-y-6 flex-1 w-full min-w-0">
+          {activeTab === 'organization' ? (
         <div className="space-y-6">
           <div className="bg-white rounded-2xl border border-gray-150 overflow-hidden shadow-2xs">
             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
@@ -247,6 +295,66 @@ export default function Settings() {
             </div>
           </div>
 
+          {/* Browser Push Notifications Card */}
+          <div className="bg-white rounded-2xl border border-gray-150 overflow-hidden shadow-2xs">
+            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+              <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                <span className="text-base">🔔</span>
+                Browser Push Notifications
+              </h3>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">Desktop Alerts Status</h4>
+                  <p className="text-[11px] text-gray-400">
+                    Receive real-time desktop notifications for booking creations, cancellations, payment collections, and lead follow-up alerts.
+                  </p>
+                </div>
+                
+                <div className="shrink-0 flex items-center gap-3">
+                  {pushPermission === 'granted' ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase tracking-wider">
+                      Granted
+                    </span>
+                  ) : pushPermission === 'denied' ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-100 uppercase tracking-wider">
+                      Blocked
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-100 uppercase tracking-wider">
+                      Not Configured
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-gray-100 flex flex-wrap gap-3">
+                {pushPermission === 'default' && (
+                  <button
+                    onClick={handleRequestPushPermission}
+                    className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-xs font-semibold text-white rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+                  >
+                    <span>Request Permission</span>
+                  </button>
+                )}
+                {pushPermission === 'granted' && (
+                  <button
+                    onClick={handleSendTestNotification}
+                    className="px-4 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 active:scale-95 text-xs font-bold text-gray-700 rounded-xl transition-all flex items-center gap-1.5"
+                  >
+                    <span>Send Test Notification</span>
+                  </button>
+                )}
+                {pushPermission === 'denied' && (
+                  <p className="text-xs text-rose-600 font-semibold leading-normal">
+                    Notifications are blocked by your browser settings. To re-enable them, please reset site permissions in your browser address bar.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Diagnostics */}
           <div className="bg-rose-50/40 rounded-2xl border border-rose-100 overflow-hidden p-6 space-y-4">
             <div>
@@ -268,6 +376,59 @@ export default function Settings() {
             </div>
           </div>
         </div>
+      ) : activeTab === 'lead-widget' ? (
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl border border-gray-150 overflow-hidden shadow-2xs">
+            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+              <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                <Code className="w-4 h-4 text-brand-600" />
+                Inquiry Form Embed Code
+              </h3>
+            </div>
+            <div className="p-6 space-y-5">
+              <div className="space-y-1.5">
+                <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Embed on Your Website</h4>
+                <p className="text-[11px] text-gray-400 leading-normal">
+                  Copy and paste the HTML code below into your website builder (WordPress, Wix, Webflow, or custom code) to show a premium request form. Submissions feed directly into your leads pipeline.
+                </p>
+              </div>
+
+              {/* Code display panel */}
+              <div className="relative rounded-2xl border border-gray-200 bg-slate-900 p-4 font-mono text-[11px] text-slate-200 leading-normal group select-all">
+                <div className="absolute right-3 top-3 opacity-80 group-hover:opacity-100 flex gap-2">
+                  <button
+                    onClick={() => {
+                      const embedCode = `<iframe src="${window.location.origin}/inquiry?org=${organization.id}" width="100%" height="600" style="border:none; border-radius:12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);"></iframe>`;
+                      navigator.clipboard.writeText(embedCode);
+                      toast.success('Embed iframe code copied to clipboard! 📋');
+                    }}
+                    className="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition-colors"
+                    title="Copy Code"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <pre className="whitespace-pre-wrap select-all pr-8">
+                  {`<iframe src="${window.location.origin}/inquiry?org=${organization.id}" width="100%" height="600" style="border:none; border-radius:12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);"></iframe>`}
+                </pre>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex gap-3 pt-2 border-t border-gray-100">
+                <a
+                  href={`/inquiry?org=${organization.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-4 py-2 bg-white border border-gray-250 hover:bg-gray-50 active:scale-95 text-xs font-bold text-gray-700 rounded-xl transition-all flex items-center gap-1.5"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" /> Open Preview
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : activeTab === 'inventory' ? (
+        <InventorySettings />
       ) : activeTab === 'staff' ? (
         <StaffManagement />
       ) : activeTab === 'access' ? (
@@ -392,6 +553,8 @@ export default function Settings() {
           </div>
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 }

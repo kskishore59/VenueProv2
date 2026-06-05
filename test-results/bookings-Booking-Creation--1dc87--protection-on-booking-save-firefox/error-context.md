@@ -12,10 +12,6 @@
 # Error details
 
 ```
-Test timeout of 30000ms exceeded while running "beforeEach" hook.
-```
-
-```
 Error: expect(locator).toContainText(expected) failed
 
 Locator: locator('h1')

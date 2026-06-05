@@ -9,6 +9,7 @@ import { useUIStore } from '@/stores/ui-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { useDataStore } from '@/stores/data-store';
 import { hasPermission } from '@/lib/permissions';
+import { toast } from 'sonner';
 
 const pageTitles: Record<string, string> = {
   '/': 'Dashboard',
@@ -72,9 +73,48 @@ export function Header() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifFilter, setNotifFilter] = useState<'all' | 'unread'>('all');
 
+  const [pushPermission, setPushPermission] = useState<NotificationPermission>(
+    typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default'
+  );
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
   useEffect(() => {
     fetchNotifications();
   }, [fetchNotifications]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const dismissed = localStorage.getItem('vp_push_banner_dismissed') === 'true';
+      setBannerDismissed(dismissed);
+    }
+  }, []);
+
+  const handleRequestPushPermission = async () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      toast.error('Web Notifications are not supported in this browser.');
+      return;
+    }
+    try {
+      const permission = await Notification.requestPermission();
+      setPushPermission(permission);
+      if (permission === 'granted') {
+        toast.success('Push notifications enabled! 🔔');
+        new Notification('Notifications Enabled! 🎉', {
+          body: 'You will now receive real-time alerts from VenuePro.',
+          icon: '/favicon.svg'
+        });
+      } else if (permission === 'denied') {
+        toast.warning('Notifications permission denied. You can enable them in browser settings.');
+      }
+    } catch (e) {
+      console.error('Failed to request push notification permission:', e);
+    }
+  };
+
+  const handleDismissBanner = () => {
+    setBannerDismissed(true);
+    localStorage.setItem('vp_push_banner_dismissed', 'true');
+  };
 
   const title = pageTitles[location.pathname] || 'VenuePro';
   const fullName = profile?.full_name || 'Venue Manager';
@@ -261,6 +301,33 @@ export function Header() {
                     </button>
                   )}
                 </div>
+
+                {/* Browser Push Permission Banner */}
+                {pushPermission === 'default' && !bannerDismissed && (
+                  <div className="mb-3 p-3 rounded-xl bg-brand-50/70 border border-brand-100/40 flex items-start gap-3 animate-fade-in">
+                    <span className="text-base flex-shrink-0 mt-0.5">🔔</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-bold text-brand-900">Enable Desktop Alerts</p>
+                      <p className="text-[10px] text-brand-700/85 leading-normal mt-0.5">
+                        Get real-time booking updates and lead follow-up alerts directly on your desktop.
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-1.5 shrink-0">
+                      <button
+                        onClick={handleRequestPushPermission}
+                        className="px-2.5 py-1 bg-brand-600 hover:bg-brand-700 active:scale-95 text-[9px] font-extrabold text-white rounded-lg transition-all shadow-3xs"
+                      >
+                        Enable
+                      </button>
+                      <button
+                        onClick={handleDismissBanner}
+                        className="text-[9px] font-bold text-gray-400 hover:text-gray-600 text-center transition-colors"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Tabs */}
                 <div className="flex gap-2 border-b border-gray-50 pb-2 mb-2">

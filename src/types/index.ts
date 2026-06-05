@@ -10,4 +10,4 @@ export * from './staff';
 export * from './notification';
 export * from './feedback';
 export * from './menu';
-
+export * from './inventory';
