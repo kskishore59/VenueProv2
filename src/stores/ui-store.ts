@@ -28,6 +28,10 @@ interface UIState {
   isAddCustomerOpen: boolean;
   isAddHallOpen: boolean;
 
+  // Day Summary Drawer
+  isDaySummaryOpen: boolean;
+  daySummaryDate: string | null;
+
   // Phase 3 States
   isImportOpen: boolean;
   isExpenseModalOpen: boolean;
@@ -58,6 +62,8 @@ interface UIState {
   };
 
   // Drawer/Modal actions
+  openDaySummary: (date: string) => void;
+  closeDaySummary: () => void;
   openBookingDrawer: (bookingId: string) => void;
   closeBookingDrawer: () => void;
   openQuickAdd: (date?: string) => void;
@@ -129,6 +135,10 @@ export const useUIStore = create<UIState>()((set) => ({
   isAddCustomerOpen: false,
   isAddHallOpen: false,
 
+  // Day Summary Drawer
+  isDaySummaryOpen: false,
+  daySummaryDate: null,
+
   // Phase 3 States
   isImportOpen: false,
   isExpenseModalOpen: false,
@@ -150,6 +160,10 @@ export const useUIStore = create<UIState>()((set) => ({
   confirmDialog: { open: false, title: '', description: '', variant: 'danger', onConfirm: null },
 
   // Actions
+  openDaySummary: (date) =>
+    set({ isDaySummaryOpen: true, daySummaryDate: date }),
+  closeDaySummary: () =>
+    set({ isDaySummaryOpen: false, daySummaryDate: null }),
   openBookingDrawer: (bookingId) =>
     set({ isBookingDrawerOpen: true, selectedBookingId: bookingId }),
   closeBookingDrawer: () =>

@@ -25,6 +25,7 @@ export function BookingCalendar() {
   const setSelectedDate = useUIStore((s) => s.setSelectedDate);
   const openQuickAdd = useUIStore((s) => s.openQuickAdd);
   const openBookingDrawer = useUIStore((s) => s.openBookingDrawer);
+  const openDaySummary = useUIStore((s) => s.openDaySummary);
 
   const bookings = useDataStore((s) => s.bookings);
   const getCustomerById = useDataStore((s) => s.getCustomerById);
@@ -121,6 +122,8 @@ export function BookingCalendar() {
                 setSelectedDate(day);
                 if (dayBookings.length === 0) {
                   openQuickAdd(dateKey);
+                } else {
+                  openDaySummary(dateKey);
                 }
               }}
               className={cn(

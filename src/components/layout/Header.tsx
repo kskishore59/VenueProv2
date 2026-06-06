@@ -179,13 +179,13 @@ export function Header() {
             <button
               onClick={() => setQuickAddOpen(!quickAddOpen)}
               className={cn(
-                'w-9 h-9 rounded-full bg-brand-600 text-white flex items-center justify-center',
+                'w-36 h-9 rounded-full font-semibold text-xs text=-brand-100 bg-brand-600 text-white flex items-center justify-center',
                 'hover:bg-brand-700 active:scale-95 shadow-sm hover:shadow-md',
                 'transition-all duration-200'
               )}
               title="Quick Add"
             >
-              <Plus className="w-4 h-4" />
+              Add Booking/Inquiry
             </button>
 
             {quickAddOpen && (

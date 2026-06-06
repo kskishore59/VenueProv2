@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { StatCard } from '@/components/shared/StatCard';
 import { BookingCalendar } from '@/components/booking/BookingCalendar';
+import { DaySummaryDrawer } from '@/components/booking/DaySummaryDrawer';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { WhatsAppButton } from '@/components/shared/WhatsAppButton';
 import { CallButton } from '@/components/shared/CallButton';
@@ -372,6 +373,7 @@ export default function Dashboard() {
           )}
         >
           <BookingCalendar />
+          <DaySummaryDrawer />
         </ErrorBoundary>
       </div>
 

@@ -329,7 +329,7 @@ export default function Landing() {
                 <button
                   type="button"
                   onClick={() => handleNavigate('/signup')}
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full text-xs font-bold transition-all hover:scale-[1.03] active:scale-98 shadow-md shadow-indigo-100"
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full text-xs font-bold transition-all hover:scale-[1.03] active:scale-98 shadow-md shadow-indigo-100 sm:block"
                 >
                   Start Free Trial
                 </button>

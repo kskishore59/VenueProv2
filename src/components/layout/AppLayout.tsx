@@ -84,12 +84,16 @@ export function AppLayout() {
   let isGracePeriod = false;
   let isBlocked = false;
 
-  if (status === 'trial' && endsAt) {
+  if (status === 'trial' && endsAt && !isNaN(endsAt.getTime())) {
     const diffTime = endsAt.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Normalize to midnight local time to compute exact calendar days remaining
+    const endsAtDate = new Date(endsAt.getFullYear(), endsAt.getMonth(), endsAt.getDate());
+    const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffDays = Math.round((endsAtDate.getTime() - nowDate.getTime()) / (1000 * 60 * 60 * 24));
 
-    if (diffDays > 0) {
-      trialDaysLeft = diffDays;
+    if (diffTime > 0) {
+      trialDaysLeft = Math.max(1, diffDays);
       isTrialActive = true;
     } else {
       // Trial has ended. Let's check grace period (3 days)
@@ -103,7 +107,7 @@ export function AppLayout() {
         isBlocked = true;
       }
     }
-  } else if ((status === 'expired' || status === 'canceled') && endsAt) {
+  } else if ((status === 'expired' || status === 'canceled') && endsAt && !isNaN(endsAt.getTime())) {
     const diffTimeGrace = now.getTime() - endsAt.getTime();
     const diffDaysGrace = diffTimeGrace / (1000 * 60 * 60 * 24);
 
@@ -219,7 +223,7 @@ export function AppLayout() {
               <div className="flex items-center gap-2">
                 <span className="text-base animate-bounce">📅</span>
                 <span>
-                  You are currently on a <strong>Pro Free Trial</strong>. You have <strong>{trialDaysLeft} {trialDaysLeft === 1 ? 'day' : 'days'} remaining</strong> to explore the premium features.
+                  You are currently on a <strong>Pro Free Trial</strong> (ends on <strong>{endsAt?.toLocaleDateString('en-IN', { dateStyle: 'medium' })}</strong>). You have <strong>{trialDaysLeft} {trialDaysLeft === 1 ? 'day' : 'days'} remaining</strong> to explore the premium features.
                 </span>
               </div>
               <button
