@@ -36,6 +36,8 @@ const Privacy = lazy(() => import('@/pages/Privacy'));
 const Terms = lazy(() => import('@/pages/Terms'));
 const SuperAdmin = lazy(() => import('@/pages/SuperAdmin'));
 const PublicInquiry = lazy(() => import('@/pages/PublicInquiry'));
+const Faqs = lazy(() => import('@/pages/Faqs'));
+const Features = lazy(() => import('@/pages/Features'));
 
 
 import { FeedbackWidget } from '@/components/shared/FeedbackWidget';
@@ -127,6 +129,8 @@ export default function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/inquiry" element={<PublicInquiry />} />
+              <Route path="/faqs" element={<Faqs />} />
+              <Route path="/features" element={<Features />} />
 
 
               {/* Protected Workspace Routes */}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import {
@@ -7,503 +7,465 @@ import {
   TrendingUp, MessageSquare, Clock, Sparkles, Menu, X,
   FileText, Smartphone, ShieldCheck, CheckCircle2, ChevronRight,
   HelpCircle, Printer, HeartHandshake, ArrowUpRight, Plus, Send,
-  AlertCircle, XCircle, BarChart3, Database, Shield, Share2, Award, Search, DollarSign, Phone
+  AlertCircle, XCircle, BarChart3, Shield, Award, Search, DollarSign, Phone,
+  Play, Lock, RefreshCw
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { cn } from '@/lib/utils';
 import venueProLogo from '@/assets/venueProLogo.svg';
 import { getAppUrl } from '@/lib/urls';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
-// FAQ data structure matching operational B2B questions in simple terms
-interface FAQItem {
-  question: string;
-  answer: string;
-  category: 'usage' | 'benefits' | 'challenges' | 'support';
-}
 
-const FAQS: FAQItem[] = [
-  {
-    category: 'usage',
-    question: "How easy is it to change from paper diaries or Excel sheets to VenuePro?",
-    answer: "Very simple! You can upload your customer lists and old bookings from Excel in one click. If you need help, our support team can set everything up for you over a quick WhatsApp call, completely free."
-  },
-  {
-    category: 'benefits',
-    question: "How does VenuePro help me get more hall bookings?",
-    answer: "It stops leads from getting lost. It alerts your team to follow up on inquiries, lets you share open dates and prices on WhatsApp instantly, and auto-reminds clients about pending payments. Most banquets see a 30% increase in bookings within 90 days."
-  },
-  {
-    category: 'challenges',
-    question: "Can I hide my profits and cash flow details from my staff?",
-    answer: "Yes, 100%. You can set staff permissions so coordinators only see the calendar slots to check dates and enter bookings, while all financial reports, net profits, and expenses are hidden and visible only to the owner."
-  },
-  {
-    category: 'support',
-    question: "What if the internet stops working during wedding season?",
-    answer: "No problem. VenuePro has offline protection. It saves all your bookings on your phone or computer even without internet. As soon as you connect to a mobile network, it automatically syncs everything safely to the cloud."
-  }
-];
 
-// Feature network nodes definition
-interface FeatureNode {
-  id: string;
+// Interactive Flow Steps
+interface FlowStep {
   title: string;
-  description: string;
-  metric: string;
+  desc: string;
   icon: any;
-  color: string;
+  metric: string;
 }
 
-const FEATURE_NODES: FeatureNode[] = [
+const FLOW_STEPS: FlowStep[] = [
   {
-    id: 'bookings',
-    title: 'Instant Calendar Lock',
-    description: 'Avoid double-booking disputes. Lock dates with real-time slot synchronization across all staff devices.',
-    metric: '100% Calendar Accuracy',
+    title: "1. Lead Entry",
+    desc: "Inquiry enters via website widget or phone walk-in. Synced in CRM.",
+    icon: Phone,
+    metric: "+84 Leads This Month"
+  },
+  {
+    title: "2. Slot Locked",
+    desc: "System validates date availability and locks calendar slot instantly.",
     icon: CalendarIcon,
-    color: 'from-blue-600 to-cyan-500'
+    metric: "0% Double-Bookings"
   },
   {
-    id: 'crm',
-    title: 'Smart CRM & Leads',
-    description: 'Capture wedding inquiries from WhatsApp, phone, and walk-ins. Turn cold inquiries into site visits.',
-    metric: '3x Lead Conversion',
-    icon: Users,
-    color: 'from-indigo-600 to-purple-500'
-  },
-  {
-    id: 'payments',
-    title: 'Automated Invoices',
-    description: 'Generate CA-compliant GST tax invoices. Split advances, catering plates, and add-ons in one click.',
-    metric: 'Zero Invoice Mistakes',
+    title: "3. Deposit Logged",
+    desc: "Splits advance payment, generates GST bill, and registers ledger.",
     icon: DollarSign,
-    color: 'from-emerald-600 to-teal-500'
+    metric: "₹1.5L Deposit UPI Recd"
   },
   {
-    id: 'whatsapp',
-    title: 'WhatsApp Automation',
-    description: 'Send booking updates, PDF receipts, and balance reminders automatically to client chats.',
-    metric: '98% Message Open Rate',
+    title: "4. Auto-WhatsApp",
+    desc: "Sends PDF invoice, schedule, and confirmation details to customer.",
     icon: MessageSquare,
-    color: 'from-green-600 to-emerald-500'
+    metric: "98% Open Rate"
   },
   {
-    id: 'operations',
-    title: 'Venue Intelligence',
-    description: 'Assign catering, decor, and cleaning checklists to staff. Monitor shifts and event handovers in real-time.',
-    metric: 'Effortless Management',
-    icon: Shield,
-    color: 'from-amber-600 to-orange-500'
-  },
-  {
-    id: 'analytics',
-    title: 'Financial Analytics',
-    description: 'Get reports on occupancy rates, outstanding collection timelines, and monthly expense curves.',
-    metric: '35% Revenue Optimization',
+    title: "5. Realtime Reports",
+    desc: "Pushes transaction metadata to dashboard, updating occupancy ratios.",
     icon: BarChart3,
-    color: 'from-cyan-600 to-blue-500'
-  },
-  {
-    id: 'marketplace',
-    title: 'Discoverability Network',
-    description: 'List your venue on the consumer discovery portal to receive organic bookings direct from brides and grooms.',
-    metric: 'Get Direct Leads',
-    icon: Search,
-    color: 'from-purple-600 to-pink-500'
-  },
-  {
-    id: 'staff',
-    title: 'Roles & Permissions',
-    description: 'Restrict sensitive financial data. Give staff view-only calendars while keeping dashboard control to owners.',
-    metric: 'Complete Data Security',
-    icon: ShieldCheck,
-    color: 'from-rose-600 to-orange-500'
+    metric: "₹52.8L Q3 Collections"
   }
 ];
 
-function InteractiveDemo() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'booking' | 'followup'>('dashboard');
-  const [progress, setProgress] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const [bookingStep, setBookingStep] = useState(0); // 0: initial, 1: cursor moving/typing, 2: clicked / confetti / success
-  const [cursorPos, setCursorPos] = useState({ x: 50, y: 70 });
-  const [followupStatus, setFollowupStatus] = useState<Record<string, string>>({}); // leadId -> status/text
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isIntersecting, setIsIntersecting] = useState(true);
+interface DemoWizardProps {
+  onSuccess?: (name: string, phone: string, venueName: string) => void;
+}
 
-  // Intersection Observer to run the animation only when visible in Hero viewport
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsIntersecting(entry.isIntersecting);
-      },
-      { threshold: 0.1 }
-    );
+function DemoWizard({ onSuccess }: DemoWizardProps) {
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState({
+    name: '',
+    phone: '',
+    venueName: '',
+    city: '',
+    venueType: '',
+    currentSystem: '',
+    preferredDate: '',
+    preferredTime: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
-
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
-
-  // Autoplay cycle
-  useEffect(() => {
-    if (isPaused || !isIntersecting) return;
-
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          setActiveTab((curr) => {
-            if (curr === 'dashboard') return 'booking';
-            if (curr === 'booking') return 'followup';
-            return 'dashboard';
-          });
-          return 0;
-        }
-        return prev + 1; // 1% every 50ms = 5s total
-      });
-    }, 50);
-
-    return () => clearInterval(interval);
-  }, [isPaused, isIntersecting]);
-
-  // Handle active tab switches (reset progress and step animations)
-  useEffect(() => {
-    setProgress(0);
-    if (activeTab === 'booking') {
-      setBookingStep(0);
-      const timer1 = setTimeout(() => {
-        // start animation
-        setBookingStep(1);
-        setCursorPos({ x: 75, y: 80 }); // move towards save button
-      }, 1000);
-      const timer2 = setTimeout(() => {
-        setBookingStep(2);
-        confetti({
-          particleCount: 50,
-          spread: 45,
-          origin: { x: 0.75, y: 0.6 }
-        });
-      }, 3000);
-      return () => {
-        clearTimeout(timer1);
-        clearTimeout(timer2);
-      };
-    } else {
-      setBookingStep(0);
-      setCursorPos({ x: 50, y: 70 });
-    }
-  }, [activeTab]);
-
-  const handleTabClick = (tab: 'dashboard' | 'booking' | 'followup') => {
-    setActiveTab(tab);
-    setIsPaused(true); // stop autoplay once user clicks
+  const handleSelectVenueType = (type: string) => {
+    setForm(prev => ({ ...prev, venueType: type }));
   };
 
-  return (
-    <div ref={containerRef} className="relative w-full max-w-[540px] h-[460px] md:w-[540px] md:h-[460px] shrink-0 group rounded-3xl">
-      {/* Glow background layer */}
-      <div className="absolute -inset-[3px] rounded-3xl bg-gradient-to-r from-indigo-500 via-cyan-400 to-purple-650 opacity-30 blur-md group-hover:opacity-45 transition duration-500 animate-edge-glow -z-10" />
-      {/* Sharp gradient border line */}
-      <div className="absolute -inset-[1px] rounded-3xl bg-gradient-to-r from-indigo-500 via-cyan-400 to-purple-650 animate-edge-glow -z-10" />
+  const handleSelectSystem = (system: string) => {
+    setForm(prev => ({ ...prev, currentSystem: system }));
+  };
 
-      {/* Main card */}
-      <div
-        className="w-full h-full bg-white rounded-3xl overflow-hidden flex flex-col shadow-lg transition-all duration-300"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => { if (progress > 0) setIsPaused(false); }}
-      >
-        {/* Tabs / Header buttons */}
-        <div className="bg-slate-50 px-4 pt-3 pb-0 border-b border-slate-100 shrink-0">
-          <div className="flex gap-2 text-xs font-bold select-none overflow-x-auto scrollbar-none pb-2">
-            {[
-              { id: 'dashboard', label: '📊 Owner Dashboard', color: 'from-indigo-500 to-cyan-500' },
-              { id: 'booking', label: '📅 Lock Booking', color: 'from-emerald-500 to-teal-500' },
-              { id: 'followup', label: '📞 Customer Follow-ups', color: 'from-amber-500 to-orange-500' },
-            ].map((tab) => {
-              const isSelected = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => handleTabClick(tab.id as any)}
-                  className={cn(
-                    "px-3 py-2 rounded-xl transition-all whitespace-nowrap relative overflow-hidden flex-1 text-center",
-                    isSelected
-                      ? "bg-white text-slate-900 shadow-sm border border-slate-200/50"
-                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/50"
-                  )}
-                >
-                  <span>{tab.label}</span>
-                  {isSelected && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-100">
-                      <div
-                        className={cn("h-full bg-gradient-to-r", tab.color)}
-                        style={{ width: `${progress}%`, transition: 'width 50ms linear' }}
-                      />
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+  const handleSelectDate = (date: string) => {
+    setForm(prev => ({ ...prev, preferredDate: date }));
+  };
+
+  const handleSelectTime = (time: string) => {
+    setForm(prev => ({ ...prev, preferredTime: time }));
+  };
+
+  const handleNext = () => {
+    if (step === 1) {
+      if (!form.venueType || !form.currentSystem) {
+        toast.error('Please make selections for both options.');
+        return;
+      }
+    } else if (step === 2) {
+      if (!form.name.trim()) {
+        toast.error('Please enter your name');
+        return;
+      }
+      const cleanPhone = form.phone.replace(/[^0-9]/g, '');
+      if (cleanPhone.length < 10) {
+        toast.error('Please enter a valid 10-digit mobile number');
+        return;
+      }
+    }
+    setStep(prev => prev + 1);
+  };
+
+  const handleBack = () => {
+    setStep(prev => prev - 1);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim()) {
+      toast.error('Please enter your name');
+      return;
+    }
+    const cleanPhone = form.phone.replace(/[^0-9]/g, '');
+    if (cleanPhone.length < 10) {
+      toast.error('Please enter a valid 10-digit mobile number');
+      return;
+    }
+    if (!form.preferredDate || !form.preferredTime) {
+      toast.error('Please select your preferred date and time');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const notesString = `Venue Type: ${form.venueType} | Current Setup: ${form.currentSystem} | Preferred Schedule: ${form.preferredDate} - ${form.preferredTime}`;
+
+      const { error } = await supabase.from('demo_requests').insert({
+        name: form.name.trim(),
+        phone: cleanPhone,
+        venue_name: form.venueName.trim() || null,
+        city: form.city.trim() || null,
+        notes: notesString
+      });
+
+      if (error) throw error;
+
+      toast.success("Demo request registered successfully! 🎉");
+      setSubmitted(true);
+      confetti({
+        particleCount: 80,
+        spread: 60,
+        origin: { y: 0.7 }
+      });
+      if (onSuccess) {
+        onSuccess(form.name.trim(), cleanPhone, form.venueName.trim());
+      }
+    } catch (err: any) {
+      console.error('Failed to submit demo request:', err);
+      toast.error(err.message || 'Failed to schedule demo. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (submitted) {
+    return (
+      <div className="text-center py-6 space-y-5 animate-scale-up">
+        <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto text-emerald-500 shadow-xs">
+          <Check className="w-6 h-6 stroke-[3]" />
         </div>
-
-        {/* Browser address bar visual */}
-        <div className="bg-slate-100/60 border-b border-slate-150 px-4 py-2 flex items-center gap-2 text-[10px] text-slate-400 select-none">
-          <div className="flex gap-1">
-            <span className="w-2 h-2 rounded-full bg-slate-300" />
-            <span className="w-2 h-2 rounded-full bg-slate-300" />
-            <span className="w-2 h-2 rounded-full bg-slate-300" />
-          </div>
-          <div className="flex-1 max-w-[200px] bg-white border border-slate-200/80 rounded-md py-0.5 text-center text-slate-500 truncate flex items-center justify-center gap-1 font-semibold">
-            <ShieldCheck className="w-3 h-3 text-indigo-500" />
-            venuepro.in/{activeTab}
-          </div>
+        <div className="space-y-2">
+          <h4 className="text-base font-extrabold text-slate-800 font-display">Demo Requested Successfully!</h4>
+          <p className="text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">
+            Dhanyawad <strong>{form.name}</strong>! We have registered your request. One of our product guides will contact you on WhatsApp (<strong>+91 {form.phone.replace(/[^0-9]/g, '')}</strong>) within 15 minutes to initiate your live walkthrough.
+          </p>
         </div>
-
-        {/* Frame Body Content */}
-        <div className="bg-[#fcfbf9] p-5 relative text-left text-slate-800 select-none flex-1 flex flex-col justify-between overflow-y-auto">
-          <AnimatePresence mode="wait">
-            {activeTab === 'dashboard' && (
-              <motion.div
-                key="dashboard"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-4 flex-1 flex flex-col justify-between"
-              >
-                {/* Financial KPI Widgets */}
-                <div className="grid grid-cols-3 gap-2.5">
-                  {[
-                    { label: "Revenue (कमाई)", value: "₹18.4L", sub: "+12% this month", color: "text-indigo-600" },
-                    { label: "Bookings", value: "28 Events", sub: "Grand Hall & Lawn", color: "text-emerald-650" },
-                    { label: "Due Balance", value: "₹4.20L", sub: "Needs reminder ⚠️", color: "text-rose-600" }
-                  ].map((item, idx) => (
-                    <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-2.5 flex flex-col justify-between shadow-2xs">
-                      <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider block">{item.label}</span>
-                      <span className={cn("text-sm sm:text-base font-black tracking-tight mt-1 block", item.color)}>{item.value}</span>
-                      <span className="text-[7px] text-slate-400 mt-0.5 block">{item.sub}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Miniature Interactive Calendar Grid */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-3 flex-1 mt-3 flex flex-col justify-between shadow-2xs">
-                  <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                    <span className="text-[10px] font-bold text-slate-700">Banquet Slot Scheduler</span>
-                    <span className="text-[8px] text-indigo-650 font-bold bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded">June 18 - 20</span>
-                  </div>
-
-                  <div className="grid grid-cols-4 gap-2 pt-2.5 text-[8px] flex-1">
-                    <div className="flex flex-col justify-around text-slate-450 font-bold border-r border-slate-100 pr-1 shrink-0">
-                      <span>Jun 18</span>
-                      <span>Jun 19</span>
-                      <span>Jun 20</span>
-                    </div>
-
-                    <div className="col-span-3 grid grid-cols-3 gap-1.5">
-                      {/* Headers */}
-                      <span className="text-[7px] text-slate-400 text-center font-bold">Grand Lawn</span>
-                      <span className="text-[7px] text-slate-400 text-center font-bold">Crystal Hall</span>
-                      <span className="text-[7px] text-slate-400 text-center font-bold">Royal Banquet</span>
-
-                      {/* Jun 18 */}
-                      <div className="p-1 rounded bg-indigo-50 border border-indigo-100 flex flex-col justify-between">
-                        <span className="font-extrabold text-indigo-700 truncate">Priya Wedding</span>
-                        <span className="text-[6px] text-indigo-600 font-bold uppercase mt-1">LOCKED 🔒</span>
-                      </div>
-                      <div className="border border-dashed border-slate-200 rounded flex items-center justify-center text-slate-400 text-[6px] hover:bg-slate-50 hover:text-slate-650 cursor-pointer">+ Block</div>
-                      <div className="p-1 rounded bg-amber-50 border border-amber-100 flex flex-col justify-between">
-                        <span className="font-extrabold text-amber-700 truncate">Corp AGM</span>
-                        <span className="text-[6px] text-amber-600 font-bold uppercase mt-1">INQUIRY ⏳</span>
-                      </div>
-
-                      {/* Jun 19 */}
-                      <div className="border border-dashed border-slate-200 rounded flex items-center justify-center text-slate-400 text-[6px] hover:bg-slate-50 hover:text-slate-655 cursor-pointer">+ Block</div>
-                      <div className="p-1 rounded bg-emerald-50 border border-emerald-100 flex flex-col justify-between">
-                        <span className="font-extrabold text-emerald-700 truncate">Kapoor Mehndi</span>
-                        <span className="text-[6px] text-emerald-600 font-bold uppercase mt-1">LOCKED 🔒</span>
-                      </div>
-                      <div className="border border-dashed border-slate-200 rounded flex items-center justify-center text-slate-400 text-[6px] hover:bg-slate-50 hover:text-slate-655 cursor-pointer">+ Block</div>
-
-                      {/* Jun 20 */}
-                      <div className="p-1 rounded bg-purple-50 border border-purple-100 flex flex-col justify-between">
-                        <span className="font-extrabold text-purple-700 truncate">Sen Reception</span>
-                        <span className="text-[6px] text-purple-650 font-bold uppercase mt-1">LOCKED 🔒</span>
-                      </div>
-                      <div className="border border-dashed border-slate-200 rounded flex items-center justify-center text-slate-400 text-[6px] hover:bg-slate-50 hover:text-slate-655 cursor-pointer">+ Block</div>
-                      <div className="p-1 rounded bg-cyan-50 border border-cyan-100 flex flex-col justify-between">
-                        <span className="font-extrabold text-cyan-700 truncate">Birthday Bash</span>
-                        <span className="text-[6px] text-cyan-600 font-bold uppercase mt-1">LOCKED 🔒</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <p className="text-[9px] text-slate-450 mt-2 text-center border-t border-slate-100 pt-2 font-semibold">
-                    💡 Owners see their full daily occupancy, income, and cash reports on one screen.
-                  </p>
-                </div>
-              </motion.div>
-            )}
-
-            {activeTab === 'booking' && (
-              <motion.div
-                key="booking"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-4 flex-1 flex flex-col justify-between relative"
-              >
-                {/* Form simulator */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-3 flex-1 flex flex-col justify-between gap-2.5 shadow-2xs">
-                  <div className="flex justify-between items-center pb-1.5 border-b border-slate-100">
-                    <span className="text-[10px] font-bold text-slate-700">📅 Quick Block Slot</span>
-                    <span className="text-[8px] text-emerald-650 font-bold bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded uppercase">No Conflict</span>
-                  </div>
-
-                  {/* Simulated Form inputs */}
-                  <div className="grid grid-cols-2 gap-2 text-[8px] font-semibold text-slate-455">
-                    <div>
-                      <label className="block text-slate-400 mb-1">Customer Name</label>
-                      <div className="bg-slate-50 border border-slate-150 rounded p-1.5 text-slate-800 font-bold">
-                        {bookingStep >= 1 ? "Ramesh Sharma" : <span className="opacity-0">Placeholder</span>}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-slate-400 mb-1">Event Date</label>
-                      <div className="bg-slate-50 border border-slate-150 rounded p-1.5 text-slate-800 font-bold">Oct 12, 2026</div>
-                    </div>
-                    <div>
-                      <label className="block text-slate-400 mb-1">Total Venue Price (₹)</label>
-                      <div className="bg-slate-50 border border-slate-150 rounded p-1.5 text-slate-800 font-bold">3,50,000</div>
-                    </div>
-                    <div>
-                      <label className="block text-slate-400 mb-1">Advance Collected (₹)</label>
-                      <div className="bg-slate-50 border border-slate-150 rounded p-1.5 text-slate-800 font-bold">87,500 (UPI)</div>
-                    </div>
-                  </div>
-
-                  {/* Animated cursor click overlay */}
-                  {bookingStep === 1 && (
-                    <motion.div
-                      className="absolute w-4 h-4 z-30 pointer-events-none select-none text-base animate-pulse"
-                      style={{ left: '60%', top: '65%' }}
-                    >
-                      🖱️
-                    </motion.div>
-                  )}
-
-                  {/* Submit button */}
-                  <button
-                    type="button"
-                    className={cn(
-                      "w-full py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300",
-                      bookingStep === 2
-                        ? "bg-emerald-650 text-white shadow-emerald-500/20"
-                        : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/10 cursor-default"
-                    )}
-                  >
-                    {bookingStep === 2 ? "✓ Date Locked & Receipt Shared!" : "Lock Booking & Send WhatsApp Receipt"}
-                  </button>
-                </div>
-
-                {/* Confetti & WhatsApp pop-up mock */}
-                {bookingStep === 2 && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9, y: 15 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    className="bg-white border border-slate-200 rounded-2xl p-2.5 mt-2 flex items-start gap-2.5 shadow-md max-w-[90%] self-end"
-                  >
-                    <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 font-bold text-xs">💬</div>
-                    <div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[8px] font-bold text-emerald-600">WhatsApp Notification</span>
-                        <span className="text-[7px] text-slate-400">Just now</span>
-                      </div>
-                      <p className="text-[9px] text-slate-600 leading-normal mt-1 italic font-semibold">
-                        "Dear Ramesh, your venue slot is LOCKED for Oct 12! PDF Invoice attached. Paid: ₹87,500 advance via UPI. Thank you!"
-                      </p>
-                    </div>
-                  </motion.div>
-                )}
-              </motion.div>
-            )}
-
-            {activeTab === 'followup' && (
-              <motion.div
-                key="followup"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-3 flex-1 flex flex-col justify-between"
-              >
-                <div className="bg-white border border-slate-200 rounded-2xl p-3 flex-1 flex flex-col justify-between gap-2 shadow-2xs">
-                  <div className="flex justify-between items-center pb-1.5 border-b border-slate-100">
-                    <span className="text-[10px] font-bold text-slate-700">📞 Follow-ups Due Today (बातचीत बाकी है)</span>
-                    <span className="text-[8px] text-amber-700 font-bold bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded uppercase">2 Actions Pending</span>
-                  </div>
-
-                  {/* List of customer inquiries */}
-                  <div className="space-y-2 text-[9px]">
-                    {[
-                      { id: '1', name: 'Sanjay Sharma', event: 'Wedding - Nov 15th', state: 'Cold prospect', defaultStatus: 'Site visit done. Needs menu price list.' },
-                      { id: '2', name: 'Megha Gupta', event: 'Sangeet - Dec 8th', state: 'Hot prospect', defaultStatus: 'Party requested discount sheet.' }
-                    ].map((lead) => (
-                      <div key={lead.id} className="bg-slate-50 border border-slate-150 rounded-xl p-2.5 flex items-center justify-between gap-3 hover:border-slate-250 transition-colors shadow-3xs">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-bold text-slate-800">{lead.name}</span>
-                            <span className="text-[7px] text-slate-450 font-bold block">{lead.event}</span>
-                          </div>
-                          <p className="text-[8px] text-slate-500 mt-1 truncate font-semibold">
-                            {followupStatus[lead.id] || lead.defaultStatus}
-                          </p>
-                        </div>
-
-                        {/* Action buttons */}
-                        <div className="flex items-center gap-1.5 shrink-0 select-none">
-                          <button
-                            key={`call-${lead.id}`}
-                            type="button"
-                            onClick={() => setFollowupStatus(prev => ({ ...prev, [lead.id]: "📞 Phone dialer opened!" }))}
-                            className="p-1.5 bg-white hover:bg-slate-100 text-slate-650 hover:text-slate-800 rounded-lg border border-slate-200 flex items-center justify-center transition-all active:scale-95 shadow-3xs"
-                            title="Call Customer"
-                          >
-                            <Phone className="w-3.5 h-3.5 text-indigo-500" />
-                          </button>
-                          <button
-                            key={`wa-${lead.id}`}
-                            type="button"
-                            onClick={() => {
-                              setFollowupStatus(prev => ({ ...prev, [lead.id]: "💬 Menu sent on WhatsApp!" }));
-                              confetti({ particleCount: 30, spread: 30, origin: { x: 0.6, y: 0.6 } });
-                            }}
-                            className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 hover:text-emerald-700 rounded-lg border border-emerald-150 flex items-center justify-center transition-all active:scale-95 shadow-3xs"
-                            title="WhatsApp Estimate"
-                          >
-                            <MessageSquare className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <p className="text-[9px] text-slate-450 mt-2 text-center border-t border-slate-100 pt-2 font-semibold">
-                    💡 Never forget a follow-up. Keep wedding inquiries warm and book faster.
-                  </p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <div className="pt-2">
+          <a
+            href={`https://wa.me/919812345678?text=Namaste%20VenuePro,%20I%20just%20requested%20a%20guided%20demo%20for%20${encodeURIComponent(form.venueName || 'my venue')}.%20Can%20we%20connect%20now?`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-sm font-bold transition-all shadow-md shadow-emerald-500/20 hover:scale-[1.02] active:scale-98"
+          >
+            <MessageSquare className="w-4 h-4" />
+            <span>Connect on WhatsApp Instantly</span>
+          </a>
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 text-left">
+      {/* Progress Header */}
+      <div className="flex justify-between items-center">
+        <span className="text-[10px] uppercase font-black tracking-wider text-slate-400">Step {step} of 3</span>
+        <div className="flex gap-1.5">
+          {[1, 2, 3].map(s => (
+            <div
+              key={s}
+              className={`w-10 h-1.5 rounded-full transition-all duration-300 ${s <= step ? 'bg-[#1E5EFF]' : 'bg-slate-200'
+                }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      <AnimatePresence mode="wait">
+        {step === 1 && (
+          <motion.div
+            key="step1"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-5"
+          >
+            <div>
+              <label className="block text-sm font-black text-slate-700 uppercase tracking-wide mb-2.5">
+                What type of venue do you manage? *
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { id: 'banquet', label: 'Banquet Hall 🏰' },
+                  { id: 'lawn', label: 'Wedding Lawn 🌿' },
+                  { id: 'resort', label: 'Resort & Lawn 🏨' },
+                  { id: 'convention', label: 'Convention Center 🏛️' }
+                ].map(opt => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => handleSelectVenueType(opt.id)}
+                    className={`p-4 rounded-xl border text-left text-sm font-bold transition-all flex justify-between items-center ${form.venueType === opt.id
+                      ? 'border-[#1E5EFF] bg-[#1E5EFF]/5 text-[#1E5EFF] shadow-xs ring-1 ring-[#1E5EFF]'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-350 hover:bg-slate-50'
+                      }`}
+                  >
+                    <span>{opt.label}</span>
+                    {form.venueType === opt.id && (
+                      <div className="w-4 h-4 rounded-full bg-[#1E5EFF] flex items-center justify-center">
+                        <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-black text-slate-700 uppercase tracking-wide mb-2.5">
+                How do you track slots and payments now? *
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { id: 'paper', label: 'Paper Registers 📖' },
+                  { id: 'excel', label: 'Excel Sheets 📊' },
+                  { id: 'software', label: 'Other Software 💻' },
+                  { id: 'none', label: 'New Venue / None 🚀' }
+                ].map(opt => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => handleSelectSystem(opt.id)}
+                    className={`p-4 rounded-xl border text-left text-sm font-bold transition-all flex justify-between items-center ${form.currentSystem === opt.id
+                      ? 'border-[#1E5EFF] bg-[#1E5EFF]/5 text-[#1E5EFF] shadow-xs ring-1 ring-[#1E5EFF]'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-350 hover:bg-slate-50'
+                      }`}
+                  >
+                    <span>{opt.label}</span>
+                    {form.currentSystem === opt.id && (
+                      <div className="w-4 h-4 rounded-full bg-[#1E5EFF] flex items-center justify-center">
+                        <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={!form.venueType || !form.currentSystem}
+              className="w-full text-center py-3.5 bg-[#1E5EFF] hover:bg-blue-600 disabled:bg-slate-200 text-white disabled:text-slate-400 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-99"
+            >
+              <span>Continue to Contact Details</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+
+        {step === 2 && (
+          <motion.div
+            key="step2"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-4"
+          >
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1.5">Your Name (आपका नाम) *</label>
+              <input
+                type="text"
+                required
+                value={form.name}
+                onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="e.g. Sanjay Yadav"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:border-[#1E5EFF] focus:ring-1 focus:ring-[#1E5EFF] transition-all outline-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5">WhatsApp Number *</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400 flex items-center gap-1 pointer-events-none">
+                    <span>🇮🇳</span>
+                    <span>+91</span>
+                  </span>
+                  <input
+                    type="tel"
+                    required
+                    value={form.phone}
+                    onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="98765 43210"
+                    className="w-full rounded-xl border border-slate-200 bg-white pl-16 pr-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:border-[#1E5EFF] focus:ring-1 focus:ring-[#1E5EFF] transition-all outline-none"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5">City / Location (शहर)</label>
+                <input
+                  type="text"
+                  value={form.city}
+                  onChange={(e) => setForm(prev => ({ ...prev, city: e.target.value }))}
+                  placeholder="e.g. Gurugram"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:border-[#1E5EFF] focus:ring-1 focus:ring-[#1E5EFF] transition-all outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1.5">Venue / Banquet Name (वेन्यू का नाम)</label>
+              <input
+                type="text"
+                value={form.venueName}
+                onChange={(e) => setForm(prev => ({ ...prev, venueName: e.target.value }))}
+                placeholder="e.g. Balaji Palace & Garden"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:border-[#1E5EFF] focus:ring-1 focus:ring-[#1E5EFF] transition-all outline-none"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleBack}
+                className="w-1/3 text-center py-3 border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 hover:border-slate-300 transition-all"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={!form.name.trim() || form.phone.replace(/[^0-9]/g, '').length < 10}
+                className="w-2/3 text-center py-3 bg-[#1E5EFF] hover:bg-blue-600 disabled:bg-slate-200 text-white disabled:text-slate-400 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-99"
+              >
+                <span>Continue to Schedule</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {step === 3 && (
+          <motion.div
+            key="step3"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-5"
+          >
+            <div>
+              <label className="block text-sm font-black text-slate-700 uppercase tracking-wide mb-2.5">
+                Preferred Day for Guided Tour *
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'today', label: '🗓️ Today' },
+                  { id: 'tomorrow', label: '🗓️ Tomorrow' },
+                  { id: 'later', label: '🗓️ Later' }
+                ].map(opt => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => handleSelectDate(opt.id)}
+                    className={`p-3 rounded-xl border text-center text-sm font-bold transition-all ${form.preferredDate === opt.id
+                      ? 'border-[#1E5EFF] bg-[#1E5EFF]/5 text-[#1E5EFF] shadow-xs ring-1 ring-[#1E5EFF]'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-350 hover:bg-slate-50'
+                      }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-black text-slate-700 uppercase tracking-wide mb-2.5">
+                Preferred Time Window *
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {[
+                  { id: 'morning', label: '🌅 Morning (10AM-1PM)' },
+                  { id: 'afternoon', label: '☀️ Afternoon (1PM-5PM)' },
+                  { id: 'evening', label: '🌆 Evening (5PM-8PM)' }
+                ].map(opt => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => handleSelectTime(opt.id)}
+                    className={`p-3 rounded-xl border text-center text-[10px] font-bold transition-all ${form.preferredTime === opt.id
+                      ? 'border-[#1E5EFF] bg-[#1E5EFF]/5 text-[#1E5EFF] shadow-xs ring-1 ring-[#1E5EFF]'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-350 hover:bg-slate-50'
+                      }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleBack}
+                className="w-1/3 text-center py-3 border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 hover:border-slate-300 transition-all"
+              >
+                Back
+              </button>
+              <button
+                type="submit"
+                onClick={handleSubmit}
+                disabled={isSubmitting || !form.preferredDate || !form.preferredTime}
+                className="w-2/3 text-center py-3 bg-[#1E5EFF] hover:bg-blue-600 disabled:bg-slate-200 text-white disabled:text-slate-400 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-99 disabled:opacity-60"
+              >
+                {isSubmitting ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Submitting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Submit Request</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -512,22 +474,26 @@ export default function Landing() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
 
-  const [activeFeature, setActiveFeature] = useState<FeatureNode>(FEATURE_NODES[0]);
+  const [activeStep, setActiveStep] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [faqCategory, setFaqCategory] = useState<'all' | 'usage' | 'benefits' | 'challenges' | 'support'>('all');
-  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
-
-  // Pricing toggle: true = Yearly, false = Monthly
   const [isYearlyBilling, setIsYearlyBilling] = useState(true);
 
   // WhatsApp Chat Simulator State
   const [whatsappStep, setWhatsappStep] = useState(0);
   const [messages, setMessages] = useState<{ sender: 'client' | 'system'; text: string; time: string; attachment?: string }[]>([
-    { sender: 'client', text: "Namaste, can we get a quick price estimate for June 18th event?", time: "11:00 AM" }
+    { sender: 'client', text: "Namaste, can we check slot availability and per plate rate for Dec 18th?", time: "11:00 AM" }
   ]);
 
   // Analytics Dashboard state
   const [analyticsTimeframe, setAnalyticsTimeframe] = useState<'month' | 'quarter' | 'year'>('quarter');
+
+  // Demo Request form states
+  const demoSectionRef = useRef<HTMLDivElement>(null);
+  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
+
+  const handleScrollToDemo = () => {
+    demoSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const getAnalyticsData = () => {
     switch (analyticsTimeframe) {
@@ -539,18 +505,11 @@ export default function Landing() {
           revenueTrend: '+12%',
           occupancy: '85%',
           occupancyTrend: '+4%',
-          bars: [
-            { label: 'W1', value: 40 },
-            { label: 'W2', value: 65 },
-            { label: 'W3', value: 85 },
-            { label: 'W4', value: 50 },
-            { label: 'W5', value: 90 },
-            { label: 'W6', value: 75 }
-          ],
+          bars: [45, 60, 85, 50, 90, 75],
           bookingsList: [
-            { name: 'Dev & Priya Wedding', space: 'Grand Lawn', amount: '₹12.4 Lakhs', status: 'Locked', date: 'Jun 18' },
-            { name: 'Corporate AGM', space: 'Ruby Banquet', amount: '₹4.8 Lakhs', status: 'Deposit Paid', date: 'Jun 22' },
-            { name: 'Sonia Birthday', space: 'Mini Hall', amount: '₹1.2 Lakhs', status: 'Inquiry', date: 'Jun 28' }
+            { name: 'Dev & Priya Wedding', space: 'Grand Lawn', amount: '₹12.4 Lakhs', status: 'Locked', date: 'Dec 18' },
+            { name: 'Corporate AGM', space: 'Ruby Banquet', amount: '₹4.8 Lakhs', status: 'Deposit Paid', date: 'Dec 22' },
+            { name: 'Sonia Birthday', space: 'Mini Hall', amount: '₹1.2 Lakhs', status: 'Inquiry', date: 'Dec 28' }
           ]
         };
       case 'year':
@@ -561,17 +520,10 @@ export default function Landing() {
           revenueTrend: '+25%',
           occupancy: '88%',
           occupancyTrend: '+7%',
-          bars: [
-            { label: 'Q1', value: 60 },
-            { label: 'Q2', value: 75 },
-            { label: 'Q3', value: 90 },
-            { label: 'Q4', value: 80 },
-            { label: 'Q5', value: 98 },
-            { label: 'Q6', value: 85 }
-          ],
+          bars: [70, 75, 90, 80, 98, 85],
           bookingsList: [
             { name: 'Winter Wedding Fest', space: 'Full Resort', amount: '₹45.0 Lakhs', status: 'Locked', date: 'Nov 12' },
-            { name: 'Medica Summit 2026', space: 'Convention Center', amount: '₹28.5 Lakhs', status: 'Locked', date: 'Dec 05' },
+            { name: 'Medical Summit 2026', space: 'Convention Center', amount: '₹28.5 Lakhs', status: 'Locked', date: 'Dec 05' },
             { name: 'Royal Engagement', space: 'Crystal Palace', amount: '₹15.0 Lakhs', status: 'Deposit Paid', date: 'Jan 15' }
           ]
         };
@@ -584,18 +536,11 @@ export default function Landing() {
           revenueTrend: '+19%',
           occupancy: '91%',
           occupancyTrend: '+5%',
-          bars: [
-            { label: 'Jan', value: 55 },
-            { label: 'Feb', value: 70 },
-            { label: 'Mar', value: 85 },
-            { label: 'Apr', value: 60 },
-            { label: 'May', value: 95 },
-            { label: 'Jun', value: 75 }
-          ],
+          bars: [55, 70, 85, 60, 95, 75],
           bookingsList: [
-            { name: 'Dev & Priya Wedding', space: 'Grand Lawn', amount: '₹12.4 Lakhs', status: 'Locked', date: 'Jun 18' },
-            { name: 'Tech Summit 2026', space: 'Ruby Banquet', amount: '₹4.8 Lakhs', status: 'Locked', date: 'Jun 25' },
-            { name: 'Rohan Engagement', space: 'Sapphire Hall', amount: '₹3.2 Lakhs', status: 'Deposit Paid', date: 'Jul 02' }
+            { name: 'Dev & Priya Wedding', space: 'Grand Lawn', amount: '₹12.4 Lakhs', status: 'Locked', date: 'Dec 18' },
+            { name: 'Tech Summit 2026', space: 'Ruby Banquet', amount: '₹4.8 Lakhs', status: 'Locked', date: 'Dec 25' },
+            { name: 'Rohan Engagement', space: 'Sapphire Hall', amount: '₹3.2 Lakhs', status: 'Deposit Paid', date: 'Jan 02' }
           ]
         };
     }
@@ -618,7 +563,7 @@ export default function Landing() {
       const timer = setTimeout(() => {
         setMessages(prev => [
           ...prev,
-          { sender: 'system', text: "✨ VenuePro Auto-Response:\nJune 18th slot is AVAILABLE! Let me calculate the quote.", time: "11:01 AM" }
+          { sender: 'system', text: "✨ VenuePro Auto-Response:\nDec 18th is AVAILABLE at Sapphire Lawn! Plate quote generated.", time: "11:01 AM" }
         ]);
         setWhatsappStep(2);
       }, 1000);
@@ -627,11 +572,11 @@ export default function Landing() {
       const timer = setTimeout(() => {
         setMessages(prev => [
           ...prev,
-          { sender: 'system', text: "📄 ESTIMATE_RECEIPT_JUNE_18.pdf", time: "11:02 AM", attachment: "PDF Estimate — 250 Guests, Veg Buffet" }
+          { sender: 'system', text: "📄 ESTIMATE_DECI_18_SAPPHIRE.pdf", time: "11:02 AM", attachment: "PDF Estimate — 300 Guests, Veg Buffet" }
         ]);
         setWhatsappStep(4);
         confetti({
-          particleCount: 60,
+          particleCount: 50,
           spread: 60,
           origin: { y: 0.8 }
         });
@@ -645,70 +590,130 @@ export default function Landing() {
     if (whatsappStep === 2) setWhatsappStep(3);
   };
 
-  const staggerContainer = {
-    hidden: {},
-    visible: {
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
+  // Autoplay flow stepper
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveStep((prev) => (prev + 1) % FLOW_STEPS.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
 
-  const fadeInUp = {
-    hidden: { opacity: 0, y: 40 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as const }
-    }
-  };
 
-  const filteredFaqs = faqCategory === 'all'
-    ? FAQS
-    : FAQS.filter(f => f.category === faqCategory);
 
   return (
-    <div className="bg-[#fcfbf9] text-slate-900 min-h-screen font-sans bg-grid-pattern relative selection:bg-brand-100 selection:text-brand-900 overflow-hidden">
+    <div className="bg-[#F6F7FB] text-slate-800 min-h-screen font-sans relative selection:bg-[#1E5EFF]/15 selection:text-[#1E5EFF] overflow-hidden">
 
-      {/* Edge glow animation keyframes */}
+      {/* Custom Styles */}
       <style dangerouslySetInnerHTML={{
         __html: `
-        @keyframes borderGlow {
-          0%, 100% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          background-color: #F6F7FB;
         }
-        .animate-edge-glow {
+        
+        .font-display {
+          font-family: 'Outfit', sans-serif;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+          width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+          background: #F6F7FB;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: #CBD5E1;
+          border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: #94A3B8;
+        }
+
+        .stripe-grid {
+          background-image: 
+            linear-gradient(to right, rgba(30, 94, 255, 0.04) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(30, 94, 255, 0.04) 1px, transparent 1px);
+          background-size: 40px 40px;
+          mask-image: radial-gradient(circle at center, black 40%, transparent 95%);
+          -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 95%);
+        }
+
+        .inner-dot-grid {
+          background-image: radial-gradient(rgba(11, 27, 58, 0.03) 1px, transparent 0);
+          background-size: 16px 16px;
+        }
+
+        .glow-blue {
+          box-shadow: 0 0 0 1px rgba(30, 94, 255, 0.05), 0 10px 40px -10px rgba(30, 94, 255, 0.08);
+        }
+
+        .glow-gold {
+          box-shadow: 0 0 0 1px rgba(245, 197, 66, 0.1), 0 10px 40px -10px rgba(245, 197, 66, 0.12);
+        }
+
+        @keyframes pulseGlow {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.7; }
+        }
+
+        .animate-pulse-glow {
+          animation: pulseGlow 8s ease-in-out infinite;
+        }
+
+        @keyframes borderRotate {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+
+        .gradient-border-glow {
+          position: relative;
+          background: white;
+          border-radius: 24px;
+          z-index: 1;
+        }
+
+        .gradient-border-glow::before {
+          content: '';
+          position: absolute;
+          inset: -1.5px;
+          border-radius: 25.5px;
+          background: linear-gradient(90deg, #1E5EFF, #F5C542, #1E5EFF);
           background-size: 200% 200%;
-          animation: borderGlow 6s linear infinite;
+          animation: borderRotate 6s linear infinite;
+          z-index: -1;
+          opacity: 0.6;
         }
       `}} />
 
-      {/* Decorative ambient blobs reflecting luxury warmth and cyan technology */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] aspect-square rounded-full bg-gradient-to-tr from-indigo-100/30 via-cyan-100/20 to-amber-100/20 blur-[130px] -z-10 animate-pulse-slow" />
-      <div className="absolute top-[40%] right-[-10%] w-[45%] aspect-square rounded-full bg-gradient-to-tr from-purple-100/30 to-brand-100/20 blur-[130px] -z-10 animate-pulse-slow" style={{ animationDelay: '3s' }} />
+      {/* Background Gradients */}
+      <div className="absolute top-0 left-1/4 w-[60%] aspect-square rounded-full bg-gradient-to-tr from-[#1E5EFF]/5 via-[#0B1B3A]/5 to-[#F5C542]/5 blur-[160px] -z-10 animate-pulse-glow" />
+      <div className="absolute top-[35%] right-0 w-[45%] aspect-square rounded-full bg-gradient-to-tr from-[#1E5EFF]/4 to-[#F5C542]/4 blur-[160px] -z-10 animate-pulse-glow" style={{ animationDelay: '4s' }} />
+      <div className="absolute bottom-0 left-[-10%] w-[50%] aspect-square rounded-full bg-gradient-to-tr from-[#1E5EFF]/5 via-[#0B1B3A]/5 to-transparent blur-[160px] -z-10 animate-pulse-glow" style={{ animationDelay: '2s' }} />
+
+      {/* Grid Pattern overlay */}
+      <div className="absolute inset-0 stripe-grid pointer-events-none opacity-60 -z-10" />
 
       {/* Floating Glass Header */}
-      <header className="fixed top-4 left-4 right-4 z-50 max-w-7xl mx-auto shadow">
-        <nav className="backdrop-blur-xl bg-white/70 border border-slate-100/60 px-5 py-3 rounded-full flex items-center justify-between shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
-          <div className="flex items-center gap-8">
-            <a href="#" className="flex items-center group focus:outline-none transition-transform hover:scale-105">
+      <header className="fixed top-5 left-4 right-4 z-50 max-w-7xl mx-auto">
+        <nav className="backdrop-blur-xl bg-white/70 border border-slate-200/50 px-6 py-3.5 rounded-full flex items-center justify-between shadow-lg">
+          <div className="flex items-center gap-10">
+            <a href="#" className="flex items-center group transition-transform hover:scale-102">
               <img
                 src={venueProLogo}
                 alt="VenuePro Logo"
-                className="h-14 w-auto object-contain transition-transform group-hover:scale-102"
+                className="h-10 w-auto object-contain"
               />
             </a>
             {/* Desktop Links */}
-            <div className="hidden md:flex items-center gap-6">
-              <a href="#features" className="text-sm font-semibold text-slate-500 hover:text-slate-950 transition-colors hover:scale-105">Features</a>
-              <a href="#workflow" className="text-sm font-semibold text-slate-500 hover:text-slate-950 transition-colors  hover:scale-105">Live Operations</a>
-              <a href="#marketplace" className="text-sm font-semibold text-slate-500 hover:text-slate-950 transition-colors  hover:scale-105">Marketplace</a>
-              <a href="#analytics" className="text-sm font-semibold text-slate-500 hover:text-slate-950 transition-colors  hover:scale-105">Analytics</a>
-              <a href="#faq" className="text-sm font-semibold text-slate-500 hover:text-slate-950 transition-colors hover:scale-105">Help FAQ</a>
+            <div className="hidden md:flex items-center gap-7">
+              <button onClick={() => handleNavigate('/features')} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">Features</button>
+              <a href="#workflow" className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] transition-all hover:scale-110 ease-in-out">How It Works</a>
+              <button onClick={() => setIsDemoModalOpen(true)} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all">Book Demo</button>
+              <button onClick={() => handleNavigate('/faqs')} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">Support FAQ</button>
             </div>
           </div>
 
@@ -717,7 +722,7 @@ export default function Landing() {
               <button
                 type="button"
                 onClick={() => handleNavigate('/dashboard')}
-                className="px-5 py-2.5 bg-slate-950 hover:bg-slate-900 text-white rounded-full text-xs font-bold transition-all hover:scale-[1.03] active:scale-98 shadow-sm"
+                className="px-5 py-2.5 bg-[#1E5EFF] hover:bg-blue-600 text-white rounded-full text-sm font-bold transition-all hover:scale-[1.03] active:scale-98 shadow-md shadow-blue-500/10"
               >
                 Go to Dashboard
               </button>
@@ -726,14 +731,14 @@ export default function Landing() {
                 <button
                   type="button"
                   onClick={() => handleNavigate('/login')}
-                  className="px-4 py-2.5 text-xs font-bold text-slate-500 hover:text-slate-950 transition-colors hidden sm:block"
+                  className="px-4 py-2.5 text-sm font-bold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all hidden sm:block"
                 >
                   Log In
                 </button>
                 <button
                   type="button"
                   onClick={() => handleNavigate('/signup')}
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full text-xs font-bold transition-all hover:scale-[1.03] active:scale-98 shadow-md shadow-indigo-100 "
+                  className="px-5 py-2.5 bg-[#1E5EFF] hover:bg-blue-600 text-white rounded-full text-sm font-bold transition-all hover:scale-[1.03] active:scale-98 shadow-md shadow-blue-500/10"
                 >
                   Start Free Trial
                 </button>
@@ -744,7 +749,7 @@ export default function Landing() {
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-1.5 md:hidden text-slate-500 hover:text-slate-950 rounded-lg focus:outline-none"
+              className="p-1.5 md:hidden text-slate-500 hover:text-[#0B1B3A] rounded-lg focus:outline-none"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -758,17 +763,17 @@ export default function Landing() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="absolute top-16 left-0 right-0 bg-white border border-slate-100 rounded-3xl p-5 shadow-2xl md:hidden flex flex-col gap-3"
+              className="absolute top-16 left-0 right-0 bg-white/95 border border-slate-200 backdrop-blur-2xl rounded-3xl p-5 shadow-2xl md:hidden flex flex-col gap-3"
             >
-              <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold text-slate-600 hover:text-slate-950 px-3 py-2 rounded-xl hover:bg-slate-50 transition-all">Features</a>
-              <a href="#workflow" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold text-slate-600 hover:text-slate-950 px-3 py-2 rounded-xl hover:bg-slate-50 transition-all">Live Operations</a>
-              <a href="#marketplace" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold text-slate-600 hover:text-slate-950 px-3 py-2 rounded-xl hover:bg-slate-50 transition-all">Marketplace</a>
-              <a href="#analytics" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-bold text-slate-600 hover:text-slate-950 px-3 py-2 rounded-xl hover:bg-slate-50 transition-all">Analytics</a>
+              <button onClick={() => { setIsMobileMenuOpen(false); handleNavigate('/features'); }} className="text-left text-sm font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">Features</button>
+              <a href="#workflow" onClick={() => setIsMobileMenuOpen(false)} className="text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all">How It Works</a>
+              <button onClick={() => { setIsMobileMenuOpen(false); setIsDemoModalOpen(true); }} className="text-left text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all">Book Demo</button>
+              <button onClick={() => { setIsMobileMenuOpen(false); handleNavigate('/faqs'); }} className="text-left text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">Support FAQs</button>
               {!user && (
                 <button
                   type="button"
                   onClick={() => { setIsMobileMenuOpen(false); handleNavigate('/login'); }}
-                  className="w-full text-center py-2.5 text-sm font-bold text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50"
+                  className="w-full text-center py-2.5 text-md font-bold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50"
                 >
                   Log In
                 </button>
@@ -779,986 +784,1048 @@ export default function Landing() {
       </header>
 
       {/* Main content body */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24 space-y-36">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 pb-24 space-y-36">
 
         {/* 1. HERO SECTION */}
-        <motion.section
-          id="hero"
-          initial="hidden"
-          animate="visible"
-          variants={staggerContainer}
-          className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center pt-8 w-full"
-        >
-          <motion.div variants={fadeInUp} className="lg:col-span-6 space-y-6 text-left">
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-100 text-amber-800 text-[10px] font-black uppercase tracking-wider shadow-3xs">
-              <Award className="w-3.5 h-3.5" /> India's Easiest Venue Management App
+        <section id="hero" className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center min-h-[75vh] pt-4 w-full">
+          <div className="lg:col-span-6 space-y-6 text-left">
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-slate-200/80 text-[#0B1B3A] text-[10px] font-black uppercase tracking-wider shadow-sm">
+              <Award className="w-3.5 h-3.5 text-[#F5C542]" /> India's Premium Venue Operating System
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-950 tracking-tight leading-[1.1] font-display">
-              Stop Losing Bookings to <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-cyan-500">Paper Registers</span> & Missing Follow-ups
+            <h1 className="text-5xl sm:text-6xl lg:text-6xl tracking-tight leading-[1.12] font-display text-[#0B1B3A]">
+              <span className="block text-black-600 font-large font-sans text-5xl md:text-5xl sm:text-4xl lg:text-6xl mb-2">Still managing your bookings through</span>
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#1E5EFF] via-[#8b5cf6] to-[#1a1846] font-extrabold font-display">WhatsApp & Registers?</span>
             </h1>
-            <p className="text-sm sm:text-base text-slate-500 leading-relaxed max-w-xl font-semibold">
-              Lock Bookings, track Follow-ups & manage Staff in one click. The simplest app built for Banquet Halls, Wedding Lawns, Resorts, and Convention Centers. No computer skills needed.
+            <p className="text-md sm:text-base text-slate-600 leading-relaxed max-w-xl">
+              Most banquet halls and wedding venues lose track of payments, follow-ups, and event coordination when everything is managed manually in diaries.
             </p>
+            <div className="border-l-2 border-[#1E5EFF]/40 pl-4 py-1 max-w-xl space-y-0.5">
+              <span className="text-md font-bold text-slate-800 block">Upgrade to VenuePro</span>
+              <p className="text-sm sm:text-md text-slate-500 leading-relaxed">
+                The modern operating system built specifically for banquet halls, wedding lawns, resorts, and convention centers in India.
+              </p>
+            </div>
             <div className="flex flex-wrap gap-4 pt-2">
               <button
                 type="button"
                 onClick={() => handleNavigate('/signup')}
-                className="px-6 py-4 bg-brand-500 hover:bg-indigo-700 text-white rounded-full text-xs font-bold shadow-lg shadow-indigo-100 transition-all hover:scale-[1.02] active:scale-98"
-              >
-                Start Free Trial (14 Days)
-              </button>
-              <a
-                href="#workflow"
-                className="px-6 py-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 rounded-full text-xs font-bold transition-all flex items-center gap-2"
-              >
-                See How It Works <ArrowRight className="w-4 h-4 text-slate-400" />
-              </a>
-            </div>
-          </motion.div>
-
-          <motion.div variants={fadeInUp} className="lg:col-span-6 relative flex justify-center w-full">
-            <InteractiveDemo />
-          </motion.div>
-        </motion.section>
-
-        {/* 2. PAIN TO TRANSFORMATION */}
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={staggerContainer}
-          className="space-y-12 text-center"
-        >
-          <motion.div variants={fadeInUp} className="space-y-3">
-            <h2 className="text-4xl font-extrabold text-slate-950 font-display tracking-tight">
-              Say Goodbye to Messy Diary Registers
-            </h2>
-            <p className="text-sm text-slate-500 max-w-xl mx-auto font-semibold">
-              Banquet management shouldn't be complicated. Here is how VenuePro saves you from daily headaches.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {/* The Chaos */}
-            <motion.div
-              variants={fadeInUp}
-              className="bg-rose-50/30 border border-rose-100 rounded-3xl p-8 space-y-6 text-left relative transition-all hover:border-rose-200"
-            >
-              <div className="absolute top-4 right-4 text-[9px] font-bold text-rose-600 uppercase tracking-widest bg-rose-50 border border-rose-100 px-2.5 py-0.5 rounded-full">Old Way (Diaries & Paper)</div>
-              <h3 className="text-lg font-bold text-rose-950">The Headaches of Paper Registers</h3>
-              <div className="space-y-4">
-                {[
-                  { title: "Double-Booking Overlaps", desc: "Two wedding parties arrive for the same date because a slot was written in pencil or forgotten in a diary." },
-                  { title: "Lost Payment Slips & Disputes", desc: "Advances collected in cash get misplaced or forgotten, leading to arguments during final settlement." },
-                  { title: "Slow Quotes & Manual WhatsApp", desc: "Manually calculating buffet plates and decor rates, causing delays and letting competitors steal clients." }
-                ].map((item, idx) => (
-                  <div key={idx} className="flex gap-3 items-start">
-                    <div className="w-5 h-5 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">✕</div>
-                    <div>
-                      <span className="text-sm font-bold text-rose-900 block">{item.title}</span>
-                      <p className="text-[12px] text-rose-700 mt-0.5 leading-relaxed">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* The Clarity */}
-            <motion.div
-              variants={fadeInUp}
-              className="bg-emerald-50/30 border border-emerald-100 rounded-3xl p-8 space-y-6 text-left relative transition-all hover:border-emerald-200"
-            >
-              <div className="absolute top-4 right-4 text-[9px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-full">Transformation</div>
-              <h3 className="text-lg font-bold text-emerald-950">Intelligent Clarity with VenuePro</h3>
-              <div className="space-y-4">
-                {[
-                  { title: "100% Calendar Slots Locking", desc: "Slots lock instantly across all staff phones. No double-bookings, no arguments, ever." },
-                  { title: "Automated WhatsApp Invoice Trails", desc: "Auto-tracks advances, catering plates, and tax bills. Sends bills directly to client phones on WhatsApp." },
-                  { title: "10-Second Digital Quotes", desc: "Instantly create menu rates and venue bills. Share beautiful quotes via WhatsApp in one click." }
-                ].map((item, idx) => (
-                  <div key={idx} className="flex gap-3 items-start">
-                    <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">✓</div>
-                    <div>
-                      <span className="text-sm font-bold text-emerald-900 block">{item.title}</span>
-                      <p className="text-[12px] text-emerald-700 mt-0.5 leading-relaxed">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </div>
-        </motion.section>
-
-        {/* 3. FEATURE ECOSYSTEM */}
-        <motion.section
-          id="features"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={staggerContainer}
-          className="space-y-12 text-center"
-        >
-          <motion.div variants={fadeInUp} className="space-y-3">
-            <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold uppercase tracking-wider">
-              Core Capabilities
-            </div>
-            <h2 className="text-4xl font-extrabold text-slate-950 font-display tracking-tight">
-              Everything You Need to Run Your Venue
-            </h2>
-            <p className="text-sm text-slate-500 max-w-xl mx-auto font-semibold">
-              Every detail of your venue synchronized in real time. Click on any block to see what it does.
-            </p>
-          </motion.div>
-
-          {/* Desktop view (hidden on mobile) */}
-          <div className="hidden lg:grid grid-cols-12 gap-8 items-center max-w-6xl mx-auto">
-            {/* Interactive Grid nodes */}
-            <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {FEATURE_NODES.map((node) => {
-                const IconComponent = node.icon;
-                const isSelected = activeFeature.id === node.id;
-                return (
-                  <button
-                    key={node.id}
-                    type="button"
-                    onClick={() => setActiveFeature(node)}
-                    className={cn(
-                      "p-4 rounded-2xl text-left border flex flex-col justify-between aspect-square transition-all duration-300 relative overflow-hidden shadow-2xs hover:-translate-y-0.5",
-                      isSelected
-                        ? "bg-white border-indigo-600 shadow-md scale-102"
-                        : "bg-white/50 border-slate-100 hover:border-slate-350 hover:bg-white"
-                    )}
-                  >
-                    <div className={cn(
-                      "w-8 h-8 rounded-xl flex items-center justify-center text-white bg-gradient-to-br shadow-sm",
-                      node.color
-                    )}>
-                      <IconComponent className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-bold text-slate-400 block tracking-wider uppercase">{node.metric.split(' ')[0]}</span>
-                      <span className="text-md font-semibold text-slate-900 block mt-1">{node.title.split(' ')[0]}</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Display detailed node panel */}
-            <div className="lg:col-span-5">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeFeature.id}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-white border border-slate-100 rounded-3xl p-8 text-left shadow-[0_8px_30px_rgb(0,0,0,0.01)] space-y-6"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={cn(
-                      "w-12 h-12 rounded-2xl flex items-center justify-center text-white bg-gradient-to-br shadow-md",
-                      activeFeature.color
-                    )}>
-                      <activeFeature.icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-extrabold text-slate-950 font-display">{activeFeature.title}</h3>
-                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full tracking-wider uppercase border border-emerald-100 mt-1 inline-block">
-                        {activeFeature.metric}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-sm text-slate-500 leading-relaxed font-semibold">
-                    {activeFeature.description}
-                  </p>
-                  <div className="pt-4 border-t border-slate-55">
-                    <button
-                      type="button"
-                      onClick={() => handleNavigate('/signup')}
-                      className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5"
-                    >
-                      Try this feature <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </div>
-
-          {/* Mobile view accordion (visible on mobile only) */}
-          <div className="block lg:hidden space-y-3.5 text-left max-w-xl mx-auto px-1">
-            {FEATURE_NODES.map((node) => {
-              const IconComponent = node.icon;
-              const isSelected = activeFeature.id === node.id;
-              return (
-                <div
-                  key={node.id}
-                  className={cn(
-                    "bg-white border rounded-2xl overflow-hidden shadow-2xs transition-all duration-300",
-                    isSelected ? "border-indigo-600 ring-1 ring-indigo-600/30" : "border-slate-100"
-                  )}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setActiveFeature(node)}
-                    className="w-full p-4 flex items-center justify-between gap-3 text-left focus:outline-none"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center text-white bg-gradient-to-br shadow-xs shrink-0", node.color)}>
-                        <IconComponent className="w-4.5 h-4.5" />
-                      </div>
-                      <div>
-                        <span className="text-xs font-bold text-slate-900 block">{node.title}</span>
-                        <span className="text-[9px] text-emerald-650 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full tracking-wider uppercase font-semibold mt-1 inline-block">
-                          {node.metric}
-                        </span>
-                      </div>
-                    </div>
-                    <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0", isSelected && "rotate-180")} />
-                  </button>
-
-                  <AnimatePresence initial={false}>
-                    {isSelected && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <div className="px-4 pb-4 pt-1.5 text-xs text-slate-500 leading-relaxed font-semibold border-t border-slate-100 bg-[#fcfbf9]/50">
-                          <p>{node.description}</p>
-                          <div className="pt-3 flex justify-start">
-                            <button
-                              type="button"
-                              onClick={() => handleNavigate('/signup')}
-                              className="text-[11px] font-bold text-indigo-650 hover:text-indigo-700 flex items-center gap-1"
-                            >
-                              Try this feature <ArrowRight className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            })}
-          </div>
-        </motion.section>
-
-        {/* 4. LIVE OPERATION STORY */}
-        <motion.section
-          id="workflow"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={staggerContainer}
-          className="space-y-12 text-center"
-        >
-          <motion.div variants={fadeInUp} className="space-y-3">
-            <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-cyan-50 text-cyan-700 text-[10px] font-bold uppercase tracking-wider">
-              Easy Workflow
-            </div>
-            <h2 className="text-4xl font-extrabold text-slate-950 font-display tracking-tight">
-              How VenuePro Works in 5 Simple Steps
-            </h2>
-            <p className="text-sm text-slate-500 max-w-xl mx-auto font-semibold">
-              From the first phone call inquiry to the final wedding payment, everything runs smoothly.
-            </p>
-          </motion.div>
-
-          {/* Timeline Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 max-w-6xl mx-auto relative">
-            {[
-              { num: "01", title: "Inquiry Captured", desc: "Customer details and event dates registered instantly. Never forget a potential client.", icon: MessageSquare },
-              { num: "02", title: "Lock The Date", desc: "Select the hall, enter the advance amount, and lock the date. Slot is blocked immediately.", icon: CalendarIcon },
-              { num: "03", title: "Auto WhatsApp Receipt", desc: "The system automatically sends a professional PDF receipt to the client's WhatsApp.", icon: FileText },
-              { num: "04", title: "Staff Checklist", desc: "Catering food plates, decorations, and shifts checklists are assigned to staff on their phones.", icon: CheckCircle2 },
-              { num: "05", title: "Final Billing Clear", desc: "Auto-calculates buffet counts and pending amounts. Share the final bill on WhatsApp in 1 tap.", icon: DollarSign }
-            ].map((step, idx) => (
-              <motion.div
-                key={idx}
-                variants={fadeInUp}
-                className="bg-white border border-slate-100 hover:border-indigo-100 hover:shadow-md transition-all rounded-2xl p-5 text-left flex flex-col justify-between aspect-[4/3] md:aspect-[3/4] relative"
-              >
-                <div>
-                  <div className="flex justify-between items-center pb-3 border-b border-slate-50 mb-4">
-                    <span className="text-xs font-bold text-indigo-600 bg-indigo-50 w-6 h-6 rounded-lg flex items-center justify-center">{step.num}</span>
-                    <step.icon className="w-4 h-4 text-slate-400" />
-                  </div>
-                  <h3 className="text-md font-bold text-slate-900 block mt-1">{step.title}</h3>
-                  <p className="text-[12px] text-slate-400 font-semibold leading-relaxed mt-2">{step.desc}</p>
-                </div>
-                <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden mt-4">
-                  <div className="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 w-1/3 animate-pulse" />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.section>
-
-        {/* 5. MARKETPLACE VISION */}
-        <motion.section
-          id="marketplace"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={staggerContainer}
-          className="space-y-12 text-center"
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center max-w-6xl mx-auto">
-            <motion.div variants={fadeInUp} className="lg:col-span-5 space-y-6 text-left">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 border border-purple-100 text-purple-800 text-[10px] font-bold uppercase tracking-wider">
-                Get New Clients
-              </div>
-              <h2 className="text-4xl font-extrabold text-slate-950 font-display tracking-tight leading-[1.15]">
-                Get Direct Bookings from Bride & Groom Searches
-              </h2>
-              <p className="text-sm text-slate-500 leading-relaxed font-semibold">
-                VenuePro links your private dashboard to our public guest-facing portal. Local wedding planners, brides, and grooms can see your open dates and message you directly. Grow your bookings with zero commissions.
-              </p>
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => handleNavigate('/signup')}
-                  className="px-5 py-3 bg-slate-950 hover:bg-slate-900 hover:scale-105 text-white rounded-full text-sm font-bold transition-all flex items-center gap-2"
-                >
-                  Join the Booking Network <ArrowUpRight className="w-4 h-4" />
-                </button>
-              </div>
-            </motion.div>
-
-            <motion.div variants={fadeInUp} className="lg:col-span-7 flex justify-center w-full">
-              {/* Custom mock of discovery search filters card */}
-              <div className="bg-white border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl p-6 w-full max-w-[500px] space-y-5 text-left">
-                <div className="flex gap-2">
-                  <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 flex items-center gap-2 text-xs">
-                    <Search className="w-4 h-4 text-slate-400" />
-                    <span className="font-semibold text-slate-700">Resorts & Banquets in Juhu</span>
-                  </div>
-                  <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-2.5 text-xs text-indigo-700 font-bold">
-                    June 18
-                  </div>
-                </div>
-
-                {/* Simulated list card */}
-                <div className="border border-slate-100 rounded-2xl p-4 flex gap-4">
-                  <div className="w-20 h-20 rounded-xl bg-slate-100 flex items-center justify-center text-slate-450 font-bold text-xs uppercase shrink-0">Lawn Image</div>
-                  <div className="flex-1 space-y-1.5 min-w-0">
-                    <span className="bg-amber-105 text-amber-900 text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Lux Premium</span>
-                    <h3 className="text-sm font-bold text-slate-900 block truncate">Royal Heritage Lawn & Hall</h3>
-                    <p className="text-[11px] text-slate-450 font-semibold">Capacity: 300 - 800 guests • Juhu, Mumbai</p>
-                    <div className="flex justify-between items-center pt-2">
-                      <span className="text-xs font-black text-slate-800">Veg: ₹1,500/plate</span>
-                      <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 shrink-0">Slot Available</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </motion.section>
-
-        {/* 6. MOBILE EXPERIENCE (WhatsApp Chat Simulator) */}
-        <motion.section
-          id="mobile"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={staggerContainer}
-          className="space-y-12 text-center"
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center max-w-6xl mx-auto">
-            <motion.div variants={fadeInUp} className="lg:col-span-7 flex justify-center w-full order-last lg:order-first">
-              {/* WhatsApp Simulator panel */}
-              <div className="bg-slate-900 rounded-[40px] p-4 border-[8px] border-slate-800 shadow-2xl w-full max-w-[340px] aspect-[9/16] flex flex-col justify-between overflow-hidden">
-                <div className="bg-slate-800/80 p-3 rounded-2xl flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-200">VP</div>
-                  <div>
-                    <span className="text-xs font-bold text-slate-200 block">VenuePro Auto-Billing</span>
-                    <span className="text-[8px] text-emerald-400 font-medium">Online</span>
-                  </div>
-                </div>
-
-                <div className="flex-1 space-y-2.5 overflow-y-auto px-1 flex flex-col justify-end pb-3">
-                  {messages.map((msg, idx) => {
-                    const isSystem = msg.sender === 'system';
-                    return (
-                      <div key={idx} className={cn(
-                        "p-2.5 rounded-2xl text-[10px] max-w-[85%] leading-normal font-semibold relative",
-                        isSystem
-                          ? "bg-slate-800 text-slate-100 self-start"
-                          : "bg-indigo-600 text-white self-end"
-                      )}>
-                        {msg.attachment && (
-                          <div className="p-2 bg-slate-950/60 rounded-xl border border-white/5 mb-1.5 flex items-center gap-2">
-                            <FileText className="w-4 h-4 text-emerald-400 shrink-0" />
-                            <span className="font-bold text-[9px] text-white truncate">{msg.attachment}</span>
-                          </div>
-                        )}
-                        <span>{msg.text}</span>
-                        <span className="block text-[7px] text-slate-400 text-right mt-1">{msg.time}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="bg-slate-800/60 p-2 rounded-2xl flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={runStepCheck}
-                    disabled={whatsappStep === 4}
-                    className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-700 text-white rounded-xl text-[10px] font-bold transition-all text-center"
-                  >
-                    {whatsappStep === 0 && "Send Response Invitation"}
-                    {whatsappStep === 1 && "Generating Response..."}
-                    {whatsappStep === 2 && "Trigger Receipt Estimate"}
-                    {whatsappStep === 3 && "Calculating split..."}
-                    {whatsappStep === 4 && "Voucher Shared!"}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div variants={fadeInUp} className="lg:col-span-5 space-y-6 text-left">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-800 text-[10px] font-bold uppercase tracking-wider">
-                WhatsApp Connected
-              </div>
-              <h2 className="text-4xl font-extrabold text-slate-950 tracking-tight leading-[1.15] font-display">
-                Send Bills & Menu Rates via WhatsApp
-              </h2>
-              <p className="text-sm text-slate-500 leading-relaxed font-semibold">
-                Banquets run on mobile, not computers. Lock bookings, send receipt PDFs, and calculate price quotes directly from your phone. Share details instantly in 1 tap on WhatsApp chats.
-              </p>
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => handleNavigate('/signup')}
-                  className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full text-xs font-bold transition-all shadow-md"
-                >
-                  Try Mobile Booking Free
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        </motion.section>
-
-        {/* 7. ANALYTICS */}
-        <motion.section
-          id="analytics"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={staggerContainer}
-          className="space-y-12 text-center"
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center max-w-6xl mx-auto">
-            <motion.div variants={fadeInUp} className="lg:col-span-5 space-y-6 text-left">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-855 text-[10px] font-bold uppercase tracking-wider">
-                Venue Reports
-              </div>
-              <h2 className="text-4xl font-extrabold text-slate-950 tracking-tight leading-[1.15] font-display">
-                Understand Your Daily Revenue & Occupancy
-              </h2>
-              <p className="text-sm text-slate-500 leading-relaxed font-semibold">
-                Track how many dates are filled this wedding season. Monitor your total cash earnings, pending balances, and catering plate expenses without calculating things manually in Excel sheets.
-              </p>
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => handleNavigate('/signup')}
-                  className="px-5 py-3 bg-slate-950 hover:bg-slate-900 text-white rounded-full text-sm font-bold transition-all shadow-sm"
-                >
-                  Open Owner Account
-                </button>
-              </div>
-            </motion.div>
-
-            <motion.div variants={fadeInUp} className="lg:col-span-7 flex justify-center w-full">
-              {/* Analytics Dashboard Visualizer */}
-              <div className="relative w-full max-w-[600px] group rounded-[32px]">
-                {/* Glow background */}
-                <div className="absolute -inset-[3px] rounded-[32px] bg-gradient-to-r from-indigo-500 via-cyan-400 to-purple-650 opacity-20 blur-md group-hover:opacity-35 transition duration-500 animate-edge-glow -z-10" />
-                {/* Sharp border line */}
-                <div className="absolute -inset-[1px] rounded-[32px] bg-gradient-to-r from-indigo-500 via-cyan-400 to-purple-650 animate-edge-glow -z-10" />
-
-                <div className="bg-white border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] rounded-[32px] p-6 w-full space-y-6 text-left relative overflow-hidden h-full">
-
-                  {/* Dashboard Header with Switcher */}
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-900 tracking-tight">Owner's Dashboard Report</h3>
-                      <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Real-time performance analytics</p>
-                    </div>
-
-                    {/* Timeframe switch button group */}
-                    <div className="flex bg-slate-50 border border-slate-100 p-1 rounded-xl shrink-0">
-                      {(['month', 'quarter', 'year'] as const).map((t) => (
-                        <button
-                          key={t}
-                          type="button"
-                          onClick={() => setAnalyticsTimeframe(t)}
-                          className={cn(
-                            "px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all",
-                            analyticsTimeframe === t
-                              ? "bg-white text-indigo-650 shadow-sm border border-slate-100"
-                              : "text-slate-500 hover:text-slate-950"
-                          )}
-                        >
-                          {t === 'month' ? '30 Days' : t === 'quarter' ? 'Quarter' : 'Year'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Metrics 3-Column Grid */}
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { label: 'Bookings Locked', val: analyticsData.bookings, trend: analyticsData.bookingsTrend, color: 'text-indigo-600' },
-                      { label: 'Total Earnings', val: analyticsData.revenue, trend: analyticsData.revenueTrend, color: 'text-emerald-650' },
-                      { label: 'Dates Filled %', val: analyticsData.occupancy, trend: analyticsData.occupancyTrend, color: 'text-cyan-600' }
-                    ].map((card, idx) => (
-                      <div key={idx} className="bg-slate-50/50 border border-slate-100/50 rounded-2xl p-3 flex flex-col justify-between">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">{card.label}</span>
-                        <div className="mt-1.5 flex items-baseline gap-1.5 flex-wrap">
-                          <span className={cn("text-base font-extrabold tracking-tight", card.color)}>{card.val}</span>
-                          <span className="text-[8px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded-md">{card.trend}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Styled Custom Bar Chart with vertical bars */}
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Revenue Flow</span>
-                      <span className="text-[9px] font-bold text-slate-500">Scale: Relative %</span>
-                    </div>
-
-                    {/* Bar container */}
-                    <div className="relative bg-slate-50/40 border border-slate-100/60 rounded-2xl p-5 h-44 flex items-end justify-between gap-2 overflow-hidden">
-                      {/* Horizontal gridlines */}
-                      <div className="absolute inset-0 flex flex-col justify-between pointer-events-none p-5 opacity-40">
-                        <div className="border-b border-slate-200 border-dashed w-full h-0" />
-                        <div className="border-b border-slate-200 border-dashed w-full h-0" />
-                        <div className="border-b border-slate-200 border-dashed w-full h-0" />
-                        <div className="w-full h-0" />
-                      </div>
-
-                      {analyticsData.bars.map((bar, idx) => (
-                        <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end relative z-10 group">
-                          {/* Tooltip on hover */}
-                          <div className="absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[8px] px-1.5 py-0.5 rounded font-bold pointer-events-none shadow-sm -translate-y-4">
-                            {bar.value}%
-                          </div>
-                          {/* Interactive vertical animated bar */}
-                          <div
-                            className="w-full max-w-[28px] rounded-t-lg bg-gradient-to-t from-indigo-600 to-cyan-400 group-hover:from-indigo-500 group-hover:to-cyan-300 transition-all duration-500 shadow-xs"
-                            style={{ height: `${bar.value}%` }}
-                          />
-                          <span className="text-[9px] font-extrabold text-slate-400 group-hover:text-slate-950 transition-colors uppercase">{bar.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Booking status sub-table */}
-                  <div className="space-y-2.5">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Active Operations Log</span>
-                    <div className="space-y-2">
-                      {analyticsData.bookingsList.map((bk, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2.5 bg-white border border-slate-100 rounded-xl shadow-3xs hover:border-slate-200 transition-all">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
-                              <CalendarIcon className="w-3.5 h-3.5 text-indigo-600" />
-                            </div>
-                            <div className="min-w-0">
-                              <span className="text-xs font-bold text-slate-800 block truncate">{bk.name}</span>
-                              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mt-0.5">{bk.space} • {bk.date}</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3 shrink-0">
-                            <span className="text-xs font-extrabold text-slate-700">{bk.amount}</span>
-                            <span className={cn(
-                              "text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
-                              bk.status === 'Locked'
-                                ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
-                                : bk.status === 'Deposit Paid'
-                                  ? 'bg-cyan-50 border-cyan-100 text-cyan-700'
-                                  : 'bg-amber-50 border-amber-100 text-amber-700'
-                            )}>
-                              {bk.status}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </motion.section>
-
-        {/* 8. PRICING PLANS */}
-        <motion.section
-          id="pricing"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={staggerContainer}
-          className="space-y-12 text-center animate-fade-in"
-        >
-          <motion.div variants={fadeInUp} className="space-y-3">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold uppercase tracking-wider">
-              Pricing Plans
-            </div>
-            <h2 className="text-4xl font-extrabold text-slate-950 font-display tracking-tight">
-              Simple, Honest Pricing for Hall Owners
-            </h2>
-            <p className="text-sm text-slate-500 max-w-xl mx-auto font-medium">
-              Start with our <strong>14-day free trial</strong> to explore all features. No credit card required.
-            </p>
-
-            {/* Toggle Group */}
-            <div className="pt-4 flex justify-center items-center gap-3">
-              <div className="flex bg-white border border-slate-150 p-1.5 rounded-2xl shadow-3xs">
-                <button
-                  type="button"
-                  onClick={() => setIsYearlyBilling(true)}
-                  className={cn(
-                    "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5",
-                    isYearlyBilling
-                      ? "bg-indigo-600 text-white shadow-sm"
-                      : "text-slate-500 hover:text-slate-950"
-                  )}
-                >
-                  Yearly Billing
-                  <span className="bg-emerald-100 text-emerald-800 text-[8px] font-black px-1.5 py-0.2 rounded-md">Save 20%</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsYearlyBilling(false)}
-                  className={cn(
-                    "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
-                    !isYearlyBilling
-                      ? "bg-slate-900 text-white shadow-sm"
-                      : "text-slate-500 hover:text-slate-950"
-                  )}
-                >
-                  Monthly
-                </button>
-              </div>
-            </div>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
-            {/* Starter Plan */}
-            <motion.div
-              variants={fadeInUp}
-              className="bg-white border border-slate-150 rounded-3xl p-8 text-left shadow-2xs hover:shadow-md transition-all flex flex-col justify-between hover:scale-[1.02]"
-            >
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-extrabold text-slate-900 font-display">Starter</h3>
-                  <p className="text-xs text-slate-450 font-semibold mt-1">For single halls or local banquet spaces.</p>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold text-slate-950 font-display">
-                    ₹{isYearlyBilling ? '9,999' : '1,999'}
-                  </span>
-                  <span className="text-xs text-slate-400 font-medium">/{isYearlyBilling ? 'year' : 'month'}</span>
-                </div>
-                <ul className="space-y-3 pt-4 border-t border-slate-50 text-xs text-slate-600 font-medium">
-                  {[
-                    "1 Active Venue/Hall Profile",
-                    "Unlimited Booking Slots Calendar",
-                    "Leads & Customer Inquiries CRM",
-                    "Basic Invoicing (Plain PDF)",
-                    "Up to 2 Staff Accounts",
-                    "Offline Local Sync Protection"
-                  ].map((benefit, idx) => (
-                    <li key={idx} className="flex gap-2 items-center">
-                      <Check className="w-4 h-4 text-indigo-650 shrink-0" />
-                      <span>{benefit}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <button
-                type="button"
-                onClick={() => handleNavigate('/signup')}
-                className="w-full py-3.5 mt-8 bg-brand-600 hover:bg-brand-800 hover:scale-102 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+                className="px-6 py-4 bg-[#1E5EFF] hover:bg-blue-600 text-white rounded-full text-sm font-bold shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-98"
               >
                 Start 14-Day Free Trial
               </button>
-            </motion.div>
-
-            {/* Pro Plan */}
-            <div className="relative flex flex-col group rounded-[32px] hover:scale-[1.03] transition-all duration-300">
-              {/* Glow background */}
-              <div className="absolute -inset-[2.5px] rounded-[32px] bg-gradient-to-r from-indigo-500 via-cyan-400 to-purple-650 opacity-30 blur-md group-hover:opacity-50 transition duration-500 animate-edge-glow -z-10" />
-              {/* Sharp border line */}
-              <div className="absolute -inset-[1px] rounded-[32px] bg-gradient-to-r from-indigo-500 via-cyan-400 to-purple-650 animate-edge-glow -z-10" />
-
-              <motion.div
-                variants={fadeInUp}
-                className="bg-white rounded-[32px] p-8 text-left shadow-md flex flex-col justify-between relative bg-gradient-to-b from-indigo-50/10 to-transparent h-full"
+              <button
+                type="button"
+                onClick={() => setIsDemoModalOpen(true)}
+                className="px-6 py-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 rounded-full text-sm font-bold transition-all flex items-center gap-2 shadow-sm"
               >
-                <div className="absolute top-0 right-8 -translate-y-1/2 bg-gradient-to-r from-brand-600 to-brand-300 text-white text-[9px] font-black tracking-widest px-3.5 py-1 rounded-full uppercase shadow-xs animate-pulse">
-                  Most Popular
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-extrabold text-slate-900 font-display">Pro Plan</h3>
-                    <p className="text-xs text-indigo-700 font-semibold mt-1">Complete automated billing & WhatsApp operations for banquet halls.</p>
+                <Play className="w-3.5 h-3.5 text-[#1E5EFF] fill-current" /> Request a Demo
+              </button>
+            </div>
+          </div>
+
+          {/* Hero Visual: Venue operations flow simulator */}
+          {/* <div className="lg:col-span-6 relative flex justify-center w-full hover:scale-105 transition-all ease-in-out">
+            <div className="relative w-full max-w-lg bg-white/80 border border-slate-200/60 rounded-3xl p-6 glow-blue backdrop-blur-md shadow-lg">
+              <div className="absolute -top-3 left-6 px-3 py-1 rounded-md bg-[#1E5EFF] text-white text-[10px] font-bold tracking-widest uppercase">Live Operations Flow</div>
+              <div className="space-y-4">
+                {[
+                  { id: 0, title: "1. Lead Entry", desc: "Customer details collected from website / phone call", label: "+84 Inquiries", icon: Users, color: "text-[#1E5EFF] bg-blue-50" },
+                  { id: 1, title: "2. Slot Locked", desc: "Real-time calendar verification prevents double-bookings", label: "0% Clashes", icon: CalendarIcon, color: "text-[#F5C542] bg-amber-50" },
+                  { id: 2, title: "3. Advance Ledger", desc: "Catering and rental bill parsed with GST reverse-calc", label: "₹1.5L UPI Recd", icon: DollarSign, color: "text-emerald-500 bg-emerald-50" },
+                  { id: 3, title: "4. Auto WhatsApp", desc: "Automated PDF invoice receipt and balance alert triggered", label: "98% Open Rate", icon: MessageSquare, color: "text-green-500 bg-green-50" },
+                  { id: 4, title: "5. CFO Analytics", desc: "Transaction mapped to occupancies and expense reports", label: "₹52.8L Q3 Sales", icon: BarChart3, color: "text-purple-500 bg-purple-50" }
+                ].map((item, idx) => {
+                  const isActive = idx === activeStep;
+                  return (
+                    <motion.div
+                      key={item.id}
+                      animate={{
+                        scale: isActive ? 1.02 : 1,
+                        backgroundColor: isActive ? '#FFFFFF' : 'rgba(255, 255, 255, 0.3)',
+                        borderColor: isActive ? 'rgba(30, 94, 255, 0.25)' : 'rgba(15, 23, 42, 0.05)',
+                        boxShadow: isActive ? '0 10px 25px -5px rgba(30, 94, 255, 0.08), 0 0 0 1px rgba(30, 94, 255, 0.1)' : 'none'
+                      }}
+                      transition={{ duration: 0.3 }}
+                      className="flex items-center gap-4 p-3.5 rounded-2xl border border-slate-100"
+                    >
+                      <div className={cn("p-2.5 rounded-xl", item.color)}>
+                        <item.icon className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-bold text-slate-800">{item.title}</p>
+                          <span className={cn("text-[9px] font-bold px-2 py-0.5 rounded-md", isActive ? "text-[#1E5EFF] bg-[#1E5EFF]/10" : "text-slate-400")}>
+                            {item.label}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 mt-0.5 truncate">{item.desc}</p>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          </div> */}
+          <div className="lg:col-span-6 relative flex justify-center w-full hover:scale-105 transition-all ease-in-out">
+            <div className="relative w-full max-w-lg bg-white/80 border border-slate-200/60 rounded-3xl p-6 glow-blue backdrop-blur-md shadow-lg">
+
+              {/* Floating Label */}
+              <div className="absolute -top-3 left-6 px-3 py-1 rounded-md bg-[#1E5EFF] text-white text-[10px] font-bold tracking-widest uppercase">
+                Live Venue Operations Flow
+              </div>
+
+              <div className="space-y-4">
+
+                {[
+                  {
+                    id: 0,
+                    title: "Inquiry Captured",
+                    desc: "Lead comes from call, website, or walk-in — all stored in one place",
+                    label: "Real-time Leads",
+                    icon: Users,
+                    color: "text-[#1E5EFF] bg-blue-50"
+                  },
+                  {
+                    id: 1,
+                    title: "Booking Confirmed",
+                    desc: "Instant slot check prevents double bookings and conflicts",
+                    label: "Zero Clashes",
+                    icon: CalendarIcon,
+                    color: "text-[#F5C542] bg-amber-50"
+                  },
+                  {
+                    id: 2,
+                    title: "Payment Recorded",
+                    desc: "Advance and balance payments tracked automatically",
+                    label: "₹ Live Tracking",
+                    icon: DollarSign,
+                    color: "text-emerald-500 bg-emerald-50"
+                  },
+                  {
+                    id: 3,
+                    title: "Customer Updates Sent",
+                    desc: "WhatsApp messages, invoices and reminders sent automatically",
+                    label: "Auto Communication",
+                    icon: MessageSquare,
+                    color: "text-green-500 bg-green-50"
+                  },
+                  {
+                    id: 4,
+                    title: "Event Completed Insights",
+                    desc: "Revenue, occupancy and performance tracked after every event",
+                    label: "Business Clarity",
+                    icon: BarChart3,
+                    color: "text-purple-500 bg-purple-50"
+                  }
+                ].map((item, idx) => {
+                  const isActive = idx === activeStep;
+
+                  return (
+                    <motion.div
+                      key={item.id}
+                      animate={{
+                        scale: isActive ? 1.03 : 1,
+                        backgroundColor: isActive ? "#FFFFFF" : "rgba(255,255,255,0.35)",
+                        borderColor: isActive
+                          ? "rgba(30, 94, 255, 0.25)"
+                          : "rgba(15, 23, 42, 0.05)",
+                        boxShadow: isActive
+                          ? "0 12px 30px -8px rgba(30, 94, 255, 0.15)"
+                          : "none"
+                      }}
+                      transition={{ duration: 0.35 }}
+                      className="flex items-center gap-4 p-4 rounded-2xl border border-slate-100"
+                    >
+
+                      {/* Icon */}
+                      <div className={cn("p-2.5 rounded-xl", item.color)}>
+                        <item.icon className="w-4 h-4" />
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-bold text-slate-800">
+                            {item.title}
+                          </p>
+
+                          <span
+                            className={cn(
+                              "text-[9px] font-bold px-2 py-0.5 rounded-md",
+                              isActive
+                                ? "text-[#1E5EFF] bg-[#1E5EFF]/10"
+                                : "text-slate-400"
+                            )}
+                          >
+                            {item.label}
+                          </span>
+                        </div>
+
+                        <p className="text-[10px] text-slate-500 mt-0.5">
+                          {item.desc}
+                        </p>
+
+                      </div>
+                    </motion.div>
+                  );
+                })}
+
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 2. PAIN TO TRANSFORMATION SECTION */}
+        <section className="space-y-12 text-center">
+          <div className="space-y-3">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1B3A] font-sans tracking-tight">
+              Replace Diary Chaos with Unified Order
+            </h2>
+            <p className="text-md text-slate-500 max-w-xl mx-auto">
+              Running a busy Indian venue is hectic. Managing it on papers shouldn't make it harder.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* The Chaos */}
+            <div className="bg-red-50/40 border border-red-200/50 rounded-3xl p-8 space-y-6 text-left relative transition-all hover:border-red-200 shadow-xs">
+              <div className="absolute top-4 right-4 text-[9px] font-bold text-red-600 uppercase tracking-widest bg-red-100 border border-red-200 px-2.5 py-0.5 rounded-full">Old Way (Diaries & Paper)</div>
+              <h3 className="text-lg font-bold text-red-950">The Friction of Paper Registers</h3>
+              <div className="space-y-4">
+                {[
+                  { title: "Double-Booking Risk", desc: "Booking a date on a slip of paper only to find another manager blocked it in another register book.", icon: AlertCircle },
+                  { title: "Manual GST Calculations", desc: "Scribbling per-plate costs and tax structures by hand, leading to massive accounting gaps.", icon: XCircle },
+                  { title: "Lost Inquiries", desc: "WhatsApp inquiries buried under hundreds of messages, causing customers to book with rival venues.", icon: MessageSquare }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex gap-3">
+                    <item.icon className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-sm font-bold text-red-900">{item.title}</h4>
+                      <p className="text-[11px] text-red-700 leading-relaxed">{item.desc}</p>
+                    </div>
                   </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-extrabold text-slate-950 font-display">
-                      ₹{isYearlyBilling ? '14,999' : '4,999'}
-                    </span>
-                    <span className="text-xs text-slate-400 font-medium">/{isYearlyBilling ? 'year' : 'month'}</span>
-                  </div>
-                  <ul className="space-y-3 pt-4 border-t border-indigo-100/50 text-xs text-slate-700 font-semibold">
-                    {[
-                      "Unlimited Halls & Spaces Profiles",
-                      "Unlimited Bookings Slots",
-                      "Automated WhatsApp Receipts & Reminders",
-                      "Full Cash Flow & Plate Cost Analytics",
-                      "Staff Roles & View-Only Permissions",
-                      "Discovery Portal Premium Listing",
-                      "Easy Excel/CSV Customer Importer",
-                      "Priority 24/7 Phone & WhatsApp Support"
-                    ].map((benefit, idx) => (
-                      <li key={idx} className="flex gap-2 items-center">
-                        <Check className="w-4 h-4 text-indigo-650 shrink-0" />
-                        <span>{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleNavigate('/signup')}
-                  className="w-full py-3.5 mt-8 bg-indigo-600 hover:bg-indigo-700 hover:scale-102 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-100"
-                >
-                  Start 14-Day Free Trial
-                </button>
-              </motion.div>
+                ))}
+              </div>
             </div>
 
-            {/* Enterprise Plan */}
-            <motion.div
-              variants={fadeInUp}
-              className="bg-white border border-slate-150 rounded-3xl p-8 text-left shadow-2xs hover:shadow-md transition-all flex flex-col justify-between hover:scale-[1.02]"
-            >
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-extrabold text-slate-900 font-display">Enterprise</h3>
-                  <p className="text-xs text-slate-400 font-semibold mt-1">Setup custom operations for banquet chains & resorts.</p>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold text-slate-950 font-display">Custom</span>
-                  <span className="text-xs text-slate-400 font-medium">/chain pricing</span>
-                </div>
-                <ul className="space-y-3 pt-4 border-t border-slate-50 text-xs text-slate-650 font-medium">
+            {/* The Transformation */}
+            <div className="gradient-border-glow shadow-md">
+              <div className="inner-dot-grid bg-white/95 rounded-[24px] p-8 space-y-6 text-left relative overflow-hidden h-full">
+                <div className="absolute top-4 right-4 text-[9px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">The Order (VenuePro OS)</div>
+                <h3 className="text-lg font-bold text-slate-800">The Power of Digital Precision</h3>
+                <div className="space-y-4">
                   {[
-                    "Multi-Location Chain Dashboards",
-                    "Bespoke Billing & GST Tax Layouts",
-                    "Dedicated Account Operations Manager",
-                    "Bespoke WhatsApp Notification Packs",
-                    "Advanced API Data Access & Webhooks",
-                    "Custom Staff Coaching & Onboarding"
-                  ].map((benefit, idx) => (
-                    <li key={idx} className="flex gap-2 items-center">
-                      <Check className="w-4 h-4 text-indigo-600 shrink-0" />
-                      <span>{benefit}</span>
-                    </li>
+                    { title: "100% Calendar Lock", desc: "Dates are blocked instantly across all coordinators' phones. Overlap safety checks block double-bookings.", icon: CheckCircle2 },
+                    { title: "Automated Tax Bills", desc: "GST calculations are reverse-computed automatically from inclusive packages in 2 seconds.", icon: CheckCircle2 },
+                    { title: "Follow-up Pipeline", desc: "CRM dashboard surfaces pending client follow-ups automatically, securing site visits.", icon: CheckCircle2 }
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex gap-3 relative z-10">
+                      <item.icon className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-800">{item.title}</h4>
+                        <p className="text-[11px] text-slate-500 leading-relaxed">{item.desc}</p>
+                      </div>
+                    </div>
                   ))}
-                </ul>
-              </div>
-              <a
-                href="mailto:support@venuepro.in?subject=Enterprise Inquiry"
-                className="w-full py-3.5 mt-8 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all text-center block"
-              >
-                Contact Sales Team
-              </a>
-            </motion.div>
-          </div>
-        </motion.section>
-
-        {/* 9. FINAL CTA */}
-        <motion.section
-          id="final-cta"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={staggerContainer}
-          className="w-full flex justify-center pt-8"
-        >
-          <div className="relative w-full max-w-5xl group rounded-[40px]">
-            {/* Glow background */}
-            <div className="absolute -inset-[3px] rounded-[40px] bg-gradient-to-r from-indigo-500 via-cyan-400 to-purple-650 opacity-25 blur-lg group-hover:opacity-40 transition duration-500 animate-edge-glow -z-10" />
-            {/* Sharp border line */}
-            <div className="absolute -inset-[1px] rounded-[40px] bg-gradient-to-r from-indigo-500 via-cyan-400 to-purple-650 animate-edge-glow -z-10" />
-
-            <motion.div
-              variants={fadeInUp}
-              className="w-full rounded-[40px] bg-gradient-to-br from-slate-900 to-indigo-950 p-8 sm:p-12 text-center text-white relative overflow-hidden shadow-xl"
-            >
-              {/* Background ambient lighting */}
-              <div className="absolute top-[-30%] left-[-20%] w-[60%] aspect-square rounded-full bg-cyan-600/20 blur-[100px] pointer-events-none" />
-              <div className="absolute bottom-[-30%] right-[-20%] w-[60%] aspect-square rounded-full bg-brand-600/20 blur-[100px] pointer-events-none" />
-
-              <div className="relative z-10 max-w-2xl mx-auto space-y-6">
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight font-display">
-                  Ready to Run Your Banquet Without Headaches?
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-xl mx-auto font-semibold">
-                  Lock dates instantly, track follow-ups on your phone, and stop losing advances. Join hundreds of wedding lawns and banquet owners who trust VenuePro.
-                </p>
-                <div className="pt-4 flex flex-wrap justify-center gap-4">
-                  <button
-                    type="button"
-                    onClick={() => handleNavigate('/signup')}
-                    className="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-xs font-bold transition-all shadow-lg shadow-indigo-600/10 hover:scale-[1.02] active:scale-98"
-                  >
-                    Start Your Free Trial
-                  </button>
-                  <a
-                    href="mailto:support@venuepro.in?subject=Demo Inquiry"
-                    className="px-6 py-3.5 bg-slate-800/80 border border-slate-700/60 hover:bg-slate-800 text-white rounded-full text-xs font-bold transition-all text-center block"
-                  >
-                    Request Customized Demo
-                  </a>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
-        </motion.section>
+        </section>
 
-        {/* 10. SEO DIRECTORY / ACCORDION */}
-        <motion.section
-          id="faq"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={staggerContainer}
-          className="space-y-12"
-        >
-          <motion.div variants={fadeInUp} className="text-center space-y-3">
-            <h2 className="text-4xl font-extrabold text-slate-950 font-display tracking-tight">
-              Have Doubts? We Have Answers
+        {/* 3. PRODUCT VALUE SECTION (Outcome-Based Benefits) */}
+        <section className="space-y-16">
+          <div className="text-center space-y-3">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1B3A] font-Sans tracking-tight">
+              Outcome-Driven Venue Growth
             </h2>
-            <p className="text-sm text-slate-500 max-w-xl mx-auto font-semibold">
-              Clear answers to the most common questions banquet owners ask about moving from diaries to VenuePro.
+            <p className="text-md text-slate-500 max-w-xl mx-auto">
+              We focus on metrics that drive business expansion, booking occupancy, and owner security.
             </p>
-          </motion.div>
+          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-5xl mx-auto">
-            {/* Category selection */}
-            <div className="lg:col-span-3 flex lg:flex-col gap-2 overflow-x-auto pb-4 lg:pb-0 scrollbar-none shrink-0">
-              {(['all', 'usage', 'benefits', 'challenges', 'support'] as const).map((cat) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { title: "30% Booking Rate Increase", desc: "Automated followup alerts keep hot leads warm. Share quotes in seconds via WhatsApp so customers book with you before competitors get back to them.", metric: "+30%" },
+              { title: "3x Faster Debt Collection", desc: "Split advance structures and automated pending payments notifications keep cash flowing, cutting down on physical collection phone calls.", metric: "3x" },
+              { title: "100% Secret Profit Margin", desc: "Role-Based Access Control keeps net margins, bills, and accounting files completely hidden from staff while allowing them to check calendars.", metric: "100%" }
+            ].map((card, idx) => (
+              <div key={idx} className="bg-white border border-slate-200/60 hover:border-slate-350 hover:scale-105 rounded-3xl p-8 space-y-6 transition-all duration-300 relative group overflow-hidden shadow-2xs hover:shadow-md ">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-[#4f46e5] rounded-bl-full group-hover:bg-[#4f46e5] transition-colors" />
+
+
+
+                <div className="text-5xl font-black text-[#1E5EFF] font-display relative z-10">{card.metric}</div>
+                <div className="space-y-2 relative z-10">
+                  <h3 className="text-base font-bold text-slate-800">{card.title}</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">{card.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 4. SYSTEM FLOW SECTION (Interactive Workflow Mockup) */}
+        <section id="workflow" className="space-y-12">
+          <div className="text-center space-y-3">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1B3A] font-Sans tracking-tight">
+              The Booking Pipeline in Action
+            </h2>
+            <p className="text-md text-slate-500 max-w-xl mx-auto">
+              Follow a single booking from initial inquiry all the way to final tax receipts and reporting.
+            </p>
+          </div>
+
+          {/* Stepper Tabs */}
+          <div className="flex flex-wrap justify-center gap-2 max-w-3xl mx-auto">
+            {FLOW_STEPS.map((step, idx) => {
+              const isActive = idx === activeStep;
+              return (
                 <button
-                  key={cat}
-                  type="button"
-                  onClick={() => { setFaqCategory(cat); setOpenFaqIndex(null); }}
+                  key={idx}
+                  onClick={() => setActiveStep(idx)}
                   className={cn(
-                    "px-4 py-2.5 rounded-xl text-sm font-bold transition-all text-left whitespace-nowrap",
-                    faqCategory === cat
-                      ? "bg-indigo-50 text-indigo-700 border-indigo-100"
-                      : "bg-white border border-slate-100 text-slate-500 hover:text-slate-900"
+                    "px-4 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 border",
+                    isActive
+                      ? "bg-[#1E5EFF] border-transparent text-white shadow-md shadow-blue-500/10"
+                      : "bg-white border-slate-200/60 text-slate-500 hover:text-[#0B1B3A] hover:border-slate-350"
                   )}
                 >
-                  {cat === 'all' && "All Questions"}
-                  {cat === 'usage' && "Usage & Setup"}
-                  {cat === 'benefits' && "Revenue Benefits"}
-                  {cat === 'challenges' && "Staff & Control"}
-                  {cat === 'support' && "Offline Support"}
+                  <step.icon className="w-3.5 h-3.5" />
+                  <span>{step.title.split('. ')[1]}</span>
                 </button>
-              ))}
-            </div>
+              );
+            })}
+          </div>
 
-            {/* Accordion list */}
-            <div className="lg:col-span-9 space-y-3">
-              {filteredFaqs.map((faq, idx) => {
-                const isOpen = openFaqIndex === idx;
-                return (
-                  <div key={idx} className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-2xs">
-                    <button
-                      type="button"
-                      onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                      className="w-full px-6 py-4 flex justify-between items-center text-left text-md font-bold text-slate-900 hover:bg-slate-50/50 transition-all"
-                    >
-                      <span>{faq.question}</span>
-                      <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform", isOpen && "rotate-180")} />
-                    </button>
-                    <AnimatePresence initial={false}>
-                      {isOpen && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <div className="px-6 pb-4 pt-1 text-[13px] text-slate-500 leading-relaxed font-500">
-                            {faq.answer}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+          {/* Stepper Display Card */}
+          <div className="max-w-4xl mx-auto bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 backdrop-blur-md shadow-lg glow-blue relative">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              <div className="lg:col-span-5 space-y-4">
+                <span className="text-[9px] font-black uppercase tracking-widest text-[#1E5EFF] bg-[#1E5EFF]/10 border border-[#1E5EFF]/20 px-2.5 py-0.5 rounded-full">
+                  {FLOW_STEPS[activeStep].metric}
+                </span>
+                <h3 className="text-xl font-bold text-slate-800">{FLOW_STEPS[activeStep].title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">{FLOW_STEPS[activeStep].desc}</p>
+                <div className="flex items-center gap-2 text-sm font-semibold text-[#1E5EFF] hover:underline cursor-pointer" onClick={() => handleNavigate('/signup')}>
+                  <span>Try this module</span>
+                  <ArrowRight className="w-3 h-3" />
+                </div>
+              </div>
+
+              <div className="lg:col-span-7 bg-[#F6F7FB] rounded-2xl border border-slate-200/50 p-4 sm:p-6 overflow-hidden h-64 relative flex flex-col justify-between shadow-inner">
+                {activeStep === 0 && (
+                  <div className="space-y-4 animate-scale-up">
+                    <div className="flex justify-between items-center border-b border-slate-200/50 pb-2">
+                      <span className="text-sm font-bold text-slate-400">Leads Board</span>
+                      <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md font-bold">New Inquiries</span>
+                    </div>
+                    <div className="bg-white rounded-xl p-3.5 border border-slate-200/60 shadow-2xs relative overflow-hidden">
+                      <div className="absolute top-3 right-3 w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
+                      <p className="text-sm font-bold text-slate-800">Sanjay Gupta</p>
+                      <p className="text-[10px] text-slate-500 mt-1 font-medium">Event: Dec 18 Wedding (300 Plates)</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Contact: +91 98123 45678</p>
+                    </div>
                   </div>
-                );
-              })}
+                )}
+                {activeStep === 1 && (
+                  <div className="space-y-3 animate-scale-up">
+                    <div className="flex justify-between items-center border-b border-slate-200/50 pb-2">
+                      <span className="text-sm font-bold text-slate-400">Calendar Validation</span>
+                      <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-md font-bold">Slot Available</span>
+                    </div>
+                    <div className="grid grid-cols-7 gap-1.5 text-center text-[10px]">
+                      {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <span key={i} className="text-slate-400 font-bold">{d}</span>)}
+                      {Array.from({ length: 14 }).map((_, idx) => {
+                        const isDec18 = idx === 8;
+                        return (
+                          <span key={idx} className={cn(
+                            "py-1 rounded-md font-bold",
+                            isDec18
+                              ? "bg-[#1E5EFF] text-white animate-pulse"
+                              : "bg-white border border-slate-150 text-slate-600"
+                          )}>
+                            {idx + 10}
+                          </span>
+                        );
+                      })}
+                    </div>
+                    <p className="text-[10px] text-[#1E5EFF] font-bold text-center mt-2">✨ Dec 18 Locked Successfully</p>
+                  </div>
+                )}
+                {activeStep === 2 && (
+                  <div className="space-y-4 animate-scale-up">
+                    <div className="flex justify-between items-center border-b border-slate-200/50 pb-2">
+                      <span className="text-sm font-bold text-slate-400">Reverse GST Invoice</span>
+                      <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded-md font-bold">Calculated</span>
+                    </div>
+                    <div className="space-y-1.5 text-[10px] text-slate-600 font-mono">
+                      <div className="flex justify-between"><span>Package (Inclusive):</span><span className="font-bold">₹1,50,000</span></div>
+                      <div className="flex justify-between text-slate-400"><span>Taxable Base:</span><span>₹1,27,118.64</span></div>
+                      <div className="flex justify-between text-slate-400"><span>CGST (9%):</span><span>₹11,440.68</span></div>
+                      <div className="flex justify-between text-slate-400"><span>SGST (9%):</span><span>₹11,440.68</span></div>
+                      <div className="flex justify-between text-slate-800 font-bold border-t border-slate-200/60 pt-1.5"><span>Total Advance Paid:</span><span>₹1,50,000</span></div>
+                    </div>
+                  </div>
+                )}
+                {activeStep === 3 && (
+                  <div className="space-y-4 animate-scale-up flex flex-col justify-between h-full">
+                    <div className="flex justify-between items-center border-b border-slate-200/50 pb-2">
+                      <span className="text-sm font-bold text-slate-400">WhatsApp Dispatch</span>
+                      <span className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-md font-bold">Delivered</span>
+                    </div>
+                    <div className="self-end bg-white border border-slate-200/60 shadow-2xs rounded-2xl p-3 max-w-[85%] text-[10px] text-slate-700">
+                      <p>Dear Sanjay Gupta, confirmation of payment of ₹1,50,000. Slot Dec 18 Locked. Receipts: venuepro.in/public/receipt/...</p>
+                      <span className="text-[8px] text-slate-400 block text-right mt-1 font-semibold">11:02 AM ✓✓</span>
+                    </div>
+                  </div>
+                )}
+                {activeStep === 4 && (
+                  <div className="space-y-4 animate-scale-up h-full flex flex-col justify-between">
+                    <div className="flex justify-between items-center border-b border-slate-200/50 pb-2">
+                      <span className="text-sm font-bold text-slate-400">Q3 Revenue Ledger</span>
+                      <span className="text-[10px] bg-purple-50 text-purple-600 px-2 py-0.5 rounded-md font-bold">Updated</span>
+                    </div>
+                    <div className="flex-1 flex bg-slate-100/50 p-2.5 rounded-xl border border-slate-200/50 h-28 relative overflow-hidden">
+                      {/* Gridlines */}
+                      <div className="absolute inset-0 flex flex-col justify-between py-4 px-2 pointer-events-none opacity-5">
+                        <div className="border-b border-slate-900 w-full" />
+                        <div className="border-b border-slate-900 w-full" />
+                      </div>
+
+                      {/* Bars */}
+                      <div className="flex-1 flex items-end gap-2 h-full relative z-10">
+                        {[30, 45, 65, 50, 85, 95, 70].map((val, idx) => (
+                          <div key={idx} className="flex-1 bg-slate-200/40 rounded-t-md h-full flex items-end relative group">
+                            <motion.div
+                              key={`${activeStep}-${idx}`}
+                              initial={{ height: 0 }}
+                              animate={{ height: `${val}%` }}
+                              transition={{ duration: 0.8 }}
+                              className="w-full bg-gradient-to-t from-[#1E5EFF] to-[#6090FF] group-hover:from-[#F5C542] group-hover:to-[#FFDE85] rounded-t-md transition-all duration-300"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div className="text-[9px] text-slate-400 flex justify-between border-t border-slate-200/50 pt-2 font-semibold">
+                  <span>Connection: Secure SSL</span>
+                  <span>Press Tabs to switch views</span>
+                </div>
+              </div>
             </div>
           </div>
-        </motion.section>
+        </section>
+
+        {/* 5. PRODUCT MODULES (Bento Grid) */}
+        <section id="features" className="space-y-16">
+          <div className="text-center space-y-3">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1B3A] font-Sans tracking-tight">
+              A Complete Venue Operating System
+            </h2>
+            <p className="text-md text-slate-500 max-w-xl mx-auto">
+              Everything you need to automate inquiries, billing, staff, and analytics.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 max-w-6xl mx-auto">
+            {/* 1. Calendar locking */}
+            <div className="bg-white border border-slate-200/60 hover:border-slate-350 rounded-3xl p-6 sm:p-8 md:col-span-8 flex flex-col justify-between min-h-[300px] transition-all relative overflow-hidden group shadow-2xs">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#1E5EFF]/5 rounded-bl-full" />
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                <div className="md:col-span-7 space-y-4">
+                  <div className="p-3 bg-[#1E5EFF]/5 rounded-2xl w-fit text-[#1E5EFF]"><CalendarIcon className="w-5 h-5" /></div>
+                  <h3 className="text-lg font-bold text-slate-800">Instant Calendar Slots Locking</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    Dates are locked instantly across all coordinator devices. Double-booking check blocks concurrent submissions and checks buffer slot times.
+                  </p>
+                </div>
+                <div className="md:col-span-5 bg-slate-50 border border-slate-200/60 rounded-2xl p-4 space-y-2.5 font-sans relative overflow-hidden shadow-2xs scale-95 md:scale-100">
+                  <div className="flex justify-between items-center text-[9px] font-bold text-slate-400">
+                    <span>Calendar Guard</span>
+                    <span className="text-red-500 font-extrabold flex items-center gap-1">● Conflict Lock</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="bg-red-50 border border-red-200 p-2 rounded-xl text-[9px] text-red-950 flex justify-between items-center">
+                      <div>
+                        <p className="font-extrabold">Inquiry 1: Sanjay (Grand Lawn)</p>
+                        <p className="text-slate-500 font-medium">Dec 18, 10:00 AM</p>
+                      </div>
+                      <span className="bg-red-100 px-1.5 py-0.5 rounded font-black text-red-700">CLASH</span>
+                    </div>
+                    <div className="bg-blue-50 border border-blue-200 p-2 rounded-xl text-[9px] text-blue-950 flex justify-between items-center opacity-60">
+                      <div>
+                        <p className="font-extrabold">Inquiry 2: Sharma (Grand Lawn)</p>
+                        <p className="text-slate-500 font-medium">Dec 18, 11:30 AM</p>
+                      </div>
+                      <span className="bg-blue-100 px-1.5 py-0.5 rounded font-black text-blue-700">QUEUED</span>
+                    </div>
+                  </div>
+                  <p className="text-[8px] text-slate-400 text-center font-bold">⚠️ Blocked concurrently submitted duplicate requests</p>
+                </div>
+              </div>
+              <div className="border-t border-slate-150 pt-4 mt-6 text-[10px] text-slate-400 font-bold">100% Slot Accuracy Guarantee</div>
+            </div>
+
+            {/* 2. Automated invoices */}
+            <div className="bg-white border border-slate-200/60 hover:border-slate-350 rounded-3xl p-6 sm:p-8 md:col-span-4 flex flex-col justify-between min-h-[300px] transition-all relative overflow-hidden group shadow-2xs">
+              <div className="space-y-4">
+                <div className="p-3 bg-[#F5C542]/10 rounded-2xl w-fit text-[#F5C542]"><DollarSign className="w-5 h-5" /></div>
+                <h3 className="text-lg font-bold text-slate-800">Split Payments & Tax</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  Splits advances, logs installments, and reverse-calculates CGST/SGST from package totals instantly.
+                </p>
+                <div className="bg-amber-50/40 border border-amber-200/50 rounded-2xl p-3.5 space-y-2 mt-4 text-[9px] font-mono text-slate-605">
+                  <div className="flex justify-between text-slate-400"><span>Catering base:</span><span>₹1,27,118</span></div>
+                  <div className="flex justify-between text-slate-400"><span>GST (18%):</span><span>₹22,881</span></div>
+                  <div className="border-t border-slate-200/60 my-1" />
+                  <div className="flex justify-between font-extrabold text-slate-800"><span>Bill Total:</span><span>₹1,50,000</span></div>
+                </div>
+              </div>
+              <div className="border-t border-slate-150 pt-4 mt-6 text-[10px] text-slate-400 font-bold">CA-Compliant Billing Ledger</div>
+            </div>
+
+            {/* 3. CRM followups */}
+            <div className="bg-white border border-slate-200/60 hover:border-slate-350 rounded-3xl p-6 sm:p-8 md:col-span-4 flex flex-col justify-between min-h-[300px] transition-all relative overflow-hidden group shadow-2xs">
+              <div className="space-y-4">
+                <div className="p-3 bg-emerald-50 rounded-2xl w-fit text-emerald-500"><TrendingUp className="w-5 h-5" /></div>
+                <h3 className="text-lg font-bold text-slate-800">CRM Follow-ups Pipeline</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  Automatically flags overdue customer calls, keeping hot event inquiries active.
+                </p>
+                <div className="bg-emerald-50/40 border border-emerald-200/50 rounded-2xl p-3.5 space-y-2 mt-4 text-[9px] font-sans">
+                  <div className="flex justify-between items-center">
+                    <span className="font-extrabold text-slate-800">Sanjay Gupta (Wedding)</span>
+                    <span className="bg-red-100 text-red-700 font-bold px-1.5 py-0.5 rounded text-[8px]">📞 OVERDUE</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-extrabold text-slate-800">Rajesh Reddy (Engagement)</span>
+                    <span className="bg-slate-100 text-slate-500 font-bold px-1.5 py-0.5 rounded text-[8px]">✓ Done</span>
+                  </div>
+                </div>
+              </div>
+              <div className="border-t border-slate-150 pt-4 mt-6 text-[10px] text-slate-400 font-bold">3x Sales Conversion Rate</div>
+            </div>
+
+            {/* 4. Staff roles */}
+            <div className="bg-white border border-slate-200/60 hover:border-slate-350 rounded-3xl p-6 sm:p-8 md:col-span-8 flex flex-col justify-between min-h-[300px] transition-all relative overflow-hidden group shadow-2xs">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#F5C542]/5 rounded-bl-full" />
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                <div className="md:col-span-7 space-y-4">
+                  <div className="p-3 bg-purple-50 rounded-2xl w-fit text-purple-500"><ShieldCheck className="w-5 h-5" /></div>
+                  <h3 className="text-lg font-bold text-slate-800">Staff Roles & Permissions Control</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    Restrict access to cash registers, profit metrics, and pricing policies. Staff members get read-only calendar access.
+                  </p>
+                </div>
+                <div className="md:col-span-5 bg-slate-50 border border-slate-200/60 rounded-2xl p-4 space-y-2 font-sans scale-95 md:scale-100">
+                  <div className="flex justify-between items-center text-[9px] font-bold text-slate-400 border-b border-slate-200/60 pb-1.5">
+                    <span>Staff Access Rules</span>
+                    <span>Status</span>
+                  </div>
+                  <div className="space-y-1.5 text-[9px]">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-800 font-bold">Owner Dashboard metrics</span>
+                      <span className="text-emerald-600 font-black">ENABLED</span>
+                    </div>
+                    <div className="flex justify-between items-center border-t border-slate-100 pt-1.5">
+                      <span className="text-slate-800 font-bold">Staff Booking calendar</span>
+                      <span className="text-emerald-600 font-black">ENABLED</span>
+                    </div>
+                    <div className="flex justify-between items-center border-t border-slate-100 pt-1.5">
+                      <span className="text-slate-800 font-bold">Cash ledger modifications</span>
+                      <span className="text-red-500 font-black">DISABLED</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="border-t border-slate-150 pt-4 mt-6 text-[10px] text-slate-400 font-bold">Audit Log Integrity System</div>
+            </div>
+          </div>
+        </section>
+
+        {/* 6. MOBILE-FIRST SECTION */}
+        <section id="mobile" className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center w-full">
+          <div className="lg:col-span-6 space-y-6 text-left order-last lg:order-first">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1E5EFF]/10 border border-[#1E5EFF]/20 text-[#1E5EFF] text-[10px] font-bold uppercase tracking-wider">
+              <Smartphone className="w-3.5 h-3.5" /> Mobile Hub
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1B3A] tracking-tight leading-none font-Sans">
+              Manage Your Venue Directly From Your Phone
+            </h2>
+            <p className="text-md text-slate-500 leading-relaxed">
+              Our mobile-first layout is built specifically for venue managers and coordinators on the move. You don't need a computer to check slot availability, print a GST invoice, or check today's collections.
+            </p>
+            <div className="space-y-3.5">
+              {[
+                "10-second mobile quotation creation and dispatch",
+                "Instant WhatsApp invoice links with zero manual attachment steps",
+                "Realtime booking notifications and UPI deposit confirmations",
+                "Offline protected calendar checks that sync on network return"
+              ].map((text, idx) => (
+                <div key={idx} className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-full bg-[#1E5EFF]/10 border border-[#1E5EFF]/20 flex items-center justify-center shrink-0">
+                    <Check className="w-3.5 h-3.5 text-[#1E5EFF]" />
+                  </div>
+                  <span className="text-sm text-slate-600 font-semibold">{text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="lg:col-span-6 flex justify-center w-full">
+            {/* Phone Mockup */}
+            <div className="w-72 h-[560px] rounded-[44px] border-[8px] border-slate-900 bg-white p-3 shadow-2xl relative overflow-hidden ring-4 ring-slate-100 ring-offset-0">
+              <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-20 h-4 bg-slate-900 rounded-full z-20 flex items-center justify-center">
+                <div className="w-1.5 h-1.5 bg-slate-800 rounded-full ml-auto mr-1.5 opacity-60" />
+              </div> {/* Dynamic Island */}
+
+              <div className="flex-1 flex flex-col justify-between pt-5">
+                <div className="space-y-4">
+                  {/* Phone Header */}
+                  <div className="flex justify-between items-center text-[10px] text-slate-400 border-b border-slate-100 pb-2 font-bold">
+                    <span>9:41 AM</span>
+                    <span className="text-emerald-600 font-black">● Synchronized</span>
+                  </div>
+
+                  {/* Phone App Widget */}
+                  <div className="space-y-3">
+                    <div className="bg-[#0B1B3A] rounded-2xl p-3.5 space-y-1 shadow-sm text-white">
+                      <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Today's Revenue</span>
+                      <p className="text-lg font-black">₹1.85 Lakhs</p>
+                      <span className="text-[8px] text-emerald-400 block font-semibold">+14% vs last week</span>
+                    </div>
+
+                    <div className="bg-slate-50 rounded-2xl p-3 space-y-2 border border-slate-200/60">
+                      <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Active Slots (Today)</span>
+                      <div className="flex justify-between items-center text-[10px]">
+                        <span className="font-bold text-slate-800">Crystal Lawn</span>
+                        <span className="px-2 py-0.5 rounded-full bg-amber-100 text-[#F5C542] text-[8px] font-bold">Sangeet</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notifications feed */}
+                <div className="space-y-2.5">
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-2.5 flex items-start gap-2.5 animate-pulse shadow-3xs">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#1E5EFF] shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[9px] font-bold text-slate-800">Booking Slot Locked</p>
+                      <p className="text-[8px] text-slate-500 font-medium">Dec 18 - Grand Lawn (Gupta Wedding)</p>
+                    </div>
+                  </div>
+                  <div className="bg-white border border-slate-150 shadow-3xs rounded-xl p-2.5 flex items-start gap-2.5">
+                    <MessageSquare className="w-3.5 h-3.5 text-green-500 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[9px] font-bold text-slate-800">WhatsApp Invoice Sent</p>
+                      <p className="text-[8px] text-slate-500 font-medium">Sanjay Gupta - Invoice INV-10292</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Home button indicator */}
+              <div className="w-24 h-1 bg-slate-200 rounded-full mx-auto mt-4 shrink-0" />
+            </div>
+          </div>
+        </section>
+
+        {/* 8. ANALYTICS SECTION */}
+        <section id="analytics" className="space-y-12">
+          <div className="text-center space-y-3">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1B3A] font-Sans tracking-tight">
+              Real-Time Financial Dashboard
+            </h2>
+            <p className="text-md text-slate-500 max-w-xl mx-auto">
+              Get an accurate view of your bookings, plate counts, margins, and expenses instantly.
+            </p>
+          </div>
+
+          <div className="max-w-5xl mx-auto bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 backdrop-blur-md glow-gold relative overflow-hidden shadow-lg">
+            {/* Interactive Timeline Filter */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-5">
+              <div>
+                <h3 className="text-base font-bold text-slate-800">CFO Dashboard Preview</h3>
+                <p className="text-sm text-slate-400 mt-0.5 font-semibold">Toggle timeline to view simulated database calculations</p>
+              </div>
+              <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200/60 w-fit">
+                {['month', 'quarter', 'year'].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setAnalyticsTimeframe(t as any)}
+                    className={cn(
+                      "px-3.5 py-1.5 rounded-lg text-[10px] font-bold transition-all uppercase tracking-wider",
+                      analyticsTimeframe === t
+                        ? "bg-[#1E5EFF] text-white shadow-sm"
+                        : "text-slate-400 hover:text-slate-700"
+                    )}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Dashboard Visual Body */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 text-left">
+              <div className="space-y-1">
+                <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">Bookings Count</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-slate-800">{analyticsData.bookings}</span>
+                  <span className="text-sm text-emerald-600 font-bold">{analyticsData.bookingsTrend}</span>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">Total Collection</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-[#1E5EFF]">{analyticsData.revenue}</span>
+                  <span className="text-sm text-emerald-600 font-bold">{analyticsData.revenueTrend}</span>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">Occupancy Rate</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-slate-800">{analyticsData.occupancy}</span>
+                  <span className="text-sm text-emerald-600 font-bold">{analyticsData.occupancyTrend}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Mini Chart & Tables */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-8 items-end">
+              {/* Columns */}
+              <div className="lg:col-span-5 h-44 flex bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-inner relative overflow-hidden">
+                {/* Gridlines */}
+                <div className="absolute inset-0 flex flex-col justify-between py-6 px-4 pointer-events-none opacity-5">
+                  <div className="border-b border-slate-900 w-full" />
+                  <div className="border-b border-slate-900 w-full" />
+                  <div className="border-b border-slate-900 w-full" />
+                </div>
+
+                {/* Y-Axis Labels */}
+                <div className="flex flex-col justify-between text-[8px] text-slate-400 font-bold pr-2 h-full py-2 pointer-events-none select-none">
+                  <span>100%</span>
+                  <span>50%</span>
+                  <span>0%</span>
+                </div>
+
+                {/* Bars */}
+                <div className="flex-1 flex items-end gap-3.5 h-full relative z-10">
+                  {analyticsData.bars.map((val, idx) => (
+                    <div key={idx} className="flex-1 bg-slate-200/40 rounded-t-md h-full flex items-end relative group">
+                      <motion.div
+                        key={`${analyticsTimeframe}-${idx}`}
+                        initial={{ height: 0 }}
+                        animate={{ height: `${val}%` }}
+                        transition={{ duration: 0.6 }}
+                        className="w-full bg-gradient-to-t from-[#1E5EFF] to-[#6090FF] group-hover:from-[#F5C542] group-hover:to-[#FFDE85] rounded-t-md transition-all duration-300"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bookings List */}
+              <div className="lg:col-span-7 bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3 shadow-2xs">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Recent Slated Handovers</p>
+                <div className="divide-y divide-slate-150 text-[11px]">
+                  {analyticsData.bookingsList.map((b, idx) => (
+                    <div key={idx} className="py-2.5 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-slate-800 truncate max-w-xs">{b.name}</p>
+                        <p className="text-[9px] text-slate-400 mt-0.5 font-medium">{b.space} · {b.date}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-[#1E5EFF]">{b.amount}</p>
+                        <span className="text-[8px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded-md mt-0.5 block w-fit ml-auto font-bold">
+                          {b.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 9. MARKETPLACE FUTURE SECTION */}
+        <section id="marketplace" className="space-y-16 relative">
+          <div className="text-center space-y-3">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1B3A] font-sans tracking-tight">
+              Grow Your Business Commission-Free
+            </h2>
+            <p className="text-md text-slate-500 max-w-xl mx-auto">
+              Our vision is to bypass middlemen and connect guests directly with local wedding venues.
+            </p>
+          </div>
+
+          <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center bg-white rounded-3xl border border-slate-200/80 p-8 sm:p-12 relative overflow-hidden glow-blue shadow-lg">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-[#1E5EFF]/5 rounded-bl-full pointer-events-none" />
+
+            <div className="lg:col-span-6 space-y-6 text-left">
+              <span className="text-[9px] font-black uppercase tracking-widest text-[#1E5EFF] bg-[#1E5EFF]/10 border border-[#1E5EFF]/20 px-2.5 py-0.5 rounded-full">
+                Venue Discovery Portal
+              </span>
+              <h3 className="text-2xl font-bold text-slate-800 tracking-tight">Direct Consumer Booking Portal</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                We are building India's largest commission-free venue directory. By hosting your internal operations on VenuePro, your open calendar slots, photo galleries, and specs catalogs can sync directly to our guest-facing portal.
+              </p>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                Brides, grooms, and event planners can view your availability, send inquiries directly to your WhatsApp CRM, and book slots without paying a single rupee to commissions agents.
+              </p>
+            </div>
+
+            <div className="lg:col-span-6 border border-slate-150 rounded-2xl bg-slate-50 p-5 space-y-4 shadow-2xs">
+              <div className="flex items-center gap-3 border-b border-slate-200 pb-3">
+                <Search className="w-4 h-4 text-[#1E5EFF]" />
+                <span className="text-[10px] text-slate-400 font-bold">Searching for wedding banquets in Gurugram...</span>
+              </div>
+
+              <div className="bg-white rounded-xl p-3.5 space-y-3 border border-slate-200/60 shadow-3xs">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-800">Shree Balaji Palace & Lawn</h4>
+                    <p className="text-[9px] text-slate-400 mt-0.5 font-medium">Sector 48, Gurugram · 500-1000 Capacity</p>
+                  </div>
+                  <span className="text-[8px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-md font-bold">Dec 18 Available</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="px-2 py-0.5 bg-slate-50 border border-slate-200/50 rounded-md text-[8px] text-slate-500 font-bold">✓ Parking 200 Cars</span>
+                  <span className="px-2 py-0.5 bg-slate-50 border border-slate-200/50 rounded-md text-[8px] text-slate-500 font-bold">✓ 4 Bridal Suites</span>
+                </div>
+                <button type="button" className="w-full text-center py-2 bg-[#1E5EFF] text-white rounded-lg text-[10px] font-bold shadow-sm">
+                  Connect Direct via WhatsApp
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 9. BOOK A DEMO SECTION */}
+        <section ref={demoSectionRef} id="demo" className="scroll-mt-24 space-y-12 animate-fade-in">
+          <div className="text-center space-y-3">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1B3A] font-display tracking-tight">
+              Book a Free Live Demo & WhatsApp Tour
+            </h2>
+            <p className="text-md text-slate-500 max-w-xl mx-auto">
+              See how VenuePro works live. We will show you how to lock calendar slots, set up menus, and trigger WhatsApp receipts in 15 minutes.
+            </p>
+          </div>
+
+          <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-10 shadow-lg relative glow-blue">
+            <div className="lg:col-span-6 space-y-6 text-left">
+              <span className="text-[9px] font-black uppercase tracking-widest text-[#1E5EFF] bg-[#1E5EFF]/10 border border-[#1E5EFF]/20 px-2.5 py-0.5 rounded-full">
+                Guided Walkthrough
+              </span>
+              <h3 className="text-2xl font-bold text-slate-800 tracking-tight">What to expect in your 15-min demo:</h3>
+
+              <div className="space-y-4">
+                {[
+                  { title: "Live WhatsApp Simulator", desc: "Watch how split advance receipts and payment links are sent straight to your phone's WhatsApp chat." },
+                  { title: "Double-Booking Protection Test", desc: "Test how the digital calendar blocks overlapping timings across multiple managers." },
+                  { title: "GST & Catering Packages Setup", desc: "See how custom menus (Veg/Non-Veg rate lists) link directly to your reverse-tax invoice builder." },
+                  { title: "Free Data Migration Setup", desc: "Learn how we migrate your existing customer registers and Excel files to VenuePro in under 24 hours." }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex gap-3">
+                    <div className="w-5 h-5 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                      <Check className="w-3.5 h-3.5 text-[#1E5EFF]" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-800">{item.title}</h4>
+                      <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="lg:col-span-6 border border-slate-150 rounded-2xl bg-slate-50 p-6 sm:p-8 shadow-2xs">
+              <DemoWizard />
+            </div>
+          </div>
+        </section>
+
+        {/* 10. TRUST SECTION */}
+        <section className="space-y-16 max-w-5xl mx-auto">
+          {/* <div className="text-center space-y-3">
+            <h2 className="text-3xl font-extrabold text-[#0B1B3A] font-display tracking-tight">
+              Trusted by Top Indian Venues
+            </h2>
+            <p className="text-md text-slate-500 max-w-xl mx-auto">
+              Read how wedding halls and convention center owners upgraded their operations.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+            <div className="bg-white border border-slate-200/60 rounded-3xl p-8 space-y-4 relative shadow-2xs">
+              <p className="text-sm text-slate-600 italic leading-relaxed">
+                "We managed our wedding lawn on hardbound paper registers for over 35 years. Shifting our staff to VenuePro took only 2 days. The calendar locks slots instantly across all staff phones, stopping double-booking arguments once and for all."
+              </p>
+              <div>
+                <p className="text-sm font-bold text-slate-800">Rajesh Yadav</p>
+                <p className="text-[10px] text-slate-400 font-semibold">Owner, Shree Balaji Gardens (Gurugram)</p>
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-200/60 rounded-3xl p-8 space-y-4 relative shadow-2xs">
+              <p className="text-sm text-slate-600 italic leading-relaxed">
+                "Calculating reverse-GST billing during wedding seasons used to take hours. VenuePro computes splits, plates, CGST, and SGST in 2 seconds, and auto-dispatches clean PDF invoice links directly to our clients' WhatsApp. Excellent application!"
+              </p>
+              <div>
+                <p className="text-sm font-bold text-slate-800">Sanjay Reddy</p>
+                <p className="text-[10px] text-slate-400 font-semibold">General Manager, Pearl Convention Center (Hyderabad)</p>
+              </div>
+            </div>
+          </div> */}
+
+          <div className="pt-8 border-t border-slate-200 text-center space-y-4">
+            <p className="text-[18px] text-[#0B1B3A] uppercase font-black tracking-widest">A Note from the Founders</p>
+            <p className="text-sm text-slate-500 max-w-xl mx-auto leading-relaxed font-medium">
+              "We built VenuePro because we saw Indian banquet and resort owners losing lakhs every wedding season to billing calculation errors, calendar clashes, and outstanding balance collections. We designed it to be simple enough that anyone who can use WhatsApp can run their entire venue register in 10 seconds."
+            </p>
+            <p className="text-[14px] text-[#0B1B3A] font-black tracking-widest">Kishore ~ Co Founder at Venue Pro</p>
+          </div>
+        </section>
+
+        {/* 11. FINAL CTA SECTION (Premium Dark Navy Contrast Card) */}
+        <section className="max-w-4xl mx-auto">
+          <div className="bg-gradient-to-br from-[#0B1B3A] to-[#0A1A35] rounded-3xl border border-slate-800 p-8 sm:p-12 text-center text-white space-y-8 relative overflow-hidden glow-gold shadow-2xl">
+            <div className="absolute top-[-30%] left-[-20%] w-[60%] aspect-square rounded-full bg-[#1E5EFF]/10 blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-[-30%] right-[-20%] w-[60%] aspect-square rounded-full bg-[#F5C542]/5 blur-[120px] pointer-events-none" />
+
+            <div className="space-y-4">
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-white font-display tracking-tight">
+                Modernize Your Venue Register Today
+              </h2>
+              <p className="text-sm sm:text-md text-slate-300 max-w-lg mx-auto leading-relaxed">
+                Start our 14-day free trial. Setup takes under 5 minutes. No credit card required. Upload your list and check slot calendars instantly.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+              <button
+                type="button"
+                onClick={() => handleNavigate('/signup')}
+                className="w-full sm:w-auto px-7 py-4 bg-[#1E5EFF] hover:bg-blue-600 text-white rounded-full text-sm font-bold shadow-lg shadow-blue-500/30 transition-all hover:scale-[1.02] active:scale-98"
+              >
+                Create Free Account
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsDemoModalOpen(true)}
+                className="w-full sm:w-auto px-7 py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-full text-sm font-bold transition-all shadow-lg hover:scale-[1.02] active:scale-98"
+              >
+                Request a Live Demo
+              </button>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-x-8 gap-y-2 text-[10px] text-slate-500 pt-4 font-semibold">
+              <span>✓ No credit card required</span>
+              <span>✓ Cancel / Pause any time</span>
+              <span>✓ Free data migration support</span>
+            </div>
+          </div>
+        </section>
 
       </main>
 
-      {/* FOOTER */}
-      <footer className="border-t border-slate-100 bg-white py-16 text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8">
-          <div className="col-span-2 md:col-span-1 space-y-4">
-            <div className="flex items-center">
-              <img
-                src={venueProLogo}
-                alt="VenuePro Logo"
-                className="h-16 w-auto object-contain max-w-[120px]"
-              />
-            </div>
-            <p className="text-[12px] leading-relaxed text-slate-500 font-medium">
-              The simple B2B system for wedding halls, banquets, and event centers. Made in India, built for everyone.
-            </p>
+      {/* Footer */}
+      <footer className="border-t border-slate-200 bg-white py-12 text-center text-sm text-slate-500 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          <div className="flex justify-center items-center gap-3">
+            <img src={venueProLogo} alt="Logo" className="h-6 w-auto opacity-70" />
+            <span className="font-bold text-slate-600">VenuePro</span>
           </div>
-          <div className="space-y-3">
-            <span className="block text-[10px] font-bold text-slate-900 uppercase tracking-wider font-display">Product Links</span>
-            <ul className="space-y-2 text-[11px] font-semibold">
-              <li><a href="#features" className="hover:text-slate-900">Platform Features</a></li>
-              <li><a href="#workflow" className="hover:text-slate-900">Operational Timeline</a></li>
-              <li><a href="#analytics" className="hover:text-slate-900">Revenue Analytics</a></li>
-              <li><a href="#faq" className="hover:text-slate-900">Help FAQ Center</a></li>
-            </ul>
-          </div>
-          <div className="space-y-3">
-            <span className="block text-[10px] font-bold text-slate-900 uppercase tracking-wider font-display">Legal & Trust</span>
-            <ul className="space-y-2 text-[11px] font-semibold">
-              <li><Link to="/privacy" className="hover:text-slate-900">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="hover:text-slate-900">Terms of Service</Link></li>
-              <li><a href="#" className="hover:text-slate-900">Data Encryption SLA</a></li>
-            </ul>
-          </div>
-          <div className="space-y-3">
-            <span className="block text-[10px] font-bold text-slate-900 uppercase tracking-wider font-display">Help & Support</span>
-            <p className="text-[11px] leading-relaxed font-semibold">
-              EMAIL US:<br />
-              <strong className="text-slate-900">support@venuepro.in</strong>
-            </p>
+          <p>© 2026 VenuePro Technologies. All rights reserved. CA-audited billing, digital calendar locks, and WhatsApp CRM automations.</p>
+          <div className="flex justify-center gap-6 text-[11px] font-semibold">
+            <button onClick={() => handleNavigate('/faqs')} className="hover:text-slate-800 bg-transparent border-none cursor-pointer transition-colors">Support FAQs</button>
+            <a href="/privacy" className="hover:text-slate-800 transition-colors">Privacy Policy</a>
+            <a href="/terms" className="hover:text-slate-800 transition-colors">Terms of Service</a>
+            <a href="mailto:support@venuepro.in" className="hover:text-slate-800 transition-colors">Contact Support</a>
           </div>
         </div>
       </footer>
 
+      {/* Demo Request Modal */}
+      <AnimatePresence>
+        {isDemoModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
+            onClick={() => setIsDemoModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-white w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl border border-slate-200/50 flex flex-col md:flex-row relative max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setIsDemoModalOpen(false)}
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors z-50 animate-fade-in"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              {/* Left Column - Demo Info / Value Prop */}
+              <div className="hidden md:flex md:w-5/12 bg-[#0B1B3A] p-8 text-white flex-col justify-between relative overflow-hidden">
+                {/* Background glow */}
+                <div className="absolute top-[-20%] left-[-20%] w-[80%] aspect-square rounded-full bg-[#1E5EFF]/20 blur-[80px]" />
+
+                <div className="space-y-6 relative z-10">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-[#F5C542] text-[9px] font-black tracking-wider uppercase">
+                    <Sparkles className="w-3 h-3 animate-pulse" /> Live Sandbox Tour
+                  </div>
+                  <h3 className="text-xl font-bold tracking-tight font-display">Request a Personalized Demo</h3>
+                  <p className="text-sm text-slate-300 leading-relaxed">
+                    Explore how VenuePro eliminates paper register mistakes and payment tracking hassles for Indian wedding halls.
+                  </p>
+
+                  <div className="space-y-4 pt-2">
+                    {[
+                      "Realtime slot lock verification",
+                      "Reverse-GST invoicing demo",
+                      "WhatsApp auto-reminders setup",
+                      "Free 24hr paper data migration"
+                    ].map((text, idx) => (
+                      <div key={idx} className="flex items-center gap-2.5">
+                        <div className="w-4 h-4 rounded-full bg-[#1E5EFF] flex items-center justify-center shrink-0">
+                          <Check className="w-2.5 h-2.5 text-white" />
+                        </div>
+                        <span className="text-[11px] text-slate-200 font-medium">{text}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-8 border-t border-white/10 mt-8 relative z-10">
+                  <p className="text-[10px] text-slate-400 italic">
+                    "Setting up took only 2 days. The calendar lock is brilliant."
+                  </p>
+                  <p className="text-[10px] font-bold text-[#F5C542] mt-1">Rajesh Yadav (Gurugram)</p>
+                </div>
+              </div>
+
+              {/* Right Column - Conversational Form */}
+              <div className="w-full md:w-7/12 p-8 bg-slate-50 flex flex-col justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800 tracking-tight mb-1 font-display">Let's set up your walkthrough</h3>
+                  <p className="text-sm text-slate-400 mb-6">Takes less than 1 minute to submit request</p>
+                  <DemoWizard onSuccess={() => { }} />
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

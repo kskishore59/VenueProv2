@@ -4,11 +4,13 @@ import {
   ShieldCheck, Building2, Users, IndianRupee, Search, Filter,
   Edit2, Plus, Ban, CheckCircle, AlertTriangle, X, Calendar,
   Loader2, Sparkles, Check, ArrowRight, Activity, TrendingUp, Info,
-  Gift, Trash2
+  Gift, Trash2, Phone, MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 export default function SuperAdmin() {
   const {
@@ -26,7 +28,7 @@ export default function SuperAdmin() {
     deletePromoCode
   } = useAdminStore();
 
-  const [activeTab, setActiveTab] = useState<'analytics' | 'organizations' | 'users' | 'payments' | 'promo_codes'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'organizations' | 'users' | 'payments' | 'promo_codes' | 'demo_requests'>('analytics');
   const [orgSearch, setOrgSearch] = useState('');
   const [orgPlanFilter, setOrgPlanFilter] = useState<string>('all');
   const [orgStatusFilter, setOrgStatusFilter] = useState<string>('all');
@@ -61,9 +63,84 @@ export default function SuperAdmin() {
   const [editStatus, setEditStatus] = useState<string>('active');
   const [editTrialEnds, setEditTrialEnds] = useState<string>('');
 
+  // Demo Requests State
+  const [demoRequests, setDemoRequests] = useState<any[]>([]);
+  const [isFetchingDemos, setIsFetchingDemos] = useState(false);
+  const [demoSearch, setDemoSearch] = useState('');
+  const [demoStatusFilter, setDemoStatusFilter] = useState<string>('all');
+
+  const fetchDemoRequests = async () => {
+    setIsFetchingDemos(true);
+    try {
+      if (!isSupabaseConfigured()) {
+        setDemoRequests([
+          { id: '1', name: 'Sanjay Yadav', phone: '9876543210', venue_name: 'Balaji Palace & Lawn', city: 'Gurugram', notes: 'Venue Type: banquet | Current Setup: paper | Schedule Preference: today - morning', status: 'pending', created_at: new Date().toISOString() },
+          { id: '2', name: 'Rohan Sharma', phone: '9911223344', venue_name: 'Royal Palms Resort', city: 'Noida', notes: 'Venue Type: resort | Current Setup: excel | Schedule Preference: tomorrow - afternoon', status: 'scheduled', created_at: new Date(Date.now() - 24*3600*1000).toISOString() }
+        ]);
+        return;
+      }
+      const { data, error } = await supabase
+        .from('demo_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setDemoRequests(data || []);
+    } catch (err: any) {
+      console.error('Failed to fetch demo requests:', err);
+      toast.error('Failed to load demo requests');
+    } finally {
+      setIsFetchingDemos(false);
+    }
+  };
+
   useEffect(() => {
     syncAdminData();
   }, [syncAdminData]);
+
+  useEffect(() => {
+    if (activeTab === 'demo_requests') {
+      fetchDemoRequests();
+    }
+  }, [activeTab]);
+
+  const handleUpdateDemoStatus = async (id: string, newStatus: string) => {
+    try {
+      if (!isSupabaseConfigured()) {
+        setDemoRequests(prev => prev.map(d => d.id === id ? { ...d, status: newStatus } : d));
+        toast.success('Demo request status updated locally! 📝');
+        return;
+      }
+      const { error } = await supabase
+        .from('demo_requests')
+        .update({ status: newStatus })
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success('Demo request status updated successfully! 📝');
+      fetchDemoRequests();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update status.');
+    }
+  };
+
+  const parseDemoNotes = (notes: string | null) => {
+    if (!notes) return { venueType: 'N/A', currentSetup: 'N/A', schedule: 'N/A' };
+    const parts = notes.split(' | ');
+    const result = { venueType: 'N/A', currentSetup: 'N/A', schedule: 'N/A' };
+    
+    parts.forEach(part => {
+      if (part.startsWith('Venue Type:')) {
+        result.venueType = part.replace('Venue Type:', '').trim();
+      } else if (part.startsWith('Current Setup:')) {
+        result.currentSetup = part.replace('Current Setup:', '').trim();
+      } else if (part.startsWith('Schedule Preference:')) {
+        result.schedule = part.replace('Schedule Preference:', '').trim();
+      }
+    });
+    
+    return result;
+  };
 
   const handleCreateOrg = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -285,16 +362,28 @@ export default function SuperAdmin() {
           <Gift className="w-4 h-4" />
           Promo Codes ({allPromoCodes.length})
         </button>
+        <button
+          onClick={() => setActiveTab('demo_requests')}
+          className={cn(
+            'px-4 py-2.5 text-xs font-black border-b-2 -mb-px transition-all flex items-center gap-2',
+            activeTab === 'demo_requests'
+              ? 'border-indigo-600 text-indigo-650'
+              : 'border-transparent text-gray-400 hover:text-gray-600'
+          )}
+        >
+          <Phone className="w-4 h-4" />
+          Demo Requests ({demoRequests.length})
+        </button>
       </div>
 
-      {isLoading && (
+      {(isLoading || isFetchingDemos) && (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
         </div>
       )}
 
       {/* Tab Contents */}
-      {!isLoading && activeTab === 'analytics' && (
+      {!isLoading && !isFetchingDemos && activeTab === 'analytics' && (
         <div className="space-y-6">
           {/* KPI Matrix Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -557,7 +646,7 @@ export default function SuperAdmin() {
       )}
 
       {/* Tab: Organizations */}
-      {!isLoading && activeTab === 'organizations' && (
+      {!isLoading && !isFetchingDemos && activeTab === 'organizations' && (
         <div className="space-y-4">
           {/* Filters header */}
           <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-4 rounded-2xl border border-gray-150 shadow-2xs">
@@ -692,7 +781,7 @@ export default function SuperAdmin() {
       )}
 
       {/* Tab: User Directory */}
-      {!isLoading && activeTab === 'users' && (
+      {!isLoading && !isFetchingDemos && activeTab === 'users' && (
         <div className="space-y-4">
           {/* Filter Bar */}
           <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-4 rounded-2xl border border-gray-150 shadow-2xs">
@@ -828,7 +917,7 @@ export default function SuperAdmin() {
       )}
 
       {/* Tab: Payment Audit Ledger */}
-      {!isLoading && activeTab === 'payments' && (
+      {!isLoading && !isFetchingDemos && activeTab === 'payments' && (
         <div className="space-y-4">
           {/* Filter Bar */}
           <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-4 rounded-2xl border border-gray-150 shadow-2xs">
@@ -924,7 +1013,7 @@ export default function SuperAdmin() {
       )}
 
       {/* Tab: Promo Codes */}
-      {!isLoading && activeTab === 'promo_codes' && (
+      {!isLoading && !isFetchingDemos && activeTab === 'promo_codes' && (
         <div className="space-y-4">
           {/* Filter Bar */}
           <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-4 rounded-2xl border border-gray-150 shadow-2xs">
@@ -1034,6 +1123,172 @@ export default function SuperAdmin() {
                         </tr>
                       );
                     })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Demo Requests */}
+      {!isLoading && !isFetchingDemos && activeTab === 'demo_requests' && (
+        <div className="space-y-4 animate-fade-in">
+          {/* Filter Bar */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-4 rounded-2xl border border-gray-150 shadow-2xs">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={demoSearch}
+                onChange={e => setDemoSearch(e.target.value)}
+                placeholder="Search requests by name, phone, or venue..."
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all"
+              />
+            </div>
+
+            <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-150 px-3 py-2 rounded-xl text-xs w-full sm:w-auto">
+              <Filter className="w-3.5 h-3.5 text-gray-400" />
+              <select 
+                value={demoStatusFilter} 
+                onChange={e => setDemoStatusFilter(e.target.value)}
+                className="bg-transparent text-gray-700 outline-none font-bold text-xs w-full"
+              >
+                <option value="all">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="contacted">Contacted</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Demo Requests Table */}
+          <div className="bg-white rounded-3xl border border-gray-150 shadow-2xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left text-xs">
+                <thead>
+                  <tr className="bg-gray-50/50 border-b border-gray-100 text-gray-400 uppercase tracking-widest font-black text-[10px]">
+                    <th className="py-4 px-6">Requester</th>
+                    <th className="py-4 px-6">Venue Details</th>
+                    <th className="py-4 px-6">Qualification Profile</th>
+                    <th className="py-4 px-6">Call Schedule</th>
+                    <th className="py-4 px-6">Status</th>
+                    <th className="py-4 px-6 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-gray-600 font-semibold">
+                  {demoRequests
+                    .filter(d => {
+                      const matchesSearch = d.name.toLowerCase().includes(demoSearch.toLowerCase()) || 
+                                            (d.phone || '').toLowerCase().includes(demoSearch.toLowerCase()) ||
+                                            (d.venue_name || '').toLowerCase().includes(demoSearch.toLowerCase());
+                      const matchesStatus = demoStatusFilter === 'all' || d.status === demoStatusFilter;
+                      return matchesSearch && matchesStatus;
+                    })
+                    .length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-gray-400 font-medium">
+                        No demo requests found.
+                      </td>
+                    </tr>
+                  ) : (
+                    demoRequests
+                      .filter(d => {
+                        const matchesSearch = d.name.toLowerCase().includes(demoSearch.toLowerCase()) || 
+                                              (d.phone || '').toLowerCase().includes(demoSearch.toLowerCase()) ||
+                                              (d.venue_name || '').toLowerCase().includes(demoSearch.toLowerCase());
+                        const matchesStatus = demoStatusFilter === 'all' || d.status === demoStatusFilter;
+                        return matchesSearch && matchesStatus;
+                      })
+                      .map(demo => {
+                        const { venueType, currentSetup, schedule } = parseDemoNotes(demo.notes);
+                        return (
+                          <tr key={demo.id} className="hover:bg-gray-50/30 transition-colors">
+                            <td className="py-4 px-6">
+                              <div className="space-y-0.5">
+                                <span className="font-black text-gray-900 text-sm block">{demo.name}</span>
+                                <span className="text-[10px] text-gray-400 font-mono tracking-tighter">
+                                  Requested: {demo.created_at ? format(new Date(demo.created_at), 'dd MMM yyyy HH:mm') : 'N/A'}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-6">
+                              <div className="space-y-0.5">
+                                <span className="block text-gray-800">{demo.venue_name || 'Not specified'}</span>
+                                <span className="text-[10px] text-gray-400 font-semibold">{demo.city || 'No Location'}</span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-6">
+                              <div className="space-y-1">
+                                <span className="inline-block px-2 py-0.5 bg-indigo-50 text-indigo-755 rounded text-[9px] font-bold uppercase tracking-wider border border-indigo-100 capitalize">
+                                  Space: {venueType}
+                                </span>
+                                <span className="block text-[10px] text-gray-400">
+                                  Tracks on: <strong className="text-gray-700 capitalize">{currentSetup}</strong>
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-6">
+                              <div className="flex items-center gap-1 text-[11px] text-gray-700">
+                                <Phone className="w-3.5 h-3.5 text-indigo-500" />
+                                <span className="capitalize font-bold">{schedule}</span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-6">
+                              <span className={cn(
+                                'px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider',
+                                demo.status === 'pending' && 'bg-amber-100 text-amber-800 border border-amber-250',
+                                demo.status === 'contacted' && 'bg-blue-100 text-blue-800 border border-blue-200',
+                                demo.status === 'scheduled' && 'bg-purple-100 text-purple-800 border border-purple-200',
+                                demo.status === 'completed' && 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+                                demo.status === 'cancelled' && 'bg-gray-100 text-gray-600 border border-gray-200',
+                              )}>
+                                {demo.status}
+                              </span>
+                            </td>
+                            <td className="py-4 px-6 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                {demo.status === 'pending' && (
+                                  <button
+                                    onClick={() => handleUpdateDemoStatus(demo.id, 'contacted')}
+                                    className="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-bold rounded-lg border border-blue-100 transition-all"
+                                  >
+                                    Contacted
+                                  </button>
+                                )}
+                                {(demo.status === 'pending' || demo.status === 'contacted') && (
+                                  <button
+                                    onClick={() => handleUpdateDemoStatus(demo.id, 'scheduled')}
+                                    className="px-2 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 text-[10px] font-bold rounded-lg border border-purple-100 transition-all"
+                                  >
+                                    Schedule
+                                  </button>
+                                )}
+                                {demo.status !== 'completed' && demo.status !== 'cancelled' && (
+                                  <button
+                                    onClick={() => handleUpdateDemoStatus(demo.id, 'completed')}
+                                    className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-lg border border-emerald-100 transition-all"
+                                  >
+                                    Complete
+                                  </button>
+                                )}
+                                
+                                <a
+                                  href={`https://wa.me/91${demo.phone}?text=Namaste%20${encodeURIComponent(demo.name)},%20I%20am%20connecting%20from%20VenuePro%20regarding%20your%20request%20for%20a%20guided%20tour%20for%20${encodeURIComponent(demo.venue_name || 'your venue')}.%20Is%20this%20a%2520good%2520time%2520to%2520connect%253F`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="p-1.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-lg transition-all"
+                                  title="WhatsApp Lead"
+                                >
+                                  <MessageSquare className="w-3.5 h-3.5" />
+                                </a>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
                   )}
                 </tbody>
               </table>
