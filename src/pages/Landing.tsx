@@ -13,7 +13,7 @@ import {
 import { useAuthStore } from '@/stores/auth-store';
 import { cn } from '@/lib/utils';
 import venueProLogo from '@/assets/venueProLogo.svg';
-import { getAppUrl } from '@/lib/urls';
+import { getRouteUrl } from '@/lib/urls';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -549,12 +549,16 @@ export default function Landing() {
   const analyticsData = getAnalyticsData();
 
   const handleNavigate = (path: string) => {
-    const target = getAppUrl(path);
+    const target = getRouteUrl(path);
     if (target.startsWith('http')) {
       window.location.href = target;
     } else {
       navigate(target);
     }
+  };
+
+  const handleScrollToWorkflow = () => {
+    document.getElementById('workflow')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   // WhatsApp Simulator Interaction loop
@@ -698,21 +702,26 @@ export default function Landing() {
       <div className="absolute inset-0 stripe-grid pointer-events-none opacity-60 -z-10" />
 
       {/* Floating Glass Header */}
-      <header className="fixed top-5 left-4 right-4 z-50 max-w-7xl mx-auto">
+      <motion.header
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="fixed top-5 left-4 right-4 z-50 max-w-7xl mx-auto"
+      >
         <nav className="backdrop-blur-xl bg-white/70 border border-slate-200/50 px-6 py-3.5 rounded-full flex items-center justify-between shadow-lg">
           <div className="flex items-center gap-10">
-            <a href="#" className="flex items-center group transition-transform hover:scale-102">
+            <button onClick={() => handleNavigate('/')} className="flex items-center group transition-transform hover:scale-102 bg-transparent border-none outline-none cursor-pointer">
               <img
                 src={venueProLogo}
                 alt="VenuePro Logo"
                 className="h-10 w-auto object-contain"
               />
-            </a>
+            </button>
             {/* Desktop Links */}
             <div className="hidden md:flex items-center gap-7">
               <button onClick={() => handleNavigate('/features')} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">Features</button>
-              <a href="#workflow" className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] transition-all hover:scale-110 ease-in-out">How It Works</a>
-              <button onClick={() => setIsDemoModalOpen(true)} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all">Book Demo</button>
+              <button onClick={handleScrollToWorkflow} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">How It Works</button>
+              <button onClick={() => setIsDemoModalOpen(true)} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">Book Demo</button>
               <button onClick={() => handleNavigate('/faqs')} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">Support FAQ</button>
             </div>
           </div>
@@ -766,8 +775,8 @@ export default function Landing() {
               className="absolute top-16 left-0 right-0 bg-white/95 border border-slate-200 backdrop-blur-2xl rounded-3xl p-5 shadow-2xl md:hidden flex flex-col gap-3"
             >
               <button onClick={() => { setIsMobileMenuOpen(false); handleNavigate('/features'); }} className="text-left text-sm font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">Features</button>
-              <a href="#workflow" onClick={() => setIsMobileMenuOpen(false)} className="text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all">How It Works</a>
-              <button onClick={() => { setIsMobileMenuOpen(false); setIsDemoModalOpen(true); }} className="text-left text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all">Book Demo</button>
+              <button onClick={() => { setIsMobileMenuOpen(false); handleScrollToWorkflow(); }} className="text-left text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">How It Works</button>
+              <button onClick={() => { setIsMobileMenuOpen(false); setIsDemoModalOpen(true); }} className="text-left text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">Book Demo</button>
               <button onClick={() => { setIsMobileMenuOpen(false); handleNavigate('/faqs'); }} className="text-left text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">Support FAQs</button>
               {!user && (
                 <button
@@ -781,13 +790,19 @@ export default function Landing() {
             </motion.div>
           )}
         </AnimatePresence>
-      </header>
+      </motion.header>
 
       {/* Main content body */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 pb-24 space-y-36">
 
         {/* 1. HERO SECTION */}
-        <section id="hero" className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center min-h-[75vh] pt-4 w-full">
+        <motion.section
+          id="hero"
+          initial={{ opacity: 0, y: 35 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center min-h-[75vh] pt-4 w-full"
+        >
           <div className="lg:col-span-6 space-y-6 text-left">
             <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-slate-200/80 text-[#0B1B3A] text-[10px] font-black uppercase tracking-wider shadow-sm">
               <Award className="w-3.5 h-3.5 text-[#F5C542]" /> India's Premium Venue Operating System
@@ -866,7 +881,13 @@ export default function Landing() {
               </div>
             </div>
           </div> */}
-          <div className="lg:col-span-6 relative flex justify-center w-full hover:scale-105 transition-all ease-in-out">
+          <motion.div
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+            whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+            className="lg:col-span-6 relative flex justify-center w-full"
+          >
             <div className="relative w-full max-w-lg bg-white/80 border border-slate-200/60 rounded-3xl p-6 glow-blue backdrop-blur-md shadow-lg">
 
               {/* Floating Label */}
@@ -973,11 +994,17 @@ export default function Landing() {
 
               </div>
             </div>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
         {/* 2. PAIN TO TRANSFORMATION SECTION */}
-        <section className="space-y-12 text-center">
+        <motion.section
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="space-y-12 text-center"
+        >
           <div className="space-y-3">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1B3A] font-sans tracking-tight">
               Replace Diary Chaos with Unified Order
@@ -989,7 +1016,11 @@ export default function Landing() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {/* The Chaos */}
-            <div className="bg-red-50/40 border border-red-200/50 rounded-3xl p-8 space-y-6 text-left relative transition-all hover:border-red-200 shadow-xs">
+            <motion.div
+              whileHover={{ y: -6, scale: 1.015, boxShadow: "0 20px 40px -15px rgba(239, 68, 68, 0.08)" }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="bg-red-50/40 border border-red-200/50 rounded-3xl p-8 space-y-6 text-left relative transition-all hover:border-red-200 shadow-xs"
+            >
               <div className="absolute top-4 right-4 text-[9px] font-bold text-red-600 uppercase tracking-widest bg-red-100 border border-red-200 px-2.5 py-0.5 rounded-full">Old Way (Diaries & Paper)</div>
               <h3 className="text-lg font-bold text-red-950">The Friction of Paper Registers</h3>
               <div className="space-y-4">
@@ -1007,10 +1038,14 @@ export default function Landing() {
                   </div>
                 ))}
               </div>
-            </div>
+            </motion.div>
 
             {/* The Transformation */}
-            <div className="gradient-border-glow shadow-md">
+            <motion.div
+              whileHover={{ y: -6, scale: 1.015, boxShadow: "0 20px 40px -15px rgba(30, 94, 255, 0.15)" }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="gradient-border-glow shadow-md"
+            >
               <div className="inner-dot-grid bg-white/95 rounded-[24px] p-8 space-y-6 text-left relative overflow-hidden h-full">
                 <div className="absolute top-4 right-4 text-[9px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">The Order (VenuePro OS)</div>
                 <h3 className="text-lg font-bold text-slate-800">The Power of Digital Precision</h3>
@@ -1030,12 +1065,18 @@ export default function Landing() {
                   ))}
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
-        </section>
+        </motion.section>
 
         {/* 3. PRODUCT VALUE SECTION (Outcome-Based Benefits) */}
-        <section className="space-y-16">
+        <motion.section
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="space-y-16"
+        >
           <div className="text-center space-y-3">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1B3A] font-Sans tracking-tight">
               Outcome-Driven Venue Growth
@@ -1051,7 +1092,12 @@ export default function Landing() {
               { title: "3x Faster Debt Collection", desc: "Split advance structures and automated pending payments notifications keep cash flowing, cutting down on physical collection phone calls.", metric: "3x" },
               { title: "100% Secret Profit Margin", desc: "Role-Based Access Control keeps net margins, bills, and accounting files completely hidden from staff while allowing them to check calendars.", metric: "100%" }
             ].map((card, idx) => (
-              <div key={idx} className="bg-white border border-slate-200/60 hover:border-slate-350 hover:scale-105 rounded-3xl p-8 space-y-6 transition-all duration-300 relative group overflow-hidden shadow-2xs hover:shadow-md ">
+              <motion.div
+                key={idx}
+                whileHover={{ y: -6, scale: 1.015, boxShadow: "0 20px 40px -15px rgba(30, 94, 255, 0.12)" }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="bg-white border border-slate-200/60 hover:border-slate-350 rounded-3xl p-8 space-y-6 transition-all duration-300 relative group overflow-hidden shadow-2xs hover:shadow-md"
+              >
                 <div className="absolute top-0 right-0 w-24 h-24 bg-[#4f46e5] rounded-bl-full group-hover:bg-[#4f46e5] transition-colors" />
 
 
@@ -1061,13 +1107,20 @@ export default function Landing() {
                   <h3 className="text-base font-bold text-slate-800">{card.title}</h3>
                   <p className="text-sm text-slate-500 leading-relaxed">{card.desc}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* 4. SYSTEM FLOW SECTION (Interactive Workflow Mockup) */}
-        <section id="workflow" className="space-y-12">
+        <motion.section
+          id="workflow"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="space-y-12"
+        >
           <div className="text-center space-y-3">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1B3A] font-Sans tracking-tight">
               The Booking Pipeline in Action
@@ -1218,10 +1271,17 @@ export default function Landing() {
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* 5. PRODUCT MODULES (Bento Grid) */}
-        <section id="features" className="space-y-16">
+        <motion.section
+          id="features"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="space-y-16"
+        >
           <div className="text-center space-y-3">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1B3A] font-Sans tracking-tight">
               A Complete Venue Operating System
@@ -1233,7 +1293,11 @@ export default function Landing() {
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 max-w-6xl mx-auto">
             {/* 1. Calendar locking */}
-            <div className="bg-white border border-slate-200/60 hover:border-slate-350 rounded-3xl p-6 sm:p-8 md:col-span-8 flex flex-col justify-between min-h-[300px] transition-all relative overflow-hidden group shadow-2xs">
+            <motion.div
+              whileHover={{ y: -6, scale: 1.012, boxShadow: "0 20px 40px -15px rgba(30, 94, 255, 0.12)" }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="bg-white border border-slate-200/60 hover:border-slate-350 rounded-3xl p-6 sm:p-8 md:col-span-8 flex flex-col justify-between min-h-[300px] transition-all relative overflow-hidden group shadow-2xs"
+            >
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#1E5EFF]/5 rounded-bl-full" />
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                 <div className="md:col-span-7 space-y-4">
@@ -1268,10 +1332,14 @@ export default function Landing() {
                 </div>
               </div>
               <div className="border-t border-slate-150 pt-4 mt-6 text-[10px] text-slate-400 font-bold">100% Slot Accuracy Guarantee</div>
-            </div>
+            </motion.div>
 
             {/* 2. Automated invoices */}
-            <div className="bg-white border border-slate-200/60 hover:border-slate-350 rounded-3xl p-6 sm:p-8 md:col-span-4 flex flex-col justify-between min-h-[300px] transition-all relative overflow-hidden group shadow-2xs">
+            <motion.div
+              whileHover={{ y: -6, scale: 1.012, boxShadow: "0 20px 40px -15px rgba(30, 94, 255, 0.12)" }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="bg-white border border-slate-200/60 hover:border-slate-350 rounded-3xl p-6 sm:p-8 md:col-span-4 flex flex-col justify-between min-h-[300px] transition-all relative overflow-hidden group shadow-2xs"
+            >
               <div className="space-y-4">
                 <div className="p-3 bg-[#F5C542]/10 rounded-2xl w-fit text-[#F5C542]"><DollarSign className="w-5 h-5" /></div>
                 <h3 className="text-lg font-bold text-slate-800">Split Payments & Tax</h3>
@@ -1286,10 +1354,14 @@ export default function Landing() {
                 </div>
               </div>
               <div className="border-t border-slate-150 pt-4 mt-6 text-[10px] text-slate-400 font-bold">CA-Compliant Billing Ledger</div>
-            </div>
+            </motion.div>
 
             {/* 3. CRM followups */}
-            <div className="bg-white border border-slate-200/60 hover:border-slate-350 rounded-3xl p-6 sm:p-8 md:col-span-4 flex flex-col justify-between min-h-[300px] transition-all relative overflow-hidden group shadow-2xs">
+            <motion.div
+              whileHover={{ y: -6, scale: 1.012, boxShadow: "0 20px 40px -15px rgba(30, 94, 255, 0.12)" }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="bg-white border border-slate-200/60 hover:border-slate-350 rounded-3xl p-6 sm:p-8 md:col-span-4 flex flex-col justify-between min-h-[300px] transition-all relative overflow-hidden group shadow-2xs"
+            >
               <div className="space-y-4">
                 <div className="p-3 bg-emerald-50 rounded-2xl w-fit text-emerald-500"><TrendingUp className="w-5 h-5" /></div>
                 <h3 className="text-lg font-bold text-slate-800">CRM Follow-ups Pipeline</h3>
@@ -1308,10 +1380,14 @@ export default function Landing() {
                 </div>
               </div>
               <div className="border-t border-slate-150 pt-4 mt-6 text-[10px] text-slate-400 font-bold">3x Sales Conversion Rate</div>
-            </div>
+            </motion.div>
 
             {/* 4. Staff roles */}
-            <div className="bg-white border border-slate-200/60 hover:border-slate-350 rounded-3xl p-6 sm:p-8 md:col-span-8 flex flex-col justify-between min-h-[300px] transition-all relative overflow-hidden group shadow-2xs">
+            <motion.div
+              whileHover={{ y: -6, scale: 1.012, boxShadow: "0 20px 40px -15px rgba(30, 94, 255, 0.12)" }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="bg-white border border-slate-200/60 hover:border-slate-350 rounded-3xl p-6 sm:p-8 md:col-span-8 flex flex-col justify-between min-h-[300px] transition-all relative overflow-hidden group shadow-2xs"
+            >
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#F5C542]/5 rounded-bl-full" />
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                 <div className="md:col-span-7 space-y-4">
@@ -1343,12 +1419,19 @@ export default function Landing() {
                 </div>
               </div>
               <div className="border-t border-slate-150 pt-4 mt-6 text-[10px] text-slate-400 font-bold">Audit Log Integrity System</div>
-            </div>
+            </motion.div>
           </div>
-        </section>
+        </motion.section>
 
         {/* 6. MOBILE-FIRST SECTION */}
-        <section id="mobile" className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center w-full">
+        <motion.section
+          id="mobile"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center w-full"
+        >
           <div className="lg:col-span-6 space-y-6 text-left order-last lg:order-first">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1E5EFF]/10 border border-[#1E5EFF]/20 text-[#1E5EFF] text-[10px] font-bold uppercase tracking-wider">
               <Smartphone className="w-3.5 h-3.5" /> Mobile Hub
@@ -1432,10 +1515,17 @@ export default function Landing() {
               <div className="w-24 h-1 bg-slate-200 rounded-full mx-auto mt-4 shrink-0" />
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* 8. ANALYTICS SECTION */}
-        <section id="analytics" className="space-y-12">
+        <motion.section
+          id="analytics"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="space-y-12"
+        >
           <div className="text-center space-y-3">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1B3A] font-Sans tracking-tight">
               Real-Time Financial Dashboard
@@ -1551,10 +1641,17 @@ export default function Landing() {
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* 9. MARKETPLACE FUTURE SECTION */}
-        <section id="marketplace" className="space-y-16 relative">
+        <motion.section
+          id="marketplace"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="space-y-16 relative"
+        >
           <div className="text-center space-y-3">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1B3A] font-sans tracking-tight">
               Grow Your Business Commission-Free
@@ -1604,12 +1701,20 @@ export default function Landing() {
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* 9. BOOK A DEMO SECTION */}
-        <section ref={demoSectionRef} id="demo" className="scroll-mt-24 space-y-12 animate-fade-in">
+        <motion.section
+          ref={demoSectionRef}
+          id="demo"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="scroll-mt-24 space-y-12"
+        >
           <div className="text-center space-y-3">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1B3A] font-display tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1B3A] font-Sans tracking-tight">
               Book a Free Live Demo & WhatsApp Tour
             </h2>
             <p className="text-md text-slate-500 max-w-xl mx-auto">
@@ -1626,7 +1731,6 @@ export default function Landing() {
 
               <div className="space-y-4">
                 {[
-                  { title: "Live WhatsApp Simulator", desc: "Watch how split advance receipts and payment links are sent straight to your phone's WhatsApp chat." },
                   { title: "Double-Booking Protection Test", desc: "Test how the digital calendar blocks overlapping timings across multiple managers." },
                   { title: "GST & Catering Packages Setup", desc: "See how custom menus (Veg/Non-Veg rate lists) link directly to your reverse-tax invoice builder." },
                   { title: "Free Data Migration Setup", desc: "Learn how we migrate your existing customer registers and Excel files to VenuePro in under 24 hours." }
@@ -1648,10 +1752,16 @@ export default function Landing() {
               <DemoWizard />
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* 10. TRUST SECTION */}
-        <section className="space-y-16 max-w-5xl mx-auto">
+        <motion.section
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="space-y-16 max-w-5xl mx-auto"
+        >
           {/* <div className="text-center space-y-3">
             <h2 className="text-3xl font-extrabold text-[#0B1B3A] font-display tracking-tight">
               Trusted by Top Indian Venues
@@ -1690,16 +1800,26 @@ export default function Landing() {
             </p>
             <p className="text-[14px] text-[#0B1B3A] font-black tracking-widest">Kishore ~ Co Founder at Venue Pro</p>
           </div>
-        </section>
+        </motion.section>
 
         {/* 11. FINAL CTA SECTION (Premium Dark Navy Contrast Card) */}
-        <section className="max-w-4xl mx-auto">
-          <div className="bg-gradient-to-br from-[#0B1B3A] to-[#0A1A35] rounded-3xl border border-slate-800 p-8 sm:p-12 text-center text-white space-y-8 relative overflow-hidden glow-gold shadow-2xl">
+        <motion.section
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="max-w-4xl mx-auto"
+        >
+          <motion.div
+            whileHover={{ y: -6, scale: 1.01, boxShadow: "0 25px 50px -12px rgba(245, 197, 66, 0.15)" }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="bg-gradient-to-br from-[#0B1B3A] to-[#0A1A35] rounded-3xl border border-slate-800 p-8 sm:p-12 text-center text-white space-y-8 relative overflow-hidden glow-gold shadow-2xl"
+          >
             <div className="absolute top-[-30%] left-[-20%] w-[60%] aspect-square rounded-full bg-[#1E5EFF]/10 blur-[120px] pointer-events-none" />
             <div className="absolute bottom-[-30%] right-[-20%] w-[60%] aspect-square rounded-full bg-[#F5C542]/5 blur-[120px] pointer-events-none" />
 
             <div className="space-y-4">
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white font-display tracking-tight">
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-white font-Sans tracking-tight">
                 Modernize Your Venue Register Today
               </h2>
               <p className="text-sm sm:text-md text-slate-300 max-w-lg mx-auto leading-relaxed">
@@ -1729,8 +1849,8 @@ export default function Landing() {
               <span>✓ Cancel / Pause any time</span>
               <span>✓ Free data migration support</span>
             </div>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
       </main>
 
@@ -1738,14 +1858,14 @@ export default function Landing() {
       <footer className="border-t border-slate-200 bg-white py-12 text-center text-sm text-slate-500 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="flex justify-center items-center gap-3">
-            <img src={venueProLogo} alt="Logo" className="h-6 w-auto opacity-70" />
-            <span className="font-bold text-slate-600">VenuePro</span>
+            <img src={venueProLogo} alt="Logo" className="h-10 w-auto opacity-70" />
+
           </div>
           <p>© 2026 VenuePro Technologies. All rights reserved. CA-audited billing, digital calendar locks, and WhatsApp CRM automations.</p>
           <div className="flex justify-center gap-6 text-[11px] font-semibold">
             <button onClick={() => handleNavigate('/faqs')} className="hover:text-slate-800 bg-transparent border-none cursor-pointer transition-colors">Support FAQs</button>
-            <a href="/privacy" className="hover:text-slate-800 transition-colors">Privacy Policy</a>
-            <a href="/terms" className="hover:text-slate-800 transition-colors">Terms of Service</a>
+            <button onClick={() => handleNavigate('/privacy')} className="hover:text-slate-800 bg-transparent border-none cursor-pointer transition-colors">Privacy Policy</button>
+            <button onClick={() => handleNavigate('/terms')} className="hover:text-slate-800 bg-transparent border-none cursor-pointer transition-colors">Terms of Service</button>
             <a href="mailto:support@venuepro.in" className="hover:text-slate-800 transition-colors">Contact Support</a>
           </div>
         </div>

@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronDown, Search, ArrowLeft, HelpCircle, Sparkles, MessageSquare, PhoneCall,
-  ShieldAlert, BookOpen, Calendar, DollarSign
+  ShieldAlert, BookOpen, Calendar, DollarSign, Menu, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import venueProLogo from '@/assets/venueProLogo.svg';
+import { getRouteUrl } from '@/lib/urls';
+import { useAuthStore } from '@/stores/auth-store';
 
 interface FAQItem {
   question: string;
@@ -64,6 +66,40 @@ const FAQS: FAQItem[] = [
 
 export default function Faqs() {
   const navigate = useNavigate();
+  const handleNavigate = (path: string) => {
+    const target = getRouteUrl(path);
+    if (target.startsWith('http')) {
+      window.location.href = target;
+    } else {
+      navigate(target);
+    }
+  };
+  const { user } = useAuthStore();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleScrollToWorkflow = () => {
+    const target = getRouteUrl('/') + '#workflow';
+    if (target.startsWith('http')) {
+      window.location.href = target;
+    } else {
+      navigate('/');
+      setTimeout(() => {
+        document.getElementById('workflow')?.scrollIntoView({ behavior: 'smooth' });
+      }, 150);
+    }
+  };
+
+  const handleBookDemo = () => {
+    const target = getRouteUrl('/') + '#demo';
+    if (target.startsWith('http')) {
+      window.location.href = target;
+    } else {
+      navigate('/');
+      setTimeout(() => {
+        document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' });
+      }, 150);
+    }
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<'all' | 'setup' | 'business' | 'security' | 'offline'>('all');
   const [openIndex, setOpenIndex] = useState<number | null>(null);
@@ -110,27 +146,95 @@ export default function Faqs() {
       <div className="absolute bottom-0 left-[-10%] w-[50%] aspect-square rounded-full bg-gradient-to-tr from-[#1E5EFF]/5 via-[#0B1B3A]/5 to-transparent blur-[160px] -z-10" />
 
       {/* Floating Glass Header */}
-      <header className="fixed top-5 left-4 right-4 z-50 max-w-7xl mx-auto">
+      <motion.header
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="fixed top-5 left-4 right-4 z-50 max-w-7xl mx-auto"
+      >
         <nav className="backdrop-blur-xl bg-white/70 border border-slate-200/50 px-6 py-3.5 rounded-full flex items-center justify-between shadow-lg">
           <div className="flex items-center gap-10">
-            <button onClick={() => navigate('/')} className="flex items-center group transition-transform hover:scale-102 bg-transparent border-none outline-none cursor-pointer">
+            <button onClick={() => handleNavigate('/')} className="flex items-center group transition-transform hover:scale-102 bg-transparent border-none outline-none cursor-pointer">
               <img
                 src={venueProLogo}
                 alt="VenuePro Logo"
                 className="h-10 w-auto object-contain"
               />
             </button>
+            {/* Desktop Links */}
+            <div className="hidden md:flex items-center gap-7">
+              <button onClick={() => handleNavigate('/features')} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">Features</button>
+              <button onClick={handleScrollToWorkflow} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">How It Works</button>
+              <button onClick={handleBookDemo} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">Book Demo</button>
+              <button onClick={() => handleNavigate('/faqs')} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">Support FAQ</button>
+            </div>
           </div>
 
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 hover:text-slate-900 rounded-full text-xs font-bold transition-all hover:scale-[1.02] active:scale-98 shadow-sm"
-          >
-            <ArrowLeft className="w-3.5 h-3.5 text-slate-500" />
-            Back to Home
-          </button>
+          <div className="flex items-center gap-3">
+            {user ? (
+              <button
+                type="button"
+                onClick={() => handleNavigate('/dashboard')}
+                className="px-5 py-2.5 bg-[#1E5EFF] hover:bg-blue-600 text-white rounded-full text-sm font-bold transition-all hover:scale-[1.03] active:scale-98 shadow-md shadow-blue-500/10"
+              >
+                Go to Dashboard
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => handleNavigate('/login')}
+                  className="px-4 py-2.5 text-sm font-bold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all hidden sm:block"
+                >
+                  Log In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNavigate('/signup')}
+                  className="px-5 py-2.5 bg-[#1E5EFF] hover:bg-blue-600 text-white rounded-full text-sm font-bold transition-all hover:scale-[1.03] active:scale-98 shadow-md shadow-blue-500/10"
+                >
+                  Start Free Trial
+                </button>
+              </>
+            )}
+
+            {/* Mobile menu toggle */}
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-1.5 md:hidden text-slate-500 hover:text-[#0B1B3A] rounded-lg focus:outline-none"
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </nav>
-      </header>
+
+        {/* Mobile Navigation Drawer */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute top-16 left-0 right-0 bg-white/95 border border-slate-200 backdrop-blur-2xl rounded-3xl p-5 shadow-2xl md:hidden flex flex-col gap-3"
+            >
+              <button onClick={() => { setIsMobileMenuOpen(false); handleNavigate('/features'); }} className="text-left text-sm font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">Features</button>
+              <button onClick={() => { setIsMobileMenuOpen(false); handleScrollToWorkflow(); }} className="text-left text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">How It Works</button>
+              <button onClick={() => { setIsMobileMenuOpen(false); handleBookDemo(); }} className="text-left text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">Book Demo</button>
+              <button onClick={() => { setIsMobileMenuOpen(false); handleNavigate('/faqs'); }} className="text-left text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">Support FAQs</button>
+              {!user && (
+                <button
+                  type="button"
+                  onClick={() => { setIsMobileMenuOpen(false); handleNavigate('/login'); }}
+                  className="w-full text-center py-2.5 text-md font-bold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50"
+                >
+                  Log In
+                </button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.header>
 
       {/* Main Container */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 pb-24 space-y-12">
@@ -254,7 +358,7 @@ export default function Faqs() {
         </div>
 
         {/* Live Support Bottom Card */}
-        <div className="bg-gradient-to-r from-[#0B1B3A] to-[#0d224b] rounded-3xl border border-slate-800 p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden">
+        {/* <div className="bg-gradient-to-r from-[#0B1B3A] to-[#0d224b] rounded-3xl border border-slate-800 p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden">
           <div className="absolute top-[-20%] right-[-10%] w-[40%] aspect-square rounded-full bg-[#1E5EFF]/10 blur-[80px] pointer-events-none" />
 
           <div className="space-y-2 text-center md:text-left">
@@ -265,37 +369,29 @@ export default function Faqs() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
-            <a
-              href="https://wa.me/919876543210?text=Hi%20VenuePro,%20I%20have%20some%20questions%20about%20the%20venue%20operating%20system."
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-xs font-bold transition-all shadow-md active:scale-98 w-full sm:w-auto"
-            >
-              <MessageSquare className="w-4 h-4 fill-current" />
-              Chat on WhatsApp
-            </a>
+
             <a
               href="tel:+919876543210"
               className="flex items-center justify-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/15 border border-white/10 text-white rounded-full text-xs font-bold transition-all active:scale-98 w-full sm:w-auto"
             >
               <PhoneCall className="w-4 h-4" />
-              Call Support
+              Email Us
             </a>
           </div>
-        </div>
+        </div> */}
       </main>
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-12 text-center text-xs text-slate-500 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="flex justify-center items-center gap-3">
-            <img src={venueProLogo} alt="Logo" className="h-6 w-auto opacity-70" />
-            <span className="font-bold text-slate-600">VenuePro</span>
+            <img src={venueProLogo} alt="Logo" className="h-10 w-auto opacity-70" />
+
           </div>
           <p>© 2026 VenuePro Technologies. All rights reserved. CA-audited billing, digital calendar locks, and WhatsApp CRM automations.</p>
           <div className="flex justify-center gap-6 text-[11px] font-semibold">
-            <button onClick={() => navigate('/privacy')} className="hover:text-slate-800 bg-transparent border-none cursor-pointer">Privacy Policy</button>
-            <button onClick={() => navigate('/terms')} className="hover:text-slate-800 bg-transparent border-none cursor-pointer">Terms of Service</button>
+            <button onClick={() => handleNavigate('/privacy')} className="hover:text-slate-800 bg-transparent border-none cursor-pointer">Privacy Policy</button>
+            <button onClick={() => handleNavigate('/terms')} className="hover:text-slate-800 bg-transparent border-none cursor-pointer">Terms of Service</button>
             <a href="mailto:support@venuepro.in" className="hover:text-slate-800 transition-colors">Contact Support</a>
           </div>
         </div>

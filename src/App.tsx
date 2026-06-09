@@ -80,6 +80,7 @@ export default function App() {
 
     const hostname = window.location.hostname;
     const pathname = window.location.pathname;
+    const MARKETING_PATHS = ['/', '/features', '/faqs', '/privacy', '/terms'];
 
     if (hostname === 'app.venuepro.in') {
       if (pathname === '/') {
@@ -88,15 +89,17 @@ export default function App() {
         } else {
           window.location.replace('/login');
         }
+      } else if (MARKETING_PATHS.includes(pathname)) {
+        window.location.replace(`https://www.venuepro.in${pathname}`);
       }
     } else if (hostname === 'venuepro.in') {
-      if (pathname === '/') {
-        window.location.replace('https://www.venuepro.in/');
+      if (MARKETING_PATHS.includes(pathname)) {
+        window.location.replace(`https://www.venuepro.in${pathname}`);
       } else {
         window.location.replace(`https://app.venuepro.in${pathname}`);
       }
     } else if (hostname === 'www.venuepro.in') {
-      if (pathname !== '/') {
+      if (!MARKETING_PATHS.includes(pathname)) {
         window.location.replace(`https://app.venuepro.in${pathname}`);
       }
     }

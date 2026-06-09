@@ -19,3 +19,12 @@ export function getLandingUrl(path: string = ''): string {
   }
   return path; // Fallback to relative path for localhost / dev
 }
+
+export function getRouteUrl(path: string = ''): string {
+  const MARKETING_PATHS = ['/', '/features', '/faqs', '/privacy', '/terms'];
+  if (MARKETING_PATHS.includes(path)) {
+    return getLandingUrl(path);
+  }
+  return getAppUrl(path);
+}
+

@@ -1,8 +1,48 @@
-import { Link } from 'react-router-dom';
-import { FileText, ArrowLeft, Shield, Clock, BookOpen, Ban, HeartHandshake } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FileText, Shield, Clock, BookOpen, Ban, HeartHandshake, Menu, X } from 'lucide-react';
 import venueProLogo from '@/assets/venueProLogo.svg';
+import { getRouteUrl } from '@/lib/urls';
+import { useAuthStore } from '@/stores/auth-store';
 
 export default function Terms() {
+  const navigate = useNavigate();
+  const handleNavigate = (path: string) => {
+    const target = getRouteUrl(path);
+    if (target.startsWith('http')) {
+      window.location.href = target;
+    } else {
+      navigate(target);
+    }
+  };
+  const { user } = useAuthStore();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleScrollToWorkflow = () => {
+    const target = getRouteUrl('/') + '#workflow';
+    if (target.startsWith('http')) {
+      window.location.href = target;
+    } else {
+      navigate('/');
+      setTimeout(() => {
+        document.getElementById('workflow')?.scrollIntoView({ behavior: 'smooth' });
+      }, 150);
+    }
+  };
+
+  const handleBookDemo = () => {
+    const target = getRouteUrl('/') + '#demo';
+    if (target.startsWith('http')) {
+      window.location.href = target;
+    } else {
+      navigate('/');
+      setTimeout(() => {
+        document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' });
+      }, 150);
+    }
+  };
+
   return (
     <div className="bg-[#fcfbf9] text-slate-900 min-h-screen font-sans bg-grid-pattern relative selection:bg-brand-100 selection:text-brand-900 overflow-hidden">
       
@@ -10,25 +50,96 @@ export default function Terms() {
       <div className="absolute top-[-10%] right-[-15%] w-[45%] aspect-square rounded-full bg-gradient-to-tr from-indigo-100/30 via-cyan-100/20 to-amber-100/20 blur-[130px] -z-10 animate-pulse-slow" />
       <div className="absolute bottom-[20%] left-[-10%] w-[40%] aspect-square rounded-full bg-gradient-to-tr from-purple-100/20 to-brand-100/20 blur-[130px] -z-10 animate-pulse-slow" style={{ animationDelay: '2s' }} />
 
-      {/* Floating Header */}
-      <header className="fixed top-4 left-4 right-4 z-50 max-w-5xl mx-auto">
-        <div className="backdrop-blur-xl bg-white/70 border border-slate-100/60 px-6 py-2.5 rounded-full flex items-center justify-between shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
-          <Link to="/" className="flex items-center group transition-transform hover:scale-102">
-            <img
-              src={venueProLogo}
-              alt="VenuePro Logo"
-              className="h-10 w-auto object-contain"
-            />
-          </Link>
-          <Link
-            to="/"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-xs hover:scale-102 active:scale-98"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Homepage</span>
-          </Link>
-        </div>
-      </header>
+      {/* Floating Glass Header */}
+      <motion.header
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="fixed top-5 left-4 right-4 z-50 max-w-7xl mx-auto"
+      >
+        <nav className="backdrop-blur-xl bg-white/70 border border-slate-200/50 px-6 py-3.5 rounded-full flex items-center justify-between shadow-lg">
+          <div className="flex items-center gap-10">
+            <button onClick={() => handleNavigate('/')} className="flex items-center group transition-transform hover:scale-102 bg-transparent border-none outline-none cursor-pointer">
+              <img
+                src={venueProLogo}
+                alt="VenuePro Logo"
+                className="h-10 w-auto object-contain"
+              />
+            </button>
+            {/* Desktop Links */}
+            <div className="hidden md:flex items-center gap-7">
+              <button onClick={() => handleNavigate('/features')} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">Features</button>
+              <button onClick={handleScrollToWorkflow} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">How It Works</button>
+              <button onClick={handleBookDemo} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">Book Demo</button>
+              <button onClick={() => handleNavigate('/faqs')} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">Support FAQ</button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {user ? (
+              <button
+                type="button"
+                onClick={() => handleNavigate('/dashboard')}
+                className="px-5 py-2.5 bg-[#1E5EFF] hover:bg-blue-600 text-white rounded-full text-sm font-bold transition-all hover:scale-[1.03] active:scale-98 shadow-md shadow-blue-500/10"
+              >
+                Go to Dashboard
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => handleNavigate('/login')}
+                  className="px-4 py-2.5 text-sm font-bold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all hidden sm:block"
+                >
+                  Log In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNavigate('/signup')}
+                  className="px-5 py-2.5 bg-[#1E5EFF] hover:bg-blue-600 text-white rounded-full text-sm font-bold transition-all hover:scale-[1.03] active:scale-98 shadow-md shadow-blue-500/10"
+                >
+                  Start Free Trial
+                </button>
+              </>
+            )}
+
+            {/* Mobile menu toggle */}
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-1.5 md:hidden text-slate-500 hover:text-[#0B1B3A] rounded-lg focus:outline-none"
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+        </nav>
+
+        {/* Mobile Navigation Drawer */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute top-16 left-0 right-0 bg-white/95 border border-slate-200 backdrop-blur-2xl rounded-3xl p-5 shadow-2xl md:hidden flex flex-col gap-3"
+            >
+              <button onClick={() => { setIsMobileMenuOpen(false); handleNavigate('/features'); }} className="text-left text-sm font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">Features</button>
+              <button onClick={() => { setIsMobileMenuOpen(false); handleScrollToWorkflow(); }} className="text-left text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">How It Works</button>
+              <button onClick={() => { setIsMobileMenuOpen(false); handleBookDemo(); }} className="text-left text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">Book Demo</button>
+              <button onClick={() => { setIsMobileMenuOpen(false); handleNavigate('/faqs'); }} className="text-left text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">Support FAQs</button>
+              {!user && (
+                <button
+                  type="button"
+                  onClick={() => { setIsMobileMenuOpen(false); handleNavigate('/login'); }}
+                  className="w-full text-center py-2.5 text-md font-bold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50"
+                >
+                  Log In
+                </button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.header>
 
       {/* Main Content Area */}
       <main className="pt-28 pb-20 px-4 max-w-4xl mx-auto space-y-12 relative">

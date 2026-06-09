@@ -4,10 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar, DollarSign, MessageSquare, ShieldCheck, WifiOff, ArrowLeft,
   ArrowRight, Check, Users, Sparkles, TrendingUp, BarChart3, Lock,
-  RefreshCw, CheckCircle2, AlertTriangle, PhoneCall, Award, ChevronDown
+  RefreshCw, CheckCircle2, AlertTriangle, PhoneCall, Award, ChevronDown, Menu, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import venueProLogo from '@/assets/venueProLogo.svg';
+import { getRouteUrl } from '@/lib/urls';
+import { useAuthStore } from '@/stores/auth-store';
 
 interface FeatureWorkflowStep {
   title: string;
@@ -57,6 +59,40 @@ const WORKFLOW_STEPS: FeatureWorkflowStep[] = [
 
 export default function Features() {
   const navigate = useNavigate();
+  const handleNavigate = (path: string) => {
+    const target = getRouteUrl(path);
+    if (target.startsWith('http')) {
+      window.location.href = target;
+    } else {
+      navigate(target);
+    }
+  };
+  const { user } = useAuthStore();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleScrollToWorkflow = () => {
+    const target = getRouteUrl('/') + '#workflow';
+    if (target.startsWith('http')) {
+      window.location.href = target;
+    } else {
+      navigate('/');
+      setTimeout(() => {
+        document.getElementById('workflow')?.scrollIntoView({ behavior: 'smooth' });
+      }, 150);
+    }
+  };
+
+  const handleBookDemo = () => {
+    const target = getRouteUrl('/') + '#demo';
+    if (target.startsWith('http')) {
+      window.location.href = target;
+    } else {
+      navigate('/');
+      setTimeout(() => {
+        document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' });
+      }, 150);
+    }
+  };
   const [activeStep, setActiveStep] = useState(0);
   const [expandedFeature, setExpandedFeature] = useState<string | null>("calendar");
 
@@ -96,27 +132,95 @@ export default function Features() {
       <div className="absolute bottom-0 right-[-10%] w-[50%] aspect-square rounded-full bg-gradient-to-tr from-[#1E5EFF]/5 via-[#0B1B3A]/5 to-transparent blur-[160px] -z-10" />
 
       {/* Floating Header */}
-      <header className="fixed top-5 left-4 right-4 z-50 max-w-7xl mx-auto">
+      <motion.header
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="fixed top-5 left-4 right-4 z-50 max-w-7xl mx-auto"
+      >
         <nav className="backdrop-blur-xl bg-white/70 border border-slate-200/50 px-6 py-3.5 rounded-full flex items-center justify-between shadow-lg">
           <div className="flex items-center gap-10">
-            <button onClick={() => navigate('/')} className="flex items-center group transition-transform hover:scale-102 bg-transparent border-none outline-none cursor-pointer">
+            <button onClick={() => handleNavigate('/')} className="flex items-center group transition-transform hover:scale-102 bg-transparent border-none outline-none cursor-pointer">
               <img
                 src={venueProLogo}
                 alt="VenuePro Logo"
                 className="h-10 w-auto object-contain"
               />
             </button>
+            {/* Desktop Links */}
+            <div className="hidden md:flex items-center gap-7">
+              <button onClick={() => handleNavigate('/features')} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">Features</button>
+              <button onClick={handleScrollToWorkflow} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">How It Works</button>
+              <button onClick={handleBookDemo} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">Book Demo</button>
+              <button onClick={() => handleNavigate('/faqs')} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">Support FAQ</button>
+            </div>
           </div>
 
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 hover:text-slate-900 rounded-full text-xs font-bold transition-all hover:scale-[1.02] active:scale-98 shadow-sm"
-          >
-            <ArrowLeft className="w-3.5 h-3.5 text-slate-500" />
-            Back to Home
-          </button>
+          <div className="flex items-center gap-3">
+            {user ? (
+              <button
+                type="button"
+                onClick={() => handleNavigate('/dashboard')}
+                className="px-5 py-2.5 bg-[#1E5EFF] hover:bg-blue-600 text-white rounded-full text-sm font-bold transition-all hover:scale-[1.03] active:scale-98 shadow-md shadow-blue-500/10"
+              >
+                Go to Dashboard
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => handleNavigate('/login')}
+                  className="px-4 py-2.5 text-sm font-bold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all hidden sm:block"
+                >
+                  Log In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNavigate('/signup')}
+                  className="px-5 py-2.5 bg-[#1E5EFF] hover:bg-blue-600 text-white rounded-full text-sm font-bold transition-all hover:scale-[1.03] active:scale-98 shadow-md shadow-blue-500/10"
+                >
+                  Start Free Trial
+                </button>
+              </>
+            )}
+
+            {/* Mobile menu toggle */}
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-1.5 md:hidden text-slate-500 hover:text-[#0B1B3A] rounded-lg focus:outline-none"
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </nav>
-      </header>
+
+        {/* Mobile Navigation Drawer */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute top-16 left-0 right-0 bg-white/95 border border-slate-200 backdrop-blur-2xl rounded-3xl p-5 shadow-2xl md:hidden flex flex-col gap-3"
+            >
+              <button onClick={() => { setIsMobileMenuOpen(false); handleNavigate('/features'); }} className="text-left text-sm font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">Features</button>
+              <button onClick={() => { setIsMobileMenuOpen(false); handleScrollToWorkflow(); }} className="text-left text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">How It Works</button>
+              <button onClick={() => { setIsMobileMenuOpen(false); handleBookDemo(); }} className="text-left text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">Book Demo</button>
+              <button onClick={() => { setIsMobileMenuOpen(false); handleNavigate('/faqs'); }} className="text-left text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">Support FAQs</button>
+              {!user && (
+                <button
+                  type="button"
+                  onClick={() => { setIsMobileMenuOpen(false); handleNavigate('/login'); }}
+                  className="w-full text-center py-2.5 text-md font-bold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50"
+                >
+                  Log In
+                </button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.header>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 pb-24 space-y-32">
@@ -550,14 +654,14 @@ export default function Features() {
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4 relative z-10">
               <button
                 type="button"
-                onClick={() => navigate('/signup')}
+                onClick={() => handleNavigate('/signup')}
                 className="w-full sm:w-auto px-7 py-4 bg-[#1E5EFF] hover:bg-blue-600 text-white rounded-full text-xs font-bold shadow-lg shadow-blue-500/30 transition-all hover:scale-[1.02] active:scale-98"
               >
                 Start Free Trial
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/')}
+                onClick={() => handleNavigate('/')}
                 className="w-full sm:w-auto px-7 py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-full text-xs font-bold transition-all shadow-lg hover:scale-[1.02] active:scale-98 flex items-center justify-center gap-2"
               >
                 <span>Request a Walkthrough Demo</span>
@@ -578,9 +682,9 @@ export default function Features() {
           </div>
           <p>© 2026 VenuePro Technologies. All rights reserved. CA-audited billing, digital calendar locks, and WhatsApp CRM automations.</p>
           <div className="flex justify-center gap-6 text-[11px] font-semibold">
-            <button onClick={() => navigate('/faqs')} className="hover:text-slate-800 bg-transparent border-none cursor-pointer">Support FAQs</button>
-            <button onClick={() => navigate('/privacy')} className="hover:text-slate-800 bg-transparent border-none cursor-pointer">Privacy Policy</button>
-            <button onClick={() => navigate('/terms')} className="hover:text-slate-800 bg-transparent border-none cursor-pointer">Terms of Service</button>
+            <button onClick={() => handleNavigate('/faqs')} className="hover:text-slate-800 bg-transparent border-none cursor-pointer">Support FAQs</button>
+            <button onClick={() => handleNavigate('/privacy')} className="hover:text-slate-800 bg-transparent border-none cursor-pointer">Privacy Policy</button>
+            <button onClick={() => handleNavigate('/terms')} className="hover:text-slate-800 bg-transparent border-none cursor-pointer">Terms of Service</button>
             <a href="mailto:support@venuepro.in" className="hover:text-slate-800 transition-colors">Contact Support</a>
           </div>
         </div>
