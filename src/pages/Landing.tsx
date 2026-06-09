@@ -557,10 +557,6 @@ export default function Landing() {
     }
   };
 
-  const handleScrollToWorkflow = () => {
-    document.getElementById('workflow')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   // WhatsApp Simulator Interaction loop
   useEffect(() => {
     if (whatsappStep === 1) {
@@ -710,18 +706,18 @@ export default function Landing() {
       >
         <nav className="backdrop-blur-xl bg-white/70 border border-slate-200/50 px-6 py-3.5 rounded-full flex items-center justify-between shadow-lg">
           <div className="flex items-center gap-10">
-            <button onClick={() => handleNavigate('/')} className="flex items-center group transition-transform hover:scale-102 bg-transparent border-none outline-none cursor-pointer">
+            <a href="#" className="flex items-center group transition-transform hover:scale-102">
               <img
                 src={venueProLogo}
                 alt="VenuePro Logo"
                 className="h-10 w-auto object-contain"
               />
-            </button>
+            </a>
             {/* Desktop Links */}
             <div className="hidden md:flex items-center gap-7">
               <button onClick={() => handleNavigate('/features')} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">Features</button>
-              <button onClick={handleScrollToWorkflow} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">How It Works</button>
-              <button onClick={() => setIsDemoModalOpen(true)} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">Book Demo</button>
+              <a href="#workflow" className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] transition-all hover:scale-110 ease-in-out">How It Works</a>
+              <button onClick={() => setIsDemoModalOpen(true)} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all">Book Demo</button>
               <button onClick={() => handleNavigate('/faqs')} className="text-sm font-semibold text-slate-500 hover:text-[#0B1B3A] hover:scale-110 ease-in-out transition-all bg-transparent border-none cursor-pointer">Support FAQ</button>
             </div>
           </div>
@@ -775,8 +771,8 @@ export default function Landing() {
               className="absolute top-16 left-0 right-0 bg-white/95 border border-slate-200 backdrop-blur-2xl rounded-3xl p-5 shadow-2xl md:hidden flex flex-col gap-3"
             >
               <button onClick={() => { setIsMobileMenuOpen(false); handleNavigate('/features'); }} className="text-left text-sm font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">Features</button>
-              <button onClick={() => { setIsMobileMenuOpen(false); handleScrollToWorkflow(); }} className="text-left text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">How It Works</button>
-              <button onClick={() => { setIsMobileMenuOpen(false); setIsDemoModalOpen(true); }} className="text-left text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">Book Demo</button>
+              <a href="#workflow" onClick={() => setIsMobileMenuOpen(false)} className="text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all">How It Works</a>
+              <button onClick={() => { setIsMobileMenuOpen(false); setIsDemoModalOpen(true); }} className="text-left text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all">Book Demo</button>
               <button onClick={() => { setIsMobileMenuOpen(false); handleNavigate('/faqs'); }} className="text-left text-md font-semibold text-slate-600 hover:text-[#0B1B3A] px-3 py-2 rounded-xl hover:bg-slate-50 transition-all bg-transparent border-none cursor-pointer">Support FAQs</button>
               {!user && (
                 <button

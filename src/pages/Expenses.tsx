@@ -8,8 +8,23 @@ import { expenseCategoryLabels, expensePaymentModeLabels } from '@/types/expense
 import { toast } from 'sonner';
 import { DatePicker } from '@/components/shared/DatePicker';
 
-const categories: ExpenseCategory[] = ['catering', 'maintenance', 'utilities', 'marketing', 'staff_salary', 'decorations', 'miscellaneous'];
+const categories: ExpenseCategory[] = ['catering', 'maintenance', 'utilities', 'marketing', 'staff_salary', 'decorations', 'internet', 'cleaning', 'fuel_diesel', 'licensing_taxes', 'petty_cash', 'miscellaneous'];
 const paymentModes: ExpensePaymentMode[] = ['cash', 'upi', 'bank_transfer', 'cheque', 'card', 'online'];
+
+const CATEGORY_COLORS: Record<ExpenseCategory, string> = {
+  catering: 'bg-emerald-500',
+  maintenance: 'bg-amber-500',
+  utilities: 'bg-teal-500',
+  marketing: 'bg-indigo-500',
+  staff_salary: 'bg-violet-500',
+  decorations: 'bg-fuchsia-500',
+  internet: 'bg-sky-500',
+  cleaning: 'bg-rose-500',
+  fuel_diesel: 'bg-red-500',
+  licensing_taxes: 'bg-cyan-500',
+  petty_cash: 'bg-orange-500',
+  miscellaneous: 'bg-slate-400',
+};
 
 export default function Expenses() {
   const expenses = useDataStore((s) => s.expenses);
@@ -107,6 +122,40 @@ export default function Expenses() {
   }, {} as Record<ExpenseCategory, number>);
 
   const totalAllTime = expenses.reduce((sum, e) => sum + e.amount_paise, 0);
+
+  // Smart Spends & Compliance Metrics
+  const now = new Date();
+  const currentMonthExpenses = expenses.filter(e => {
+    const d = new Date(e.expense_date);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+
+  const currentMonthTotal = currentMonthExpenses.reduce((sum, e) => sum + e.amount_paise, 0);
+
+  const pettyCashTotal = currentMonthExpenses
+    .filter(e => e.category === 'petty_cash')
+    .reduce((sum, e) => sum + e.amount_paise, 0);
+
+  const pettyCashPercent = currentMonthTotal > 0 ? (pettyCashTotal / currentMonthTotal) * 100 : 0;
+  const isPettyCashHigh = pettyCashPercent > 15;
+
+  const hasInternetLogged = currentMonthExpenses.some(e => e.category === 'internet');
+
+  const hasLicensingLogged = expenses.some(e => {
+    if (e.category !== 'licensing_taxes') return false;
+    const d = new Date(e.expense_date);
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    return d >= sixMonthsAgo;
+  });
+
+  const hasDieselLogged = expenses.some(e => {
+    if (e.category !== 'fuel_diesel') return false;
+    const d = new Date(e.expense_date);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return d >= thirtyDaysAgo;
+  });
 
   // File Upload
   const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -288,7 +337,7 @@ export default function Expenses() {
 
         {/* Right Category Breakdown Chart (Percentage Bars) */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-150 p-5 shadow-xs flex flex-col justify-between">
-          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Category Allocations</h3>
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Spend Allocations & Breakdown</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {categories.map((cat) => {
               const amount = statsByCategory[cat] || 0;
@@ -300,11 +349,94 @@ export default function Expenses() {
                     <span className="text-gray-500">{pct.toFixed(0)}% ({formatCurrency(amount)})</span>
                   </div>
                   <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-brand-600 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                    <div className={cn("h-full rounded-full transition-all duration-500", CATEGORY_COLORS[cat])} style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               );
             })}
+          </div>
+        </div>
+      </div>
+
+      {/* Smart Insights & Alerts Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-fade-in-up">
+        {/* Petty Cash Alert */}
+        <div className={cn(
+          "rounded-2xl border p-5 shadow-xs flex flex-col justify-between transition-all duration-300",
+          isPettyCashHigh 
+            ? "bg-amber-50/50 border-amber-200 text-amber-900" 
+            : "bg-emerald-50/30 border-emerald-100 text-emerald-900"
+        )}>
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">💰</span>
+              <h3 className="text-xs font-black uppercase tracking-wider">
+                {isPettyCashHigh ? "High Petty Cash Warning" : "Petty Cash Health Check"}
+              </h3>
+            </div>
+            <p className="text-xs leading-relaxed opacity-90">
+              {isPettyCashHigh ? (
+                <>
+                  Petty cash transactions account for <span className="font-extrabold text-amber-700">{pettyCashPercent.toFixed(1)}%</span> of this month's total spends (<span className="font-extrabold">{formatCurrency(pettyCashTotal)}</span>). High petty cash spends indicate untracked leakages. We recommend verifying manual physical vouchers weekly.
+                </>
+              ) : (
+                <>
+                  Petty cash stands at a healthy <span className="font-extrabold text-emerald-700">{pettyCashPercent.toFixed(1)}%</span> of this month's spends (<span className="font-extrabold">{formatCurrency(pettyCashTotal)}</span>). Spends are well-distributed across trackable fixed cost accounts.
+                </>
+              )}
+            </p>
+          </div>
+          <div className="mt-4 flex items-center justify-between text-[10px] font-bold opacity-60 border-t pt-3 border-current/15">
+            <span>Limit Threshold: 15%</span>
+            <span>Current: {pettyCashPercent.toFixed(1)}%</span>
+          </div>
+        </div>
+
+        {/* Fixed Costs & Compliance Checklist */}
+        <div className="bg-white rounded-2xl border border-gray-150 p-5 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-lg">📋</span>
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">Fixed Spends & Compliance Checklist</h3>
+            </div>
+            <div className="space-y-2.5">
+              <div className="flex items-start gap-2.5 text-xs">
+                <div className={cn(
+                  "w-4 h-4 rounded-full flex items-center justify-center border text-[10px] mt-0.5 font-bold",
+                  hasInternetLogged ? "bg-emerald-500 border-emerald-500 text-white" : "border-slate-300 text-transparent"
+                )}>✓</div>
+                <div>
+                  <span className="font-bold text-slate-700 block">Internet & WiFi Subscriptions</span>
+                  <p className="text-[10px] text-slate-400">
+                    {hasInternetLogged ? "Logged for the current month." : "No internet spend logged for this month."}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5 text-xs border-t border-slate-50 pt-2">
+                <div className={cn(
+                  "w-4 h-4 rounded-full flex items-center justify-center border text-[10px] mt-0.5 font-bold",
+                  hasLicensingLogged ? "bg-emerald-500 border-emerald-500 text-white" : "border-slate-300 text-transparent"
+                )}>✓</div>
+                <div>
+                  <span className="font-bold text-slate-700 block">Licenses, Taxes & Permits</span>
+                  <p className="text-[10px] text-slate-400">
+                    {hasLicensingLogged ? "Compliance fees up to date (last 6 months)." : "No license fees logged in 6 months. (e.g. liquor, sound, pollution)"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5 text-xs border-t border-slate-50 pt-2">
+                <div className={cn(
+                  "w-4 h-4 rounded-full flex items-center justify-center border text-[10px] mt-0.5 font-bold",
+                  hasDieselLogged ? "bg-emerald-500 border-emerald-500 text-white" : "border-slate-300 text-transparent"
+                )}>✓</div>
+                <div>
+                  <span className="font-bold text-slate-700 block">Gen-Set Diesel Reserves</span>
+                  <p className="text-[10px] text-slate-400">
+                    {hasDieselLogged ? "Refueling logged in last 30 days." : "No fuel expenses recorded in 30 days. Heavy wedding season checks required."}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

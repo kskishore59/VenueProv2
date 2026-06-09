@@ -20,6 +20,11 @@ export type ExpenseCategory =
   | 'marketing'
   | 'staff_salary'
   | 'decorations'
+  | 'internet'
+  | 'cleaning'
+  | 'fuel_diesel'
+  | 'licensing_taxes'
+  | 'petty_cash'
   | 'miscellaneous';
 
 export type ExpensePaymentMode =
@@ -37,7 +42,12 @@ export const expenseCategoryLabels: Record<ExpenseCategory, string> = {
   marketing: 'Marketing & Advertising',
   staff_salary: 'Staff Salary / Wages',
   decorations: 'Decor & Theme expenses',
-  miscellaneous: 'Miscellaneous / Spends',
+  internet: 'Internet & WiFi Costs',
+  cleaning: 'Cleaning & Janitorial',
+  fuel_diesel: 'Generator Fuel & Diesel',
+  licensing_taxes: 'Licenses, Taxes & Permits',
+  petty_cash: 'Untracked Petty Cash',
+  miscellaneous: 'Miscellaneous Spends',
 };
 
 export const expensePaymentModeLabels: Record<ExpensePaymentMode, string> = {

@@ -11,6 +11,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { hasPermission } from '@/lib/permissions';
 import { DateRangeFilter } from '@/components/shared/DateRangeFilter';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { BookingCalendar } from '@/components/booking/BookingCalendar';
 import { 
   format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, 
   addMonths 
@@ -26,6 +27,7 @@ const statusFilters: { value: BookingStatus | 'all'; label: string }[] = [
 ];
 
 export default function Bookings() {
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<BookingStatus | 'all'>('all');
   const [dateRange, setDateRange] = useState<{ start: string | null; end: string | null }>({ start: null, end: null });
@@ -131,6 +133,28 @@ export default function Bookings() {
           <p className="text-sm text-gray-400 mt-0.5">{bookings.length} total bookings</p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
+          {/* Calendar/List Toggle Slider */}
+          <div className="bg-gray-100 p-0.5 rounded-xl border border-gray-250/60 flex items-center mr-1">
+            <button
+              onClick={() => setViewMode('list')}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-transparent border-none cursor-pointer",
+                viewMode === 'list' ? "bg-white text-slate-800 shadow-2xs" : "text-slate-400 hover:text-slate-600"
+              )}
+            >
+              📋 List
+            </button>
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-transparent border-none cursor-pointer",
+                viewMode === 'calendar' ? "bg-white text-slate-800 shadow-2xs" : "text-slate-400 hover:text-slate-600"
+              )}
+            >
+              📅 Calendar
+            </button>
+          </div>
+
           <button
             onClick={handleExport}
             className="px-3.5 py-2.5 rounded-xl text-xs font-bold bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1.5 transition-all shadow-2xs hover:shadow-xs active:scale-95 w-full sm:w-auto justify-center"
@@ -204,7 +228,11 @@ export default function Bookings() {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {viewMode === 'calendar' ? (
+        <div className="bg-white rounded-2xl border shadow-3xs border-gray-150/80 p-5">
+          <BookingCalendar />
+        </div>
+      ) : filtered.length === 0 ? (
         <EmptyState
           icon={Search}
           title="No bookings recorded yet"
@@ -246,7 +274,7 @@ export default function Bookings() {
                       <div>
                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">Date & Time</span>
                         <p className="text-xs font-semibold text-gray-700">{formatDateReadable(booking.event_date)}</p>
-                        <p className="text-[10px] text-gray-405">{formatTime(booking.start_time)} – {formatTime(booking.end_time)}</p>
+                        <p className="text-[10px] text-gray-450">{formatTime(booking.start_time)} – {formatTime(booking.end_time)}</p>
                       </div>
                       <div className="text-right">
                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">Venue</span>
@@ -306,8 +334,8 @@ export default function Bookings() {
                 </div>
               );
             })}
-          </div>
         </div>
+      </div>
       )}
     </div>
   );

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
 import {
   CalendarCheck, IndianRupee, AlertCircle, Clock, ArrowRight,
   PhoneIncoming, Building2, Percent, Award
@@ -17,11 +18,15 @@ import { eventTypeLabels, type EventType } from '@/types/booking';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { ErrorFallback } from '@/components/shared/ErrorFallback';
 import { DateRangeFilter, type DateRangePreset } from '@/components/shared/DateRangeFilter';
+import { useNavigate } from 'react-router-dom';
+import { expenseCategoryLabels, type ExpenseCategory } from '@/types/expense';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const bookings = useDataStore((s) => s.bookings);
   const payments = useDataStore((s) => s.payments);
   const leads = useDataStore((s) => s.leads);
+  const expenses = useDataStore((s) => s.expenses);
 
   const getDashboardStats = useDataStore((s) => s.getDashboardStats);
   const getUpcomingBookings = useDataStore((s) => s.getUpcomingBookings);
@@ -157,6 +162,48 @@ export default function Dashboard() {
       bookingsSub: `${bookings.filter((b) => b.status === 'confirmed' && (!dateRange.start || b.event_date >= dateRange.start) && (!dateRange.end || b.event_date <= dateRange.end)).length} active bookings`,
     };
   }, [dateRange, bookings, payments, leads, stats]);
+
+  // Compute expense stats based on selected date range
+  const dashboardExpensesFiltered = useMemo(() => {
+    return expenses.filter((e) => {
+      if (dateRange.start && e.expense_date < dateRange.start) return false;
+      if (dateRange.end && e.expense_date > dateRange.end) return false;
+      return true;
+    });
+  }, [expenses, dateRange]);
+
+  const dashboardTotalSpends = useMemo(() => {
+    return dashboardExpensesFiltered.reduce((sum, e) => sum + e.amount_paise, 0);
+  }, [dashboardExpensesFiltered]);
+
+  const dashboardExpenseBreakdown = useMemo(() => {
+    const map: Record<string, number> = {};
+    dashboardExpensesFiltered.forEach((e) => {
+      map[e.category] = (map[e.category] || 0) + e.amount_paise;
+    });
+    return map;
+  }, [dashboardExpensesFiltered]);
+
+  const dashboardRecentExpenses = useMemo(() => {
+    return [...dashboardExpensesFiltered]
+      .sort((a, b) => b.expense_date.localeCompare(a.expense_date))
+      .slice(0, 5);
+  }, [dashboardExpensesFiltered]);
+
+  const DASHBOARD_CATEGORY_COLORS: Record<ExpenseCategory, string> = {
+    catering: 'bg-emerald-500',
+    maintenance: 'bg-amber-500',
+    utilities: 'bg-teal-500',
+    marketing: 'bg-indigo-500',
+    staff_salary: 'bg-violet-500',
+    decorations: 'bg-fuchsia-500',
+    internet: 'bg-sky-500',
+    cleaning: 'bg-rose-500',
+    fuel_diesel: 'bg-red-500',
+    licensing_taxes: 'bg-cyan-500',
+    petty_cash: 'bg-orange-500',
+    miscellaneous: 'bg-slate-400',
+  };
 
   const upcoming = useMemo(() => getUpcomingBookings(7), [getUpcomingBookings, bookings]);
   const followUps = useMemo(() => getFollowUpsDue(), [getFollowUpsDue, leads]);
@@ -357,6 +404,92 @@ export default function Dashboard() {
               ))
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Expense Analytics Panel */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+        {/* Graph Card */}
+        <div className="lg:col-span-7 bg-white rounded-2xl border border-gray-150/80 p-5 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                <span>📉 Spends Breakdown by Category</span>
+              </h3>
+              <span className="text-[10px] text-slate-400 font-bold bg-slate-50 px-2 py-0.5 rounded-md">
+                Range: {dateRange.preset === 'all' ? 'All Time' : 'Filtered Period'}
+              </span>
+            </div>
+            {/* Custom Bar Graph */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {Object.keys(dashboardExpenseBreakdown).length === 0 ? (
+                <div className="col-span-2 py-12 text-center text-xs text-slate-400 font-medium">No spends recorded in this period</div>
+              ) : (
+                Object.entries(dashboardExpenseBreakdown).map(([cat, amount]) => {
+                  const pct = dashboardTotalSpends > 0 ? (amount / dashboardTotalSpends) * 100 : 0;
+                  return (
+                    <div key={cat} className="space-y-1">
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span className="text-slate-650 truncate">{expenseCategoryLabels[cat as ExpenseCategory].split(' (')[0]}</span>
+                        <span className="text-slate-900 font-bold">{pct.toFixed(0)}% ({formatCurrency(amount)})</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{ duration: 0.5 }}
+                          className={cn("h-full rounded-full", DASHBOARD_CATEGORY_COLORS[cat as ExpenseCategory] || "bg-slate-400")}
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+          <div className="border-t border-slate-100 pt-3 mt-4 flex items-center justify-between text-xs font-semibold">
+            <span className="text-slate-500">Total Period Spends:</span>
+            <span className="text-slate-900 text-sm font-extrabold">{formatCurrency(dashboardTotalSpends)}</span>
+          </div>
+        </div>
+
+        {/* Numbers List Card */}
+        <div className="lg:col-span-5 bg-white rounded-2xl border border-gray-150/80 p-5 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                <span>📋 Spends Registry Ledger</span>
+              </h3>
+              <span className="text-[10px] text-brand-600 font-bold bg-brand-50 px-2 py-0.5 rounded-full">
+                {dashboardExpensesFiltered.length} spends
+              </span>
+            </div>
+            <div className="space-y-2.5 max-h-[190px] overflow-y-auto pr-1">
+              {dashboardRecentExpenses.length === 0 ? (
+                <div className="py-12 text-center text-xs text-slate-400 font-medium">No spends recorded</div>
+              ) : (
+                dashboardRecentExpenses.map((e) => (
+                  <div key={e.id} className="flex items-center justify-between gap-3 text-xs border-b border-slate-50 pb-2 last:border-0 last:pb-0">
+                    <div className="min-w-0">
+                      <span className="font-bold text-slate-800 block truncate">{e.title}</span>
+                      <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-semibold mt-0.5">
+                        <span className="capitalize">{expenseCategoryLabels[e.category].split(' (')[0]}</span>
+                        <span>•</span>
+                        <span>{e.expense_date}</span>
+                      </div>
+                    </div>
+                    <span className="font-extrabold text-slate-900 shrink-0">{formatCurrency(e.amount_paise)}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/expenses')}
+            className="w-full mt-4 flex items-center justify-center gap-1 py-2 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 text-xs font-bold text-slate-650 transition-colors shadow-2xs hover:shadow-xs active:scale-[0.98]"
+          >
+            Go to Expense Tracker & Smart Audits →
+          </button>
         </div>
       </div>
 
