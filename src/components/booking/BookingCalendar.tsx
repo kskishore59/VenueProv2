@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
   format, isSameMonth, isSameDay, isToday, addMonths, subMonths,
@@ -34,6 +34,7 @@ export function BookingCalendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedHallId, setSelectedHallId] = useState<string>('all');
   const [calendarView, setLocalCalendarView] = useState<'month' | 'week'>('month');
+  const [hoveredDateKey, setHoveredDateKey] = useState<string | null>(null);
 
   // Filter bookings based on selected hall
   const filteredBookings = useMemo(() => {
@@ -121,6 +122,15 @@ export function BookingCalendar() {
     }
     return { label: 'Evening', icon: <Moon className="w-3 h-3 text-indigo-500 inline mr-0.5" />, color: 'bg-indigo-50 text-indigo-800 border-indigo-100' };
   };
+
+  // Hover handlers
+  const handleMouseEnter = useCallback((dateKey: string) => {
+    setHoveredDateKey(dateKey);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setHoveredDateKey(null);
+  }, []);
 
   return (
     <div className="bg-[#fafaf9] rounded-2xl w-full p-4 border border-gray-200/80 shadow-xs relative animate-fade-in-up">
@@ -211,6 +221,9 @@ export function BookingCalendar() {
           const isSelected = isSameDay(day, selectedDate);
           const isTodayDate = isToday(day);
           const maxShow = calendarView === 'week' ? 5 : 2;
+          const isHovered = hoveredDateKey === dateKey;
+          // Show tooltip below for top row cells (first 7 days) to avoid clipping above
+          const isTopRow = idx < 7;
 
           const primaryStatus = (() => {
             if (dayBookings.length === 0) return null;
@@ -231,6 +244,8 @@ export function BookingCalendar() {
                   openDaySummary(dateKey);
                 }
               }}
+              onMouseEnter={() => dayBookings.length > 0 && handleMouseEnter(dateKey)}
+              onMouseLeave={handleMouseLeave}
               className={cn(
                 'calendar-day relative p-2 border-b border-r border-gray-150/60 cursor-pointer transition-all duration-200 group flex flex-col justify-between',
                 calendarView === 'week' ? 'min-h-[220px] md:min-h-[260px]' : 'min-h-[90px] md:min-h-[115px]',
@@ -247,35 +262,49 @@ export function BookingCalendar() {
                 isTodayDate && !isSelected && 'bg-blue-50/40',
               )}
             >
-              {/* Tooltip Card for hover details */}
-              {dayBookings.length > 0 && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[220px] md:w-[260px] bg-slate-900/95 text-white backdrop-blur-md border border-slate-800 rounded-xl p-3 shadow-lg z-50 pointer-events-none opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 hidden md:block text-left">
-                  <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-1.5 mb-2 flex items-center justify-between">
-                    <span>📅 Day Schedule</span>
+              {/* Hover Tooltip - Desktop only, positioned above or below based on row */}
+              {dayBookings.length > 0 && isHovered && (
+                <div
+                  className={cn(
+                    "absolute left-1/2 -translate-x-1/2 w-[230px] md:w-[270px] bg-slate-900/95 text-white backdrop-blur-md border border-slate-700/60 rounded-xl p-3 shadow-2xl z-[100] pointer-events-none hidden md:block text-left",
+                    isTopRow ? "top-full mt-2" : "bottom-full mb-2"
+                  )}
+                >
+                  {/* Tooltip Arrow */}
+                  <div className={cn(
+                    "absolute left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-slate-900/95 border-slate-700/60 rotate-45",
+                    isTopRow ? "-top-1.5 border-l border-t" : "-bottom-1.5 border-r border-b"
+                  )} />
+
+                  <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-700/50 pb-1.5 mb-2 flex items-center justify-between">
+                    <span>📅 {format(day, 'EEE, d MMM')}</span>
                     <span className="bg-brand-500/20 text-brand-400 px-1.5 py-0.5 rounded font-mono text-[9px] font-black">
                       {dayBookings.length} {dayBookings.length === 1 ? 'Event' : 'Events'}
                     </span>
                   </div>
-                  <div className="space-y-2 max-h-[160px] overflow-y-auto pr-0.5 scrollbar-thin scrollbar-thumb-slate-700">
+                  <div className="space-y-1.5 max-h-[140px] overflow-y-auto pr-0.5 scrollbar-thin scrollbar-thumb-slate-700">
                     {dayBookings.map((booking) => {
                       const customer = getCustomerById(booking.customer_id);
                       const hall = getHallById(booking.hall_id);
                       const slotInfo = getSlotInfo(booking.start_time);
                       return (
-                        <div key={booking.id} className="text-[10px] border-b border-slate-800 pb-1.5 last:border-0 last:pb-0 font-sans">
+                        <div key={booking.id} className="text-[10px] border-b border-slate-700/40 pb-1.5 last:border-0 last:pb-0 font-sans">
                           <div className="flex justify-between items-center gap-1">
-                            <span className="font-extrabold truncate text-white">{customer?.name}</span>
-                            <span className={cn("text-[8px] px-1 py-0.2 rounded font-black uppercase border shrink-0 scale-90", slotInfo.color)}>
+                            <span className="font-extrabold truncate text-white max-w-[120px]">{customer?.name || 'Customer'}</span>
+                            <span className={cn("text-[8px] px-1.5 py-0.5 rounded font-black uppercase border shrink-0", slotInfo.color)}>
                               {booking.status}
                             </span>
                           </div>
                           <div className="flex justify-between text-slate-400 font-semibold mt-0.5">
-                            <span className="flex items-center gap-0.5">{slotInfo.icon} {booking.start_time.slice(0, 5)} - {booking.end_time.slice(0, 5)}</span>
-                            <span className="truncate max-w-[80px]">{hall?.name}</span>
+                            <span className="flex items-center gap-0.5">{slotInfo.icon} {booking.start_time.slice(0, 5)} – {booking.end_time.slice(0, 5)}</span>
+                            <span className="truncate max-w-[80px] text-slate-500">{hall?.name}</span>
                           </div>
                         </div>
                       );
                     })}
+                  </div>
+                  <div className="text-[9px] text-slate-500 font-bold mt-2 pt-1.5 border-t border-slate-700/40 text-center">
+                    Click to view full details
                   </div>
                 </div>
               )}

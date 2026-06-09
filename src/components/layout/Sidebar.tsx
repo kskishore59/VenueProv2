@@ -90,7 +90,7 @@ export function Sidebar() {
       <aside
         id="tour-sidebar-nav"
         className={cn(
-          'fixed top-0 left-1 h-screen bg-white rounded-2xl border-gray-200 z-[46] lg:m-2 lg:ml-4 lg:pt-4',
+          'fixed top-0 left-0 h-screen bg-white rounded-2xl border-gray-200 z-[61] lg:left-1 lg:m-2 lg:ml-4 lg:pt-4',
           'flex flex-col transition-all duration-300 ease-in-out-[cubic-bezier(0.16,1,0.3,1)] shadow-md',
           // Desktop
           'hidden md:flex',
