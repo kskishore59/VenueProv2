@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Lock, FileText, Database, Share2, HelpCircle, Menu, X } from 'lucide-react';
-import venueProLogo from '@/assets/venueProLogo.svg';
+import venueProLogo from '@/assets/venueProLogo.png';
 import { getRouteUrl } from '@/lib/urls';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -45,7 +45,7 @@ export default function Privacy() {
 
   return (
     <div className="bg-[#fcfbf9] text-slate-900 min-h-screen font-sans bg-grid-pattern relative selection:bg-brand-100 selection:text-brand-900 overflow-hidden">
-      
+
       {/* Background Ambience Blobs */}
       <div className="absolute top-[-10%] left-[-15%] w-[45%] aspect-square rounded-full bg-gradient-to-tr from-indigo-100/30 via-cyan-100/20 to-amber-100/20 blur-[130px] -z-10 animate-pulse-slow" />
       <div className="absolute bottom-[20%] right-[-10%] w-[40%] aspect-square rounded-full bg-gradient-to-tr from-purple-100/20 to-brand-100/20 blur-[130px] -z-10 animate-pulse-slow" />
@@ -143,7 +143,7 @@ export default function Privacy() {
 
       {/* Main Content Area */}
       <main className="pt-28 pb-20 px-4 max-w-4xl mx-auto space-y-12 relative">
-        
+
         {/* Title Hero */}
         <div className="text-center space-y-4 max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold uppercase tracking-wider">
@@ -160,7 +160,7 @@ export default function Privacy() {
 
         {/* Content Sections */}
         <div className="bg-white/80 backdrop-blur-md border border-slate-100/80 rounded-3xl p-6 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.015)] space-y-8 text-slate-650 text-xs md:text-sm leading-relaxed">
-          
+
           {/* Section 1 */}
           <div className="space-y-3">
             <h2 className="text-base md:text-lg font-bold text-slate-900 flex items-center gap-2">
