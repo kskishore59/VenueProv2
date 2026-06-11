@@ -260,14 +260,15 @@ export function BookingCalendar() {
 
                 isSelected && 'ring-2 ring-brand-500 ring-inset z-10',
                 isTodayDate && !isSelected && 'bg-blue-50/40',
+                isHovered && 'z-[50]'
               )}
             >
               {/* Hover Tooltip - Desktop only, positioned above or below based on row */}
               {dayBookings.length > 0 && isHovered && (
                 <div
                   className={cn(
-                    "absolute left-1/2 -translate-x-1/2 w-[230px] md:w-[270px] bg-slate-900/95 text-white backdrop-blur-md border border-slate-700/60 rounded-xl p-3 shadow-2xl z-[100] pointer-events-none hidden md:block text-left",
-                    isTopRow ? "top-full mt-2" : "bottom-full mb-2"
+                    "absolute left-1/2 -translate-x-1/2 w-[230px] md:w-[270px] bg-slate-900/95 text-white backdrop-blur-md border border-slate-700/60 rounded-xl p-3 shadow-2xl z-[1000] pointer-events-none hidden md:block text-left",
+                    isTopRow ? "top-full mt-2" : "bottom-full mb-4"
                   )}
                 >
                   {/* Tooltip Arrow */}
@@ -438,7 +439,7 @@ export function BookingCalendar() {
             </div>
           ))}
         </div>
-        
+
         <div className="text-[10px] text-slate-400 font-bold flex items-center gap-3">
           <span>☀️ = Morning Shift</span>
           <span>🌙 = Evening Shift</span>

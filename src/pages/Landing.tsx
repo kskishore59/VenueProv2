@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 
 
 
+
 // Interactive Flow Steps
 interface FlowStep {
   title: string;
@@ -805,7 +806,7 @@ export default function Landing() {
             </div>
             <h1 className="text-5xl sm:text-6xl lg:text-6xl tracking-tight leading-[1.12] font-display text-[#0B1B3A]">
               <span className="block text-black-600 font-large font-sans text-5xl md:text-5xl sm:text-4xl lg:text-6xl mb-2">Still managing your bookings through</span>
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#1E5EFF] via-[#8b5cf6] to-[#1a1846] font-extrabold font-display">WhatsApp & Registers?</span>
+              <span className="animate-gradient-text text-transparent font-extrabold italic font-sans">WhatsApp & Registers?</span>
             </h1>
             <p className="text-md sm:text-base text-slate-600 leading-relaxed max-w-xl">
               Most banquet halls and wedding venues lose track of payments, follow-ups, and event coordination when everything is managed manually in diaries.
@@ -1090,11 +1091,11 @@ export default function Landing() {
             ].map((card, idx) => (
               <motion.div
                 key={idx}
-                whileHover={{ y: -6, scale: 1.015, boxShadow: "0 20px 40px -15px rgba(30, 94, 255, 0.12)" }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="bg-white border border-slate-200/60 hover:border-slate-350 rounded-3xl p-8 space-y-6 transition-all duration-300 relative group overflow-hidden shadow-2xs hover:shadow-md"
+                whileHover={{ y: -6, scale: 1.1, boxShadow: "0 20px 40px -15px rgba(30, 94, 255, 0.12)" }}
+
+                className="bg-white border border-slate-200/60 hover:border-slate-350  rounded-3xl p-8 space-y-6 transition-all  relative group overflow-hidden shadow-2xs hover:shadow-md"
               >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-[#4f46e5] rounded-bl-full group-hover:bg-[#4f46e5] transition-colors" />
+                <div className="absolute top-0 right-0 w-24 h-24 bg-[#4f46e5] rounded-bl-full group-hover:bg-[#4f46e5] transition-all" />
 
 
 
