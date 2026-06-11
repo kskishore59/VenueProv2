@@ -3,7 +3,7 @@ import type { DataState } from '../data-store';
 import type { Booking, EventType, BookingStatus } from '@/types/booking';
 import type { Hall } from '@/types/venue';
 import type { Payment, PaymentMode } from '@/types/payment';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { formatDateReadable, formatCurrency, parseDatabaseError } from '@/lib/utils';
 import { mockBookings as initialBookings, mockHalls as initialHalls } from '@/lib/mock-data';
@@ -64,6 +64,7 @@ export interface VenueBookingSlice {
     is_active?: boolean;
   }) => Promise<Hall>;
   updateHall: (id: string, data: Partial<Hall>) => Promise<void>;
+  deleteHall: (id: string) => Promise<void>;
   getHallById: (id: string) => Hall | undefined;
   getBookingById: (id: string) => Booking | undefined;
   getBookingsForDate: (date: string) => Booking[];
@@ -85,8 +86,8 @@ export const createVenueBookingSlice: StateCreator<
   [],
   VenueBookingSlice
 > = (set, get) => ({
-  bookings: [...initialBookings],
-  halls: [...initialHalls],
+  bookings: isSupabaseConfigured() ? [] : [...initialBookings],
+  halls: isSupabaseConfigured() ? [] : [...initialHalls],
 
   // ─── Booking CRUD ────────────────────────────────────────
   createBooking: async (data) => {
@@ -435,6 +436,35 @@ export const createVenueBookingSlice: StateCreator<
     set((s) => ({
       halls: s.halls.map((h) => (h.id === id ? { ...h, ...data } : h)),
     }));
+  },
+
+  deleteHall: async (id) => {
+    const state = get();
+    const hasBookings = state.bookings.some((b) => b.hall_id === id && b.status !== 'cancelled');
+    if (hasBookings) {
+      toast.error('Cannot delete space. There are active bookings associated with it. Please make it Inactive instead.');
+      return;
+    }
+
+    if (state.isOnline) {
+      try {
+        const { error } = await supabase
+          .from('halls')
+          .delete()
+          .eq('id', id);
+        
+        if (error) throw error;
+      } catch (err: any) {
+        console.error('Database deleteHall failed:', err);
+        toast.error(parseDatabaseError(err));
+        return;
+      }
+    }
+
+    set((s) => ({
+      halls: s.halls.filter((h) => h.id !== id),
+    }));
+    toast.success('Venue space deleted.');
   },
 
   // ─── Queries ─────────────────────────────────────────────

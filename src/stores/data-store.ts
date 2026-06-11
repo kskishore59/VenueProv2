@@ -179,6 +179,7 @@ export interface DataState {
     is_active?: boolean;
   }) => Promise<Hall>;
   updateHall: (id: string, data: Partial<Hall>) => Promise<void>;
+  deleteHall: (id: string) => Promise<void>;
 
   // ─── Expense CRUD ────────────────────────────────────────
   fetchExpenses: () => Promise<void>;
@@ -392,6 +393,7 @@ interface OrgSliceState {
     is_active?: boolean;
   }) => Promise<Hall>;
   updateHall: (id: string, data: Partial<Hall>) => Promise<void>;
+  deleteHall: (id: string) => Promise<void>;
 
   // ─── Expense CRUD ────────────────────────────────────────
   fetchExpenses: () => Promise<void>;

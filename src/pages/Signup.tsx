@@ -3,7 +3,7 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth-store';
 import { Mail, Lock, Building2, User, Eye, EyeOff, Loader2, Inbox, Gift, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import venueProLogo from '@/assets/venueProLogo.svg';
+import venueProLogo from '@/assets/venueProLogo.png';
 
 export default function Signup() {
   const navigate = useNavigate();

@@ -6,8 +6,8 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import venueProLogo from '@/assets/venueProLogo.svg';
-import favicon from '@/assets/favicon.svg';
+import venueProLogo from '@/assets/venueProLogo.png';
+import favicon from '@/assets/favicon.png';
 import { useUIStore } from '@/stores/ui-store';
 import { useDataStore } from '@/stores/data-store';
 import { useAuthStore } from '@/stores/auth-store';
@@ -91,12 +91,12 @@ export function Sidebar() {
         id="tour-sidebar-nav"
         className={cn(
           'fixed top-0 left-0 h-screen bg-white rounded-2xl border-gray-200 z-[61] lg:left-1 lg:m-2 lg:ml-4 lg:pt-4',
-          'flex flex-col transition-all duration-300 ease-in-out-[cubic-bezier(0.16,1,0.3,1)] shadow-md',
+          'flex flex-col transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-md',
           // Desktop
           'hidden md:flex',
           collapsed ? 'w-[72px]' : 'w-[260px]',
           // Mobile
-          mobileOpen && '!flex w-[280px] md:hidden shadow-xl drawer-content',
+          mobileOpen && '!flex w-[280px] md:hidden shadow-xl drawer-content-left',
         )}
       >
         {/* Logo / Brand Header */}
@@ -123,7 +123,7 @@ export function Sidebar() {
             )}
 
             {/* Organization custom logo overlapping */}
-            {!collapsed && organization?.logo_url && (
+            {/* {!collapsed && organization?.logo_url && (
               <div className="w-8 h-8 rounded-full bg-white border border-gray-150 overflow-hidden shadow-2xs -ml-2 relative z-10 flex items-center justify-center transition-transform hover:translate-x-1 duration-300">
                 <img
                   src={organization.logo_url}
@@ -131,15 +131,15 @@ export function Sidebar() {
                   className="w-full h-full object-contain p-0.5"
                 />
               </div>
-            )}
+            )} */}
           </div>
-          {!collapsed && organization?.logo_url && (
+          {/* {!collapsed && organization?.logo_url && (
             <div className="min-w-0 animate-fade-in ml-1.5">
               <span className="text-xs font-bold text-gray-900 truncate block font-sans tracking-tight">
                 {orgName.split(' ')[0]}
               </span>
             </div>
-          )}
+          )} */}
           {/* Mobile close button */}
           <button
             onClick={() => setSidebarMobileOpen(false)}

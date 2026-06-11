@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { Mail, Lock, Eye, EyeOff, Loader2, Sparkles, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import venueProLogo from '@/assets/venueProLogo.svg';
+import venueProLogo from '@/assets/venueProLogo.png';
 
 export default function Login() {
   const navigate = useNavigate();

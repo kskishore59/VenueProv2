@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { DataState } from '../data-store';
 import type { InventoryItem, BookingInventoryAllocation, InventoryCategory } from '@/types/inventory';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { parseDatabaseError } from '@/lib/utils';
 import { assertActiveSubscription } from '../data-store';
@@ -47,8 +47,8 @@ export const createInventorySlice: StateCreator<
   [],
   InventorySlice
 > = (set, get) => ({
-  inventoryItems: [...mockInventoryItems],
-  inventoryAllocations: [...mockAllocations],
+  inventoryItems: isSupabaseConfigured() ? [] : [...mockInventoryItems],
+  inventoryAllocations: isSupabaseConfigured() ? [] : [...mockAllocations],
 
   fetchInventory: async () => {
     const state = get();

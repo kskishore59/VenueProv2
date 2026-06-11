@@ -343,6 +343,7 @@ export default function Venues() {
   const halls = useDataStore((s) => s.halls);
   const createHall = useDataStore((s) => s.createHall);
   const updateHall = useDataStore((s) => s.updateHall);
+  const deleteHall = useDataStore((s) => s.deleteHall);
   const uploadMedia = useDataStore((s) => s.uploadMedia);
 
   // Catering Menu Store & Local States
@@ -2307,12 +2308,37 @@ export default function Venues() {
                 )}
                 {editingHallId ? 'Update Venue Space' : 'Register Venue Space'}
               </button>
-              <button
-                onClick={() => setIsDrawerOpen(false)}
-                className="w-full px-4 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
+              <div className="flex gap-2">
+                {editingHallId && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (window.confirm('Are you sure you want to delete this space? This action cannot be undone.')) {
+                        try {
+                          await deleteHall(editingHallId);
+                          setIsDrawerOpen(false);
+                          resetForm();
+                        } catch (err: any) {
+                          toast.error(err.message || 'Failed to delete space');
+                        }
+                      }
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors text-sm font-semibold"
+                  >
+                    <Trash2 className="w-4 h-4" /> Delete Space
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsDrawerOpen(false)}
+                  className={cn(
+                    "rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-50 transition-colors py-2.5",
+                    editingHallId ? "flex-1 px-4" : "w-full px-4"
+                  )}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </>

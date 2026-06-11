@@ -2,7 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { DataState } from '../data-store';
 import type { Payment, PaymentMode, PaymentType } from '@/types/payment';
 import type { Expense, ExpenseCategory, ExpensePaymentMode } from '@/types/expense';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { formatCurrency, parseDatabaseError } from '@/lib/utils';
 import { mockPayments as initialPayments } from '@/lib/mock-data';
@@ -54,8 +54,8 @@ export const createFinanceSlice: StateCreator<
   [],
   FinanceSlice
 > = (set, get) => ({
-  payments: [...initialPayments],
-  expenses: [...mockExpenses],
+  payments: isSupabaseConfigured() ? [] : [...initialPayments],
+  expenses: isSupabaseConfigured() ? [] : [...mockExpenses],
 
   // ─── Payment CRUD ────────────────────────────────────────
   recordPayment: async (data) => {

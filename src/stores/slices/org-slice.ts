@@ -112,10 +112,36 @@ export const createOrgSlice: StateCreator<
   [],
   OrgSlice
 > = (set, get) => ({
-  organization: { ...initialOrg },
-  staffProfiles: [...mockStaffProfiles],
-  pendingInvites: [...mockStaffInvites],
-  menus: [...initialMenus],
+  organization: isSupabaseConfigured() ? {
+    id: '',
+    name: '',
+    slug: '',
+    gstin: null,
+    address: null,
+    city: null,
+    state: null,
+    phone: null,
+    email: null,
+    logo_url: null,
+    terms_and_conditions: null,
+    settings: {
+      currency: 'INR',
+      timezone: 'Asia/Kolkata',
+      date_format: 'dd/MM/yyyy',
+      default_advance_percent: 25,
+      gst_enabled: true,
+      whatsapp_enabled: true,
+      sms_enabled: false,
+      email_notifications: true,
+    },
+    plan: 'free',
+    trial_ends_at: null,
+    subscription_status: null,
+    created_at: '',
+  } : { ...initialOrg },
+  staffProfiles: isSupabaseConfigured() ? [] : [...mockStaffProfiles],
+  pendingInvites: isSupabaseConfigured() ? [] : [...mockStaffInvites],
+  menus: isSupabaseConfigured() ? [] : [...initialMenus],
   isLoading: false,
   isOnline: false,
   realtimeChannel: null,
@@ -237,34 +263,9 @@ export const createOrgSlice: StateCreator<
       if (inventoryRes.error) throw inventoryRes.error;
       if (allocationsRes.error) throw allocationsRes.error;
 
-      // Seed default halls if organization has none
-      let hallsData = hallsRes.data || [];
-      if (hallsData.length === 0) {
-        console.log('New organization detected. Seeding default halls...');
-        const seedHalls = initialHalls.map((h, i) => ({
-          name: h.name,
-          org_id: orgId,
-          type: h.type,
-          capacity_min: h.capacity_min,
-          capacity_max: h.capacity_max,
-          area_sqft: h.area_sqft,
-          pricing: h.pricing,
-          amenities: h.amenities,
-          is_active: h.is_active,
-          display_order: i + 1,
-        }));
-        
-        const { data: insertedHalls, error: seedError } = await supabase
-          .from('halls')
-          .insert(seedHalls)
-          .select();
-        
-        if (seedError) {
-          console.error('Failed to seed halls:', seedError);
-        } else if (insertedHalls) {
-          hallsData = insertedHalls;
-        }
-      }
+      // In online mode, we do not auto-seed dummy halls.
+      // New organizations start with a clean slate of 0 halls.
+      const hallsData = hallsRes.data || [];
 
       // Format time strings from Supabase (slice "HH:MM:SS" -> "HH:MM")
       const formattedBookings = (bookingsRes.data || []).map((b: any) => ({

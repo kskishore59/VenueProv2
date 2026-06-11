@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { cn } from '@/lib/utils';
-import venueProLogo from '@/assets/venueProLogo.svg';
+import venueProLogo from '@/assets/venueProLogo.png';
 import { getRouteUrl } from '@/lib/urls';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -711,7 +711,7 @@ export default function Landing() {
               <img
                 src={venueProLogo}
                 alt="VenuePro Logo"
-                className="h-10 w-auto object-contain"
+                className="h-14 w-auto object-contain"
               />
             </a>
             {/* Desktop Links */}
@@ -1855,7 +1855,7 @@ export default function Landing() {
       <footer className="border-t border-slate-200 bg-white py-12 text-center text-sm text-slate-500 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="flex justify-center items-center gap-3">
-            <img src={venueProLogo} alt="Logo" className="h-10 w-auto opacity-70" />
+            <img src={venueProLogo} alt="Logo" className="h-12 w-auto opacity-70" />
 
           </div>
           <p>© 2026 VenuePro Technologies. All rights reserved. CA-audited billing, digital calendar locks, and WhatsApp CRM automations.</p>

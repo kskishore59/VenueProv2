@@ -66,8 +66,8 @@ export const createCrmSlice: StateCreator<
   [],
   CrmSlice
 > = (set, get) => ({
-  customers: [...initialCustomers],
-  leads: [...initialLeads],
+  customers: isSupabaseConfigured() ? [] : [...initialCustomers],
+  leads: isSupabaseConfigured() ? [] : [...initialLeads],
 
   // ─── Customer CRUD ───────────────────────────────────────
   createCustomer: async (data) => {
