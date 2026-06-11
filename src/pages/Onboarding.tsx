@@ -10,7 +10,7 @@ import {
 import { useAuthStore } from '@/stores/auth-store';
 import { useDataStore } from '@/stores/data-store';
 import { cn } from '@/lib/utils';
-import venueProLogo from '@/assets/venueProLogo.svg';
+import venueProLogo from '@/assets/venueProLogo.png';
 import { toast } from 'sonner';
 
 type OnboardingStep =

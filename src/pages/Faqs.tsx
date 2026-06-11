@@ -6,7 +6,7 @@ import {
   ShieldAlert, BookOpen, Calendar, DollarSign, Menu, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import venueProLogo from '@/assets/venueProLogo.svg';
+import venueProLogo from '@/assets/venueProLogo.png';
 import { getRouteUrl } from '@/lib/urls';
 import { useAuthStore } from '@/stores/auth-store';
 

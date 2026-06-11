@@ -7,7 +7,7 @@ import {
   RefreshCw, CheckCircle2, AlertTriangle, PhoneCall, Award, ChevronDown, Menu, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import venueProLogo from '@/assets/venueProLogo.svg';
+import venueProLogo from '@/assets/venueProLogo.png';
 import { getRouteUrl } from '@/lib/urls';
 import { useAuthStore } from '@/stores/auth-store';
 
