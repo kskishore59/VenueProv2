@@ -16,6 +16,7 @@ import venueProLogo from '@/assets/venueProLogo.png';
 import { getRouteUrl } from '@/lib/urls';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import DotGrid from './DotGrid';
 
 
 
@@ -471,9 +472,17 @@ function DemoWizard({ onSuccess }: DemoWizardProps) {
   );
 }
 
+const ROLLING_TERMS = [
+  "WhatsApp Chats?",
+  "Paper Registers?",
+  "Messy Diaries?",
+  "Excel Sheets?",
+];
+
 export default function Landing() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const [rollingTermIndex, setRollingTermIndex] = useState(0);
 
   const [activeStep, setActiveStep] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -599,7 +608,13 @@ export default function Landing() {
     return () => clearInterval(timer);
   }, []);
 
-
+  // Rolling title term cycle
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRollingTermIndex((prev) => (prev + 1) % ROLLING_TERMS.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="bg-[#F6F7FB] text-slate-800 min-h-screen font-sans relative selection:bg-[#1E5EFF]/15 selection:text-[#1E5EFF] overflow-hidden">
@@ -695,8 +710,8 @@ export default function Landing() {
       <div className="absolute top-[35%] right-0 w-[45%] aspect-square rounded-full bg-gradient-to-tr from-[#1E5EFF]/4 to-[#F5C542]/4 blur-[160px] -z-10 animate-pulse-glow" style={{ animationDelay: '4s' }} />
       <div className="absolute bottom-0 left-[-10%] w-[50%] aspect-square rounded-full bg-gradient-to-tr from-[#1E5EFF]/5 via-[#0B1B3A]/5 to-transparent blur-[160px] -z-10 animate-pulse-glow" style={{ animationDelay: '2s' }} />
 
-      {/* Grid Pattern overlay */}
-      <div className="absolute inset-0 stripe-grid pointer-events-none opacity-60 -z-10" />
+      {/* Interactive Dotted Grid Canvas Background */}
+      <DotGrid />
 
       {/* Floating Glass Header */}
       <motion.header
@@ -806,7 +821,20 @@ export default function Landing() {
             </div>
             <h1 className="text-5xl sm:text-6xl lg:text-6xl tracking-tight leading-[1.12] font-display text-[#0B1B3A]">
               <span className="block text-black-600 font-large font-sans text-5xl md:text-5xl sm:text-4xl lg:text-6xl mb-2">Still managing your bookings through</span>
-              <span className="animate-gradient-text text-transparent font-extrabold italic font-sans">WhatsApp & Registers?</span>
+              <span className="relative inline-flex h-[1.2em] w-auto p-1 overflow-hidden align-bottom">
+                <AnimatePresence mode="popLayout">
+                  <motion.span
+                    key={rollingTermIndex}
+                    initial={{ y: "-100%", opacity: 0 }}
+                    animate={{ y: "0%", opacity: 1 }}
+                    exit={{ y: "100%", opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 150, damping: 18 }}
+                    className="text-[#1E5EFF] font-extrabold italic font-sans"
+                  >
+                    {ROLLING_TERMS[rollingTermIndex]}
+                  </motion.span>
+                </AnimatePresence>
+              </span>
             </h1>
             <p className="text-md sm:text-base text-slate-600 leading-relaxed max-w-xl">
               Most banquet halls and wedding venues lose track of payments, follow-ups, and event coordination when everything is managed manually in diaries.
